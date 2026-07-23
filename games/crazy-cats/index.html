@@ -117,8 +117,8 @@
   <header>
     <div class="shell">
       <a class="back" href="../../">← All games</a>
-      <h1>Crazy Cats <span class="version">v1.2.0</span></h1>
-      <p>Smash explosive towers, trigger bombs, and survive all 10 levels.</p>
+      <h1>Crazy Cats <span class="version">v1.3.0</span></h1>
+      <p>Smash bigger towers, collect cat-only diamonds, and master all 20 levels.</p>
     </div>
   </header>
 
@@ -126,7 +126,7 @@
     <section class="hud" aria-label="Game status">
       <div class="stat"><span>ANGRY PARENTS</span><strong id="parents">0</strong></div>
       <div class="stat"><span>CATS LEFT</span><strong id="catsLeft">5</strong></div>
-      <div class="stat"><span>LEVEL</span><strong id="level">1 / 10</strong></div>
+      <div class="stat"><span>LEVEL</span><strong id="level">1 / 20</strong></div>
     </section>
 
     <div class="game-wrap">
@@ -137,7 +137,7 @@
       <p class="message" id="message" aria-live="polite">Grab the cat, pull back, and let go!</p>
       <button id="restart" type="button">Restart level</button>
     </div>
-    <p class="help">Hard impacts explode blocks. Bombs destroy nearby blocks. Every destroyed or toppled block equals <strong>1 angry parent</strong>.</p>
+    <p class="help">Hard impacts explode blocks. Bombs have a smaller blast now. Hit each diamond <strong>directly with a cat</strong> for 3 extra cats; debris and bombs destroy it with no bonus. Every destroyed or toppled block equals <strong>1 angry parent</strong>.</p>
   </main>
 
   <script>
@@ -164,6 +164,7 @@
       var cat;
       var blocks = [];
       var bombs = [];
+      var diamondItem = null;
       var obstacles = [];
       var particles = [];
       var dragging = false;
@@ -172,6 +173,9 @@
       var lastTime = performance.now();
       var levelCompleteAt = 0;
       var gameWon = false;
+      var bombBlastRadius = 96;
+      var bombDestroyRadius = 48;
+      var bombChainRadius = 104;
 
       var materials = {
         glass: { fill: "#8ee7ef", stroke: "#247b86", breakSpeed: 340, groundSpeed: 300, mass: 0.72 },
@@ -191,128 +195,2749 @@
         return [x, y, radius || 18];
       }
 
+      function diamond(x, y, radius) {
+        return [x, y, radius || 17];
+      }
+
       var levels = [
         {
-          name: "First Crash",
-          cats: 5,
-          blocks: [
-            block(650, 405, 34, 80), block(735, 405, 34, 80),
-            block(692, 348, 145, 28), block(675, 302, 34, 64),
-            block(712, 302, 34, 64), block(692, 259, 118, 25, "glass")
-          ],
-          bombs: [], obstacles: []
+                "name": "First Crash",
+                "cats": 4,
+                "blocks": [
+                        [
+                                650,
+                                405,
+                                34,
+                                80,
+                                "wood"
+                        ],
+                        [
+                                735,
+                                405,
+                                34,
+                                80,
+                                "wood"
+                        ],
+                        [
+                                692,
+                                348,
+                                145,
+                                28,
+                                "wood"
+                        ],
+                        [
+                                675,
+                                302,
+                                34,
+                                64,
+                                "wood"
+                        ],
+                        [
+                                712,
+                                302,
+                                34,
+                                64,
+                                "wood"
+                        ],
+                        [
+                                692,
+                                259,
+                                118,
+                                25,
+                                "glass"
+                        ]
+                ],
+                "bombs": [],
+                "obstacles": [],
+                "diamond": [
+                        565,
+                        397,
+                        17
+                ]
         },
         {
-          name: "High Rise",
-          cats: 5,
-          blocks: [
-            block(625, 407, 32, 76), block(690, 407, 32, 76), block(755, 407, 32, 76),
-            block(657, 357, 96, 26), block(723, 357, 96, 26),
-            block(657, 311, 30, 66), block(723, 311, 30, 66),
-            block(690, 268, 152, 26), block(690, 225, 34, 62, "glass")
-          ],
-          bombs: [], obstacles: []
+                "name": "High Rise",
+                "cats": 5,
+                "blocks": [
+                        [
+                                625,
+                                407,
+                                32,
+                                76,
+                                "wood"
+                        ],
+                        [
+                                690,
+                                407,
+                                32,
+                                76,
+                                "wood"
+                        ],
+                        [
+                                755,
+                                407,
+                                32,
+                                76,
+                                "wood"
+                        ],
+                        [
+                                657,
+                                357,
+                                96,
+                                26,
+                                "wood"
+                        ],
+                        [
+                                723,
+                                357,
+                                96,
+                                26,
+                                "wood"
+                        ],
+                        [
+                                657,
+                                311,
+                                30,
+                                66,
+                                "wood"
+                        ],
+                        [
+                                723,
+                                311,
+                                30,
+                                66,
+                                "wood"
+                        ],
+                        [
+                                690,
+                                268,
+                                152,
+                                26,
+                                "wood"
+                        ],
+                        [
+                                690,
+                                225,
+                                34,
+                                62,
+                                "glass"
+                        ]
+                ],
+                "bombs": [],
+                "obstacles": [],
+                "diamond": [
+                        565,
+                        305,
+                        17
+                ]
         },
         {
-          name: "Twin Trouble",
-          cats: 6,
-          blocks: [
-            block(560, 407, 30, 76), block(620, 407, 30, 76), block(590, 357, 94, 25),
-            block(575, 314, 28, 62, "glass"), block(605, 314, 28, 62, "glass"), block(590, 275, 82, 22),
-            block(735, 407, 30, 76), block(795, 407, 30, 76), block(765, 357, 94, 25),
-            block(750, 314, 28, 62, "glass"), block(780, 314, 28, 62, "glass"), block(765, 275, 82, 22)
-          ],
-          bombs: [], obstacles: []
+                "name": "Twin Trouble",
+                "cats": 5,
+                "blocks": [
+                        [
+                                560,
+                                407,
+                                30,
+                                76,
+                                "wood"
+                        ],
+                        [
+                                620,
+                                407,
+                                30,
+                                76,
+                                "wood"
+                        ],
+                        [
+                                590,
+                                357,
+                                94,
+                                25,
+                                "wood"
+                        ],
+                        [
+                                575,
+                                314,
+                                28,
+                                62,
+                                "glass"
+                        ],
+                        [
+                                605,
+                                314,
+                                28,
+                                62,
+                                "glass"
+                        ],
+                        [
+                                590,
+                                275,
+                                82,
+                                22,
+                                "wood"
+                        ],
+                        [
+                                735,
+                                407,
+                                30,
+                                76,
+                                "wood"
+                        ],
+                        [
+                                795,
+                                407,
+                                30,
+                                76,
+                                "wood"
+                        ],
+                        [
+                                765,
+                                357,
+                                94,
+                                25,
+                                "wood"
+                        ],
+                        [
+                                750,
+                                314,
+                                28,
+                                62,
+                                "glass"
+                        ],
+                        [
+                                780,
+                                314,
+                                28,
+                                62,
+                                "glass"
+                        ],
+                        [
+                                765,
+                                275,
+                                82,
+                                22,
+                                "wood"
+                        ]
+                ],
+                "bombs": [],
+                "obstacles": [],
+                "diamond": [
+                        680,
+                        340,
+                        17
+                ]
         },
         {
-          name: "Bomb School",
-          cats: 6,
-          blocks: [
-            block(585, 407, 34, 76), block(655, 407, 34, 76), block(620, 356, 112, 26),
-            block(620, 311, 32, 64, "glass"), block(620, 267, 105, 24),
-            block(740, 407, 34, 76), block(810, 407, 34, 76), block(775, 356, 112, 26),
-            block(775, 311, 32, 64, "glass"), block(775, 267, 105, 24)
-          ],
-          bombs: [bomb(697, 424, 18)], obstacles: []
+                "name": "Bomb School",
+                "cats": 5,
+                "blocks": [
+                        [
+                                585,
+                                407,
+                                34,
+                                76,
+                                "wood"
+                        ],
+                        [
+                                655,
+                                407,
+                                34,
+                                76,
+                                "wood"
+                        ],
+                        [
+                                620,
+                                356,
+                                112,
+                                26,
+                                "wood"
+                        ],
+                        [
+                                620,
+                                311,
+                                32,
+                                64,
+                                "glass"
+                        ],
+                        [
+                                620,
+                                267,
+                                105,
+                                24,
+                                "wood"
+                        ],
+                        [
+                                740,
+                                407,
+                                34,
+                                76,
+                                "wood"
+                        ],
+                        [
+                                810,
+                                407,
+                                34,
+                                76,
+                                "wood"
+                        ],
+                        [
+                                775,
+                                356,
+                                112,
+                                26,
+                                "wood"
+                        ],
+                        [
+                                775,
+                                311,
+                                32,
+                                64,
+                                "glass"
+                        ],
+                        [
+                                775,
+                                267,
+                                105,
+                                24,
+                                "wood"
+                        ]
+                ],
+                "bombs": [
+                        [
+                                697,
+                                424,
+                                18
+                        ]
+                ],
+                "obstacles": [],
+                "diamond": [
+                        697,
+                        370,
+                        17
+                ]
         },
         {
-          name: "Stone Gate",
-          cats: 6,
-          blocks: [
-            block(610, 405, 38, 80, "stone"), block(680, 405, 38, 80, "stone"),
-            block(645, 350, 116, 28, "stone"), block(630, 301, 32, 70), block(660, 301, 32, 70),
-            block(645, 257, 105, 24, "glass"),
-            block(775, 405, 34, 80), block(830, 405, 34, 80), block(802, 350, 92, 26),
-            block(802, 304, 30, 66, "glass")
-          ],
-          bombs: [bomb(724, 424, 19)],
-          obstacles: [obstacle(520, 395, 24, 100, "shield")]
+                "name": "Stone Gate",
+                "cats": 6,
+                "blocks": [
+                        [
+                                610,
+                                405,
+                                38,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                680,
+                                405,
+                                38,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                645,
+                                350,
+                                116,
+                                28,
+                                "stone"
+                        ],
+                        [
+                                630,
+                                301,
+                                32,
+                                70,
+                                "wood"
+                        ],
+                        [
+                                660,
+                                301,
+                                32,
+                                70,
+                                "wood"
+                        ],
+                        [
+                                645,
+                                257,
+                                105,
+                                24,
+                                "glass"
+                        ],
+                        [
+                                775,
+                                405,
+                                34,
+                                80,
+                                "wood"
+                        ],
+                        [
+                                830,
+                                405,
+                                34,
+                                80,
+                                "wood"
+                        ],
+                        [
+                                802,
+                                350,
+                                92,
+                                26,
+                                "wood"
+                        ],
+                        [
+                                802,
+                                304,
+                                30,
+                                66,
+                                "glass"
+                        ]
+                ],
+                "bombs": [
+                        [
+                                724,
+                                424,
+                                19
+                        ]
+                ],
+                "obstacles": [
+                        [
+                                520,
+                                395,
+                                24,
+                                100,
+                                "shield"
+                        ]
+                ],
+                "diamond": [
+                        562,
+                        330,
+                        17
+                ]
         },
         {
-          name: "Bridge Blast",
-          cats: 7,
-          blocks: [
-            block(548, 352, 30, 68), block(600, 352, 30, 68), block(574, 306, 88, 24, "glass"),
-            block(750, 352, 30, 68), block(802, 352, 30, 68), block(776, 306, 88, 24, "glass"),
-            block(675, 270, 250, 24, "stone"), block(640, 226, 30, 62), block(710, 226, 30, 62),
-            block(675, 185, 112, 22, "glass")
-          ],
-          bombs: [bomb(625, 424, 18), bomb(724, 424, 18)],
-          obstacles: [obstacle(520, 390, 118, 18, "platform"), obstacle(804, 390, 118, 18, "platform")]
+                "name": "Three Peaks",
+                "cats": 6,
+                "blocks": [
+                        [
+                                535,
+                                407,
+                                30,
+                                76,
+                                "wood"
+                        ],
+                        [
+                                585,
+                                407,
+                                30,
+                                76,
+                                "wood"
+                        ],
+                        [
+                                560,
+                                357,
+                                82,
+                                24,
+                                "wood"
+                        ],
+                        [
+                                560,
+                                314,
+                                28,
+                                62,
+                                "glass"
+                        ],
+                        [
+                                655,
+                                407,
+                                34,
+                                76,
+                                "stone"
+                        ],
+                        [
+                                715,
+                                407,
+                                34,
+                                76,
+                                "stone"
+                        ],
+                        [
+                                685,
+                                357,
+                                98,
+                                26,
+                                "wood"
+                        ],
+                        [
+                                685,
+                                312,
+                                30,
+                                64,
+                                "glass"
+                        ],
+                        [
+                                785,
+                                407,
+                                30,
+                                76,
+                                "wood"
+                        ],
+                        [
+                                835,
+                                407,
+                                30,
+                                76,
+                                "wood"
+                        ],
+                        [
+                                810,
+                                357,
+                                82,
+                                24,
+                                "wood"
+                        ],
+                        [
+                                810,
+                                314,
+                                28,
+                                62,
+                                "glass"
+                        ],
+                        [
+                                685,
+                                260,
+                                300,
+                                24,
+                                "stone"
+                        ],
+                        [
+                                685,
+                                218,
+                                34,
+                                60,
+                                "glass"
+                        ]
+                ],
+                "bombs": [
+                        [
+                                620,
+                                424,
+                                18
+                        ],
+                        [
+                                750,
+                                424,
+                                18
+                        ]
+                ],
+                "obstacles": [],
+                "diamond": [
+                        685,
+                        170,
+                        17
+                ]
         },
         {
-          name: "Three Peaks",
-          cats: 7,
-          blocks: [
-            block(535, 407, 30, 76), block(585, 407, 30, 76), block(560, 357, 82, 24), block(560, 314, 28, 62, "glass"),
-            block(655, 407, 34, 76, "stone"), block(715, 407, 34, 76, "stone"), block(685, 357, 98, 26), block(685, 312, 30, 64, "glass"),
-            block(785, 407, 30, 76), block(835, 407, 30, 76), block(810, 357, 82, 24), block(810, 314, 28, 62, "glass"),
-            block(685, 260, 300, 24, "stone"), block(685, 218, 34, 60, "glass")
-          ],
-          bombs: [bomb(620, 424, 18), bomb(750, 424, 18)], obstacles: []
+                "name": "Bridge Blast",
+                "cats": 6,
+                "blocks": [
+                        [
+                                548,
+                                352,
+                                30,
+                                68,
+                                "wood"
+                        ],
+                        [
+                                600,
+                                352,
+                                30,
+                                68,
+                                "wood"
+                        ],
+                        [
+                                574,
+                                306,
+                                88,
+                                24,
+                                "glass"
+                        ],
+                        [
+                                750,
+                                352,
+                                30,
+                                68,
+                                "wood"
+                        ],
+                        [
+                                802,
+                                352,
+                                30,
+                                68,
+                                "wood"
+                        ],
+                        [
+                                776,
+                                306,
+                                88,
+                                24,
+                                "glass"
+                        ],
+                        [
+                                675,
+                                270,
+                                250,
+                                24,
+                                "stone"
+                        ],
+                        [
+                                640,
+                                226,
+                                30,
+                                62,
+                                "wood"
+                        ],
+                        [
+                                710,
+                                226,
+                                30,
+                                62,
+                                "wood"
+                        ],
+                        [
+                                675,
+                                185,
+                                112,
+                                22,
+                                "glass"
+                        ]
+                ],
+                "bombs": [
+                        [
+                                625,
+                                424,
+                                18
+                        ],
+                        [
+                                724,
+                                424,
+                                18
+                        ]
+                ],
+                "obstacles": [
+                        [
+                                520,
+                                390,
+                                118,
+                                18,
+                                "platform"
+                        ],
+                        [
+                                804,
+                                390,
+                                118,
+                                18,
+                                "platform"
+                        ]
+                ],
+                "diamond": [
+                        675,
+                        340,
+                        17
+                ]
         },
         {
-          name: "Fortress",
-          cats: 8,
-          blocks: [
-            block(585, 405, 40, 80, "stone"), block(650, 405, 40, 80, "stone"),
-            block(715, 405, 40, 80, "stone"), block(780, 405, 40, 80, "stone"),
-            block(618, 348, 105, 28), block(748, 348, 105, 28),
-            block(618, 300, 34, 68, "glass"), block(748, 300, 34, 68, "glass"),
-            block(683, 253, 270, 28, "stone"), block(650, 206, 34, 66), block(716, 206, 34, 66),
-            block(683, 162, 116, 24, "glass")
-          ],
-          bombs: [bomb(683, 424, 20), bomb(683, 303, 17)],
-          obstacles: [obstacle(515, 404, 24, 82, "shield"), obstacle(850, 404, 24, 82, "shield")]
+                "name": "Glass Labyrinth",
+                "cats": 7,
+                "blocks": [
+                        [
+                                535,
+                                405,
+                                34,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                590,
+                                405,
+                                28,
+                                80,
+                                "glass"
+                        ],
+                        [
+                                562,
+                                350,
+                                92,
+                                24,
+                                "wood"
+                        ],
+                        [
+                                635,
+                                338,
+                                28,
+                                68,
+                                "glass"
+                        ],
+                        [
+                                690,
+                                338,
+                                28,
+                                68,
+                                "glass"
+                        ],
+                        [
+                                662,
+                                292,
+                                92,
+                                24,
+                                "stone"
+                        ],
+                        [
+                                735,
+                                275,
+                                28,
+                                68,
+                                "glass"
+                        ],
+                        [
+                                790,
+                                275,
+                                28,
+                                68,
+                                "glass"
+                        ],
+                        [
+                                762,
+                                229,
+                                92,
+                                24,
+                                "wood"
+                        ],
+                        [
+                                815,
+                                405,
+                                34,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                760,
+                                405,
+                                28,
+                                80,
+                                "glass"
+                        ],
+                        [
+                                675,
+                                180,
+                                290,
+                                24,
+                                "stone"
+                        ],
+                        [
+                                675,
+                                138,
+                                34,
+                                60,
+                                "glass"
+                        ]
+                ],
+                "bombs": [
+                        [
+                                700,
+                                424,
+                                17
+                        ]
+                ],
+                "obstacles": [
+                        [
+                                610,
+                                385,
+                                90,
+                                18,
+                                "platform"
+                        ],
+                        [
+                                770,
+                                322,
+                                90,
+                                18,
+                                "platform"
+                        ]
+                ],
+                "diamond": [
+                        650,
+                        230,
+                        17
+                ]
         },
         {
-          name: "Bomb Alley",
-          cats: 8,
-          blocks: [
-            block(545, 355, 30, 68), block(595, 355, 30, 68), block(570, 309, 84, 24, "glass"),
-            block(655, 407, 34, 76, "stone"), block(715, 407, 34, 76, "stone"), block(685, 357, 98, 26),
-            block(685, 311, 30, 66, "glass"), block(685, 267, 90, 24),
-            block(785, 355, 30, 68), block(835, 355, 30, 68), block(810, 309, 84, 24, "glass"),
-            block(690, 214, 315, 24, "stone")
-          ],
-          bombs: [bomb(520, 424, 17), bomb(625, 424, 18), bomb(750, 424, 18), bomb(855, 424, 17)],
-          obstacles: [obstacle(570, 390, 112, 18, "platform"), obstacle(810, 390, 112, 18, "platform")]
+                "name": "Fortress",
+                "cats": 7,
+                "blocks": [
+                        [
+                                585,
+                                405,
+                                40,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                650,
+                                405,
+                                40,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                715,
+                                405,
+                                40,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                780,
+                                405,
+                                40,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                618,
+                                348,
+                                105,
+                                28,
+                                "wood"
+                        ],
+                        [
+                                748,
+                                348,
+                                105,
+                                28,
+                                "wood"
+                        ],
+                        [
+                                618,
+                                300,
+                                34,
+                                68,
+                                "glass"
+                        ],
+                        [
+                                748,
+                                300,
+                                34,
+                                68,
+                                "glass"
+                        ],
+                        [
+                                683,
+                                253,
+                                270,
+                                28,
+                                "stone"
+                        ],
+                        [
+                                650,
+                                206,
+                                34,
+                                66,
+                                "wood"
+                        ],
+                        [
+                                716,
+                                206,
+                                34,
+                                66,
+                                "wood"
+                        ],
+                        [
+                                683,
+                                162,
+                                116,
+                                24,
+                                "glass"
+                        ]
+                ],
+                "bombs": [
+                        [
+                                683,
+                                424,
+                                20
+                        ],
+                        [
+                                683,
+                                303,
+                                17
+                        ]
+                ],
+                "obstacles": [
+                        [
+                                515,
+                                404,
+                                24,
+                                82,
+                                "shield"
+                        ],
+                        [
+                                850,
+                                404,
+                                24,
+                                82,
+                                "shield"
+                        ]
+                ],
+                "diamond": [
+                        550,
+                        220,
+                        17
+                ]
         },
         {
-          name: "Catastrophe Castle",
-          cats: 9,
-          blocks: [
-            block(520, 405, 38, 80, "stone"), block(575, 405, 32, 80), block(547, 350, 94, 26), block(547, 304, 30, 66, "glass"),
-            block(650, 405, 40, 80, "stone"), block(715, 405, 40, 80, "stone"), block(682, 348, 108, 28, "stone"),
-            block(665, 300, 32, 68), block(700, 300, 32, 68), block(682, 255, 108, 24, "glass"),
-            block(790, 405, 32, 80), block(845, 405, 38, 80, "stone"), block(817, 350, 94, 26), block(817, 304, 30, 66, "glass"),
-            block(682, 210, 330, 26, "stone"), block(640, 162, 34, 66), block(724, 162, 34, 66),
-            block(682, 118, 125, 24, "glass")
-          ],
-          bombs: [bomb(612, 424, 18), bomb(752, 424, 18), bomb(610, 258, 16), bomb(755, 258, 16)],
-          obstacles: [obstacle(475, 404, 24, 82, "shield"), obstacle(875, 404, 24, 82, "shield")]
+                "name": "Shielded Trio",
+                "cats": 7,
+                "blocks": [
+                        [
+                                520,
+                                407,
+                                30,
+                                76,
+                                "wood"
+                        ],
+                        [
+                                570,
+                                407,
+                                30,
+                                76,
+                                "wood"
+                        ],
+                        [
+                                545,
+                                357,
+                                82,
+                                24,
+                                "wood"
+                        ],
+                        [
+                                545,
+                                314,
+                                28,
+                                62,
+                                "glass"
+                        ],
+                        [
+                                650,
+                                405,
+                                38,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                710,
+                                405,
+                                38,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                680,
+                                350,
+                                98,
+                                28,
+                                "stone"
+                        ],
+                        [
+                                665,
+                                301,
+                                30,
+                                70,
+                                "wood"
+                        ],
+                        [
+                                695,
+                                301,
+                                30,
+                                70,
+                                "wood"
+                        ],
+                        [
+                                680,
+                                256,
+                                100,
+                                24,
+                                "glass"
+                        ],
+                        [
+                                790,
+                                407,
+                                30,
+                                76,
+                                "wood"
+                        ],
+                        [
+                                840,
+                                407,
+                                30,
+                                76,
+                                "wood"
+                        ],
+                        [
+                                815,
+                                357,
+                                82,
+                                24,
+                                "wood"
+                        ],
+                        [
+                                815,
+                                314,
+                                28,
+                                62,
+                                "glass"
+                        ],
+                        [
+                                680,
+                                205,
+                                320,
+                                24,
+                                "stone"
+                        ]
+                ],
+                "bombs": [
+                        [
+                                610,
+                                424,
+                                17
+                        ],
+                        [
+                                750,
+                                424,
+                                17
+                        ]
+                ],
+                "obstacles": [
+                        [
+                                485,
+                                355,
+                                22,
+                                140,
+                                "shield"
+                        ],
+                        [
+                                875,
+                                355,
+                                22,
+                                140,
+                                "shield"
+                        ]
+                ],
+                "diamond": [
+                        620,
+                        315,
+                        17
+                ]
+        },
+        {
+                "name": "Bomb Alley",
+                "cats": 7,
+                "blocks": [
+                        [
+                                545,
+                                355,
+                                30,
+                                68,
+                                "wood"
+                        ],
+                        [
+                                595,
+                                355,
+                                30,
+                                68,
+                                "wood"
+                        ],
+                        [
+                                570,
+                                309,
+                                84,
+                                24,
+                                "glass"
+                        ],
+                        [
+                                655,
+                                407,
+                                34,
+                                76,
+                                "stone"
+                        ],
+                        [
+                                715,
+                                407,
+                                34,
+                                76,
+                                "stone"
+                        ],
+                        [
+                                685,
+                                357,
+                                98,
+                                26,
+                                "wood"
+                        ],
+                        [
+                                685,
+                                311,
+                                30,
+                                66,
+                                "glass"
+                        ],
+                        [
+                                685,
+                                267,
+                                90,
+                                24,
+                                "wood"
+                        ],
+                        [
+                                785,
+                                355,
+                                30,
+                                68,
+                                "wood"
+                        ],
+                        [
+                                835,
+                                355,
+                                30,
+                                68,
+                                "wood"
+                        ],
+                        [
+                                810,
+                                309,
+                                84,
+                                24,
+                                "glass"
+                        ],
+                        [
+                                690,
+                                214,
+                                315,
+                                24,
+                                "stone"
+                        ]
+                ],
+                "bombs": [
+                        [
+                                520,
+                                424,
+                                17
+                        ],
+                        [
+                                625,
+                                424,
+                                18
+                        ],
+                        [
+                                750,
+                                424,
+                                18
+                        ],
+                        [
+                                855,
+                                424,
+                                17
+                        ]
+                ],
+                "obstacles": [
+                        [
+                                570,
+                                390,
+                                112,
+                                18,
+                                "platform"
+                        ],
+                        [
+                                810,
+                                390,
+                                112,
+                                18,
+                                "platform"
+                        ]
+                ],
+                "diamond": [
+                        690,
+                        170,
+                        17
+                ]
+        },
+        {
+                "name": "Bomb Bunker",
+                "cats": 8,
+                "blocks": [
+                        [
+                                540,
+                                405,
+                                42,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                600,
+                                405,
+                                42,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                570,
+                                350,
+                                104,
+                                28,
+                                "stone"
+                        ],
+                        [
+                                555,
+                                300,
+                                32,
+                                72,
+                                "wood"
+                        ],
+                        [
+                                585,
+                                300,
+                                32,
+                                72,
+                                "wood"
+                        ],
+                        [
+                                570,
+                                253,
+                                104,
+                                24,
+                                "glass"
+                        ],
+                        [
+                                690,
+                                405,
+                                42,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                750,
+                                405,
+                                42,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                720,
+                                350,
+                                104,
+                                28,
+                                "stone"
+                        ],
+                        [
+                                705,
+                                300,
+                                32,
+                                72,
+                                "wood"
+                        ],
+                        [
+                                735,
+                                300,
+                                32,
+                                72,
+                                "wood"
+                        ],
+                        [
+                                720,
+                                253,
+                                104,
+                                24,
+                                "glass"
+                        ],
+                        [
+                                825,
+                                405,
+                                40,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                825,
+                                345,
+                                32,
+                                64,
+                                "glass"
+                        ],
+                        [
+                                700,
+                                205,
+                                330,
+                                26,
+                                "stone"
+                        ]
+                ],
+                "bombs": [
+                        [
+                                645,
+                                424,
+                                18
+                        ],
+                        [
+                                785,
+                                424,
+                                18
+                        ]
+                ],
+                "obstacles": [
+                        [
+                                500,
+                                365,
+                                22,
+                                160,
+                                "shield"
+                        ],
+                        [
+                                860,
+                                365,
+                                22,
+                                160,
+                                "shield"
+                        ]
+                ],
+                "diamond": [
+                        645,
+                        315,
+                        17
+                ]
+        },
+        {
+                "name": "Staircase Siege",
+                "cats": 8,
+                "blocks": [
+                        [
+                                520,
+                                365,
+                                30,
+                                62,
+                                "wood"
+                        ],
+                        [
+                                565,
+                                365,
+                                30,
+                                62,
+                                "wood"
+                        ],
+                        [
+                                542,
+                                323,
+                                76,
+                                22,
+                                "glass"
+                        ],
+                        [
+                                620,
+                                315,
+                                32,
+                                66,
+                                "stone"
+                        ],
+                        [
+                                670,
+                                315,
+                                32,
+                                66,
+                                "stone"
+                        ],
+                        [
+                                645,
+                                270,
+                                84,
+                                24,
+                                "wood"
+                        ],
+                        [
+                                720,
+                                265,
+                                30,
+                                64,
+                                "wood"
+                        ],
+                        [
+                                770,
+                                265,
+                                30,
+                                64,
+                                "wood"
+                        ],
+                        [
+                                745,
+                                221,
+                                84,
+                                24,
+                                "glass"
+                        ],
+                        [
+                                800,
+                                405,
+                                38,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                850,
+                                405,
+                                38,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                825,
+                                350,
+                                84,
+                                26,
+                                "wood"
+                        ],
+                        [
+                                685,
+                                170,
+                                330,
+                                24,
+                                "stone"
+                        ],
+                        [
+                                685,
+                                128,
+                                32,
+                                60,
+                                "glass"
+                        ]
+                ],
+                "bombs": [
+                        [
+                                590,
+                                424,
+                                17
+                        ],
+                        [
+                                780,
+                                424,
+                                17
+                        ]
+                ],
+                "obstacles": [
+                        [
+                                540,
+                                405,
+                                105,
+                                18,
+                                "platform"
+                        ],
+                        [
+                                645,
+                                355,
+                                105,
+                                18,
+                                "platform"
+                        ],
+                        [
+                                745,
+                                305,
+                                105,
+                                18,
+                                "platform"
+                        ]
+                ],
+                "diamond": [
+                        630,
+                        205,
+                        17
+                ]
+        },
+        {
+                "name": "Stone Forest",
+                "cats": 8,
+                "blocks": [
+                        [
+                                500,
+                                397,
+                                30,
+                                96,
+                                "stone"
+                        ],
+                        [
+                                565,
+                                397,
+                                30,
+                                96,
+                                "stone"
+                        ],
+                        [
+                                630,
+                                397,
+                                30,
+                                96,
+                                "stone"
+                        ],
+                        [
+                                695,
+                                397,
+                                30,
+                                96,
+                                "stone"
+                        ],
+                        [
+                                760,
+                                397,
+                                30,
+                                96,
+                                "stone"
+                        ],
+                        [
+                                825,
+                                397,
+                                30,
+                                96,
+                                "stone"
+                        ],
+                        [
+                                532,
+                                334,
+                                92,
+                                24,
+                                "glass"
+                        ],
+                        [
+                                597,
+                                298,
+                                92,
+                                24,
+                                "wood"
+                        ],
+                        [
+                                662,
+                                262,
+                                92,
+                                24,
+                                "glass"
+                        ],
+                        [
+                                727,
+                                226,
+                                92,
+                                24,
+                                "wood"
+                        ],
+                        [
+                                792,
+                                190,
+                                92,
+                                24,
+                                "glass"
+                        ],
+                        [
+                                662,
+                                148,
+                                360,
+                                26,
+                                "stone"
+                        ],
+                        [
+                                662,
+                                104,
+                                34,
+                                62,
+                                "glass"
+                        ]
+                ],
+                "bombs": [
+                        [
+                                532,
+                                424,
+                                16
+                        ],
+                        [
+                                662,
+                                424,
+                                17
+                        ],
+                        [
+                                792,
+                                424,
+                                16
+                        ]
+                ],
+                "obstacles": [
+                        [
+                                470,
+                                350,
+                                20,
+                                170,
+                                "shield"
+                        ],
+                        [
+                                860,
+                                350,
+                                20,
+                                170,
+                                "shield"
+                        ]
+                ],
+                "diamond": [
+                        730,
+                        270,
+                        17
+                ]
+        },
+        {
+                "name": "Four Tower Frenzy",
+                "cats": 9,
+                "blocks": [
+                        [
+                                500,
+                                407,
+                                28,
+                                76,
+                                "wood"
+                        ],
+                        [
+                                542,
+                                407,
+                                28,
+                                76,
+                                "wood"
+                        ],
+                        [
+                                521,
+                                357,
+                                72,
+                                22,
+                                "glass"
+                        ],
+                        [
+                                521,
+                                316,
+                                26,
+                                60,
+                                "wood"
+                        ],
+                        [
+                                600,
+                                405,
+                                34,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                648,
+                                405,
+                                34,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                624,
+                                350,
+                                80,
+                                26,
+                                "wood"
+                        ],
+                        [
+                                624,
+                                306,
+                                28,
+                                64,
+                                "glass"
+                        ],
+                        [
+                                705,
+                                405,
+                                34,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                753,
+                                405,
+                                34,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                729,
+                                350,
+                                80,
+                                26,
+                                "wood"
+                        ],
+                        [
+                                729,
+                                306,
+                                28,
+                                64,
+                                "glass"
+                        ],
+                        [
+                                810,
+                                407,
+                                28,
+                                76,
+                                "wood"
+                        ],
+                        [
+                                852,
+                                407,
+                                28,
+                                76,
+                                "wood"
+                        ],
+                        [
+                                831,
+                                357,
+                                72,
+                                22,
+                                "glass"
+                        ],
+                        [
+                                831,
+                                316,
+                                26,
+                                60,
+                                "wood"
+                        ],
+                        [
+                                676,
+                                254,
+                                370,
+                                26,
+                                "stone"
+                        ],
+                        [
+                                676,
+                                210,
+                                34,
+                                62,
+                                "wood"
+                        ],
+                        [
+                                676,
+                                168,
+                                100,
+                                22,
+                                "glass"
+                        ]
+                ],
+                "bombs": [
+                        [
+                                570,
+                                424,
+                                17
+                        ],
+                        [
+                                676,
+                                424,
+                                18
+                        ],
+                        [
+                                780,
+                                424,
+                                17
+                        ]
+                ],
+                "obstacles": [
+                        [
+                                465,
+                                380,
+                                20,
+                                130,
+                                "shield"
+                        ],
+                        [
+                                880,
+                                380,
+                                20,
+                                130,
+                                "shield"
+                        ]
+                ],
+                "diamond": [
+                        676,
+                        305,
+                        17
+                ]
+        },
+        {
+                "name": "Suspended City",
+                "cats": 9,
+                "blocks": [
+                        [
+                                510,
+                                405,
+                                38,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                565,
+                                405,
+                                38,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                537,
+                                350,
+                                92,
+                                26,
+                                "wood"
+                        ],
+                        [
+                                630,
+                                405,
+                                34,
+                                80,
+                                "wood"
+                        ],
+                        [
+                                680,
+                                405,
+                                34,
+                                80,
+                                "wood"
+                        ],
+                        [
+                                655,
+                                350,
+                                82,
+                                24,
+                                "glass"
+                        ],
+                        [
+                                750,
+                                405,
+                                38,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                805,
+                                405,
+                                38,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                777,
+                                350,
+                                92,
+                                26,
+                                "wood"
+                        ],
+                        [
+                                560,
+                                244,
+                                30,
+                                62,
+                                "glass"
+                        ],
+                        [
+                                620,
+                                244,
+                                30,
+                                62,
+                                "wood"
+                        ],
+                        [
+                                590,
+                                202,
+                                98,
+                                24,
+                                "stone"
+                        ],
+                        [
+                                720,
+                                244,
+                                30,
+                                62,
+                                "wood"
+                        ],
+                        [
+                                780,
+                                244,
+                                30,
+                                62,
+                                "glass"
+                        ],
+                        [
+                                750,
+                                202,
+                                98,
+                                24,
+                                "stone"
+                        ],
+                        [
+                                670,
+                                150,
+                                360,
+                                26,
+                                "stone"
+                        ],
+                        [
+                                670,
+                                106,
+                                34,
+                                62,
+                                "glass"
+                        ]
+                ],
+                "bombs": [
+                        [
+                                600,
+                                424,
+                                17
+                        ],
+                        [
+                                720,
+                                424,
+                                17
+                        ]
+                ],
+                "obstacles": [
+                        [
+                                590,
+                                285,
+                                150,
+                                18,
+                                "platform"
+                        ],
+                        [
+                                750,
+                                285,
+                                150,
+                                18,
+                                "platform"
+                        ],
+                        [
+                                470,
+                                360,
+                                22,
+                                150,
+                                "shield"
+                        ]
+                ],
+                "diamond": [
+                        720,
+                        90,
+                        17
+                ]
+        },
+        {
+                "name": "Catastrophe Castle",
+                "cats": 9,
+                "blocks": [
+                        [
+                                520,
+                                405,
+                                38,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                575,
+                                405,
+                                32,
+                                80,
+                                "wood"
+                        ],
+                        [
+                                547,
+                                350,
+                                94,
+                                26,
+                                "wood"
+                        ],
+                        [
+                                547,
+                                304,
+                                30,
+                                66,
+                                "glass"
+                        ],
+                        [
+                                650,
+                                405,
+                                40,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                715,
+                                405,
+                                40,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                682,
+                                348,
+                                108,
+                                28,
+                                "stone"
+                        ],
+                        [
+                                665,
+                                300,
+                                32,
+                                68,
+                                "wood"
+                        ],
+                        [
+                                700,
+                                300,
+                                32,
+                                68,
+                                "wood"
+                        ],
+                        [
+                                682,
+                                255,
+                                108,
+                                24,
+                                "glass"
+                        ],
+                        [
+                                790,
+                                405,
+                                32,
+                                80,
+                                "wood"
+                        ],
+                        [
+                                845,
+                                405,
+                                38,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                817,
+                                350,
+                                94,
+                                26,
+                                "wood"
+                        ],
+                        [
+                                817,
+                                304,
+                                30,
+                                66,
+                                "glass"
+                        ],
+                        [
+                                682,
+                                210,
+                                330,
+                                26,
+                                "stone"
+                        ],
+                        [
+                                640,
+                                162,
+                                34,
+                                66,
+                                "wood"
+                        ],
+                        [
+                                724,
+                                162,
+                                34,
+                                66,
+                                "wood"
+                        ],
+                        [
+                                682,
+                                118,
+                                125,
+                                24,
+                                "glass"
+                        ]
+                ],
+                "bombs": [
+                        [
+                                612,
+                                424,
+                                18
+                        ],
+                        [
+                                752,
+                                424,
+                                18
+                        ],
+                        [
+                                610,
+                                258,
+                                16
+                        ],
+                        [
+                                755,
+                                258,
+                                16
+                        ]
+                ],
+                "obstacles": [
+                        [
+                                475,
+                                404,
+                                24,
+                                82,
+                                "shield"
+                        ],
+                        [
+                                875,
+                                404,
+                                24,
+                                82,
+                                "shield"
+                        ]
+                ],
+                "diamond": [
+                        682,
+                        72,
+                        17
+                ]
+        },
+        {
+                "name": "Diamond Vault",
+                "cats": 9,
+                "blocks": [
+                        [
+                                500,
+                                405,
+                                40,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                550,
+                                405,
+                                40,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                525,
+                                350,
+                                88,
+                                28,
+                                "stone"
+                        ],
+                        [
+                                525,
+                                300,
+                                30,
+                                70,
+                                "glass"
+                        ],
+                        [
+                                610,
+                                405,
+                                42,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                665,
+                                405,
+                                42,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                637,
+                                350,
+                                94,
+                                28,
+                                "stone"
+                        ],
+                        [
+                                750,
+                                405,
+                                42,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                805,
+                                405,
+                                42,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                777,
+                                350,
+                                94,
+                                28,
+                                "stone"
+                        ],
+                        [
+                                850,
+                                405,
+                                36,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                850,
+                                345,
+                                30,
+                                66,
+                                "glass"
+                        ],
+                        [
+                                707,
+                                290,
+                                220,
+                                26,
+                                "stone"
+                        ],
+                        [
+                                620,
+                                242,
+                                32,
+                                70,
+                                "wood"
+                        ],
+                        [
+                                794,
+                                242,
+                                32,
+                                70,
+                                "wood"
+                        ],
+                        [
+                                707,
+                                198,
+                                240,
+                                26,
+                                "stone"
+                        ],
+                        [
+                                665,
+                                150,
+                                34,
+                                68,
+                                "wood"
+                        ],
+                        [
+                                749,
+                                150,
+                                34,
+                                68,
+                                "wood"
+                        ],
+                        [
+                                707,
+                                105,
+                                124,
+                                24,
+                                "glass"
+                        ]
+                ],
+                "bombs": [
+                        [
+                                580,
+                                424,
+                                17
+                        ],
+                        [
+                                720,
+                                424,
+                                17
+                        ],
+                        [
+                                830,
+                                424,
+                                16
+                        ]
+                ],
+                "obstacles": [
+                        [
+                                575,
+                                310,
+                                20,
+                                170,
+                                "shield"
+                        ],
+                        [
+                                839,
+                                310,
+                                20,
+                                170,
+                                "shield"
+                        ]
+                ],
+                "diamond": [
+                        707,
+                        245,
+                        17
+                ]
+        },
+        {
+                "name": "Crossfire Keep",
+                "cats": 10,
+                "blocks": [
+                        [
+                                510,
+                                405,
+                                40,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                565,
+                                405,
+                                40,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                537,
+                                350,
+                                94,
+                                28,
+                                "stone"
+                        ],
+                        [
+                                525,
+                                300,
+                                30,
+                                70,
+                                "wood"
+                        ],
+                        [
+                                550,
+                                300,
+                                30,
+                                70,
+                                "wood"
+                        ],
+                        [
+                                537,
+                                254,
+                                98,
+                                24,
+                                "glass"
+                        ],
+                        [
+                                650,
+                                405,
+                                40,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                710,
+                                405,
+                                40,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                680,
+                                350,
+                                102,
+                                28,
+                                "stone"
+                        ],
+                        [
+                                665,
+                                300,
+                                30,
+                                70,
+                                "wood"
+                        ],
+                        [
+                                695,
+                                300,
+                                30,
+                                70,
+                                "wood"
+                        ],
+                        [
+                                680,
+                                254,
+                                102,
+                                24,
+                                "glass"
+                        ],
+                        [
+                                795,
+                                405,
+                                40,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                850,
+                                405,
+                                40,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                822,
+                                350,
+                                94,
+                                28,
+                                "stone"
+                        ],
+                        [
+                                810,
+                                300,
+                                30,
+                                70,
+                                "wood"
+                        ],
+                        [
+                                835,
+                                300,
+                                30,
+                                70,
+                                "wood"
+                        ],
+                        [
+                                822,
+                                254,
+                                98,
+                                24,
+                                "glass"
+                        ],
+                        [
+                                680,
+                                205,
+                                390,
+                                28,
+                                "stone"
+                        ],
+                        [
+                                640,
+                                158,
+                                34,
+                                66,
+                                "wood"
+                        ],
+                        [
+                                720,
+                                158,
+                                34,
+                                66,
+                                "wood"
+                        ],
+                        [
+                                680,
+                                114,
+                                120,
+                                24,
+                                "glass"
+                        ]
+                ],
+                "bombs": [
+                        [
+                                610,
+                                424,
+                                17
+                        ],
+                        [
+                                750,
+                                424,
+                                17
+                        ],
+                        [
+                                680,
+                                305,
+                                16
+                        ]
+                ],
+                "obstacles": [
+                        [
+                                475,
+                                370,
+                                22,
+                                150,
+                                "shield"
+                        ],
+                        [
+                                610,
+                                330,
+                                18,
+                                110,
+                                "shield"
+                        ],
+                        [
+                                750,
+                                330,
+                                18,
+                                110,
+                                "shield"
+                        ],
+                        [
+                                880,
+                                370,
+                                22,
+                                150,
+                                "shield"
+                        ]
+                ],
+                "diamond": [
+                        680,
+                        170,
+                        17
+                ]
+        },
+        {
+                "name": "Ultimate Catastrophe",
+                "cats": 10,
+                "blocks": [
+                        [
+                                485,
+                                405,
+                                40,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                535,
+                                405,
+                                34,
+                                80,
+                                "wood"
+                        ],
+                        [
+                                510,
+                                350,
+                                84,
+                                26,
+                                "wood"
+                        ],
+                        [
+                                510,
+                                304,
+                                30,
+                                66,
+                                "glass"
+                        ],
+                        [
+                                585,
+                                405,
+                                42,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                640,
+                                405,
+                                42,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                612,
+                                350,
+                                94,
+                                28,
+                                "stone"
+                        ],
+                        [
+                                612,
+                                301,
+                                32,
+                                70,
+                                "wood"
+                        ],
+                        [
+                                690,
+                                405,
+                                42,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                745,
+                                405,
+                                42,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                717,
+                                350,
+                                94,
+                                28,
+                                "stone"
+                        ],
+                        [
+                                717,
+                                301,
+                                32,
+                                70,
+                                "wood"
+                        ],
+                        [
+                                795,
+                                405,
+                                42,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                850,
+                                405,
+                                42,
+                                80,
+                                "stone"
+                        ],
+                        [
+                                822,
+                                350,
+                                94,
+                                28,
+                                "stone"
+                        ],
+                        [
+                                822,
+                                301,
+                                32,
+                                70,
+                                "glass"
+                        ],
+                        [
+                                665,
+                                252,
+                                390,
+                                28,
+                                "stone"
+                        ],
+                        [
+                                555,
+                                202,
+                                34,
+                                70,
+                                "wood"
+                        ],
+                        [
+                                620,
+                                202,
+                                34,
+                                70,
+                                "glass"
+                        ],
+                        [
+                                710,
+                                202,
+                                34,
+                                70,
+                                "glass"
+                        ],
+                        [
+                                775,
+                                202,
+                                34,
+                                70,
+                                "wood"
+                        ],
+                        [
+                                665,
+                                155,
+                                310,
+                                26,
+                                "stone"
+                        ],
+                        [
+                                625,
+                                108,
+                                34,
+                                66,
+                                "wood"
+                        ],
+                        [
+                                705,
+                                108,
+                                34,
+                                66,
+                                "wood"
+                        ],
+                        [
+                                665,
+                                64,
+                                124,
+                                24,
+                                "glass"
+                        ]
+                ],
+                "bombs": [
+                        [
+                                560,
+                                424,
+                                16
+                        ],
+                        [
+                                665,
+                                424,
+                                17
+                        ],
+                        [
+                                770,
+                                424,
+                                16
+                        ],
+                        [
+                                665,
+                                303,
+                                16
+                        ]
+                ],
+                "obstacles": [
+                        [
+                                450,
+                                365,
+                                22,
+                                160,
+                                "shield"
+                        ],
+                        [
+                                875,
+                                365,
+                                22,
+                                160,
+                                "shield"
+                        ],
+                        [
+                                520,
+                                285,
+                                100,
+                                18,
+                                "platform"
+                        ],
+                        [
+                                810,
+                                285,
+                                100,
+                                18,
+                                "platform"
+                        ]
+                ],
+                "diamond": [
+                        665,
+                        26,
+                        16
+                ]
         }
-      ];
+];
 
       function currentLevel() {
         return levels[level - 1];
@@ -349,6 +2974,10 @@
         bombs = spec.bombs.map(function (b) {
           return { x: b[0], y: b[1], r: b[2], exploded: false, pulse: Math.random() * 6.28 };
         });
+        diamondItem = {
+          x: spec.diamond[0], y: spec.diamond[1], r: spec.diamond[2],
+          gone: false, collected: false
+        };
         obstacles = spec.obstacles.map(function (o) {
           return { x: o[0], y: o[1], w: o[2], h: o[3], kind: o[4] };
         });
@@ -362,7 +2991,7 @@
         catsLeft = currentLevel().cats;
         makeLevel();
         newCat();
-        setMessage("Level " + level + ": " + currentLevel().name + ". Pull back and fire!");
+        setMessage("Level " + level + ": " + currentLevel().name + ". Hit the diamond directly for +3 cats!");
         updateHud();
       }
 
@@ -495,36 +3124,61 @@
         else setMessage("Block exploded! +1 angry parent!");
       }
 
+      function destroyDiamond(source) {
+        if (!diamondItem || diamondItem.gone) return false;
+        diamondItem.gone = true;
+        if (source === "cat") {
+          diamondItem.collected = true;
+          catsLeft += 3;
+          addParticles(diamondItem.x, diamondItem.y, 22, "#67e8f9", 260);
+          addParticles(diamondItem.x, diamondItem.y, 12, "#ffffff", 190);
+          updateHud();
+          setMessage("Diamond collected! +3 cats for this level!");
+        } else {
+          addParticles(diamondItem.x, diamondItem.y, 14, "#94a3b8", 170);
+          if (source === "bomb") setMessage("The bomb destroyed the diamond — no bonus cats.");
+          else setMessage("A block crushed the diamond — no bonus cats.");
+        }
+        return true;
+      }
+
       function triggerBomb(bombItem) {
         if (bombItem.exploded) return;
         bombItem.exploded = true;
-        addParticles(bombItem.x, bombItem.y, 34, "#ffb020", 410);
-        addParticles(bombItem.x, bombItem.y, 18, "#ef4444", 310);
-        setMessage("BOOM! The bomb destroyed nearby blocks!");
+        addParticles(bombItem.x, bombItem.y, 24, "#ffb020", 285);
+        addParticles(bombItem.x, bombItem.y, 12, "#ef4444", 220);
+        setMessage("BOOM! A smaller, more focused blast!");
 
         blocks.forEach(function (blockItem) {
           if (blockItem.gone) return;
           var dx = blockItem.x - bombItem.x;
           var dy = blockItem.y - bombItem.y;
           var distance = Math.sqrt(dx * dx + dy * dy) || 1;
-          var radius = 142;
-          if (distance < radius * 0.78) {
-            explodeBlock(blockItem, 900, "bomb");
-          } else if (distance < radius) {
-            var strength = (radius - distance) / radius;
+          if (distance < bombDestroyRadius) {
+            explodeBlock(blockItem, 720, "bomb");
+          } else if (distance < bombBlastRadius) {
+            var strength = (bombBlastRadius - distance) / bombBlastRadius;
             blockItem.sleeping = false;
-            blockItem.vx += dx / distance * (280 + 420 * strength) / blockItem.mass;
-            blockItem.vy += dy / distance * (220 + 330 * strength) / blockItem.mass - 150;
-            blockItem.spin += (Math.random() - 0.5) * 8;
-            blockItem.flash = 0.15;
+            blockItem.vx += dx / distance * (120 + 230 * strength) / blockItem.mass;
+            blockItem.vy += dy / distance * (105 + 190 * strength) / blockItem.mass - 75;
+            blockItem.spin += (Math.random() - 0.5) * 4.5;
+            blockItem.flash = 0.12;
           }
         });
+
+        if (diamondItem && !diamondItem.gone) {
+          var diamondDx = diamondItem.x - bombItem.x;
+          var diamondDy = diamondItem.y - bombItem.y;
+          if (diamondDx * diamondDx + diamondDy * diamondDy < bombBlastRadius * bombBlastRadius) {
+            destroyDiamond("bomb");
+          }
+        }
 
         bombs.forEach(function (other) {
           if (other.exploded || other === bombItem) return;
           var dx = other.x - bombItem.x;
           var dy = other.y - bombItem.y;
-          if (dx * dx + dy * dy < 165 * 165) triggerBomb(other);
+          if (dx * dx + dy * dy < bombChainRadius * bombChainRadius) triggerBomb(other);
         });
       }
 
@@ -710,6 +3364,22 @@
           });
         }
 
+        if (diamondItem && !diamondItem.gone) {
+          blocks.some(function (blockItem) {
+            if (blockItem.gone) return false;
+            var speed = Math.sqrt(blockItem.vx * blockItem.vx + blockItem.vy * blockItem.vy);
+            var diamondBox = {
+              x: diamondItem.x, y: diamondItem.y,
+              w: diamondItem.r * 1.45, h: diamondItem.r * 1.7
+            };
+            if (speed > 34 && aabbOverlap(blockItem, diamondBox)) {
+              destroyDiamond("block");
+              return true;
+            }
+            return false;
+          });
+        }
+
         bombs.forEach(function (bombItem) {
           if (bombItem.exploded) return;
           blocks.some(function (blockItem) {
@@ -769,6 +3439,15 @@
 
           obstacles.forEach(bounceCatFromObstacle);
 
+          if (diamondItem && !diamondItem.gone) {
+            var diamondDx = cat.x - diamondItem.x;
+            var diamondDy = cat.y - diamondItem.y;
+            var diamondReach = cat.r + diamondItem.r;
+            if (diamondDx * diamondDx + diamondDy * diamondDy < diamondReach * diamondReach) {
+              destroyDiamond("cat");
+            }
+          }
+
           blocks.forEach(function (blockItem) {
             if (!circleRectHit(cat, blockItem)) return;
             var speed = Math.sqrt(cat.vx * cat.vx + cat.vy * cat.vy);
@@ -805,7 +3484,7 @@
           levelCompleteAt = now;
           if (level === levels.length) {
             gameWon = true;
-            setMessage("You beat all 10 levels! Total angry parents: " + angryParents + ".");
+            setMessage("You beat all 20 levels! Total angry parents: " + angryParents + ".");
           } else {
             setMessage("Level smashed! Get ready for " + levels[level].name + "!");
           }
@@ -818,7 +3497,7 @@
           makeLevel();
           newCat();
           updateHud();
-          setMessage("Level " + level + ": " + currentLevel().name + ". Pull back and fire!");
+          setMessage("Level " + level + ": " + currentLevel().name + ". Hit the diamond directly for +3 cats!");
         } else if (!levelCompleteAt && cat.resting && now - shotSettledAt > 850) {
           if (catsLeft > 0) {
             newCat();
@@ -968,6 +3647,40 @@
         ctx.restore();
       }
 
+      function drawDiamond(now) {
+        if (!diamondItem || diamondItem.gone) return;
+        var pulse = 1 + Math.sin(now * 0.006) * 0.07;
+        ctx.save();
+        ctx.translate(diamondItem.x, diamondItem.y);
+        ctx.scale(pulse, pulse);
+        ctx.fillStyle = "#22d3ee";
+        ctx.strokeStyle = "#0e7490";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(0, -diamondItem.r);
+        ctx.lineTo(diamondItem.r * 0.82, -diamondItem.r * 0.25);
+        ctx.lineTo(diamondItem.r * 0.55, diamondItem.r * 0.72);
+        ctx.lineTo(0, diamondItem.r);
+        ctx.lineTo(-diamondItem.r * 0.55, diamondItem.r * 0.72);
+        ctx.lineTo(-diamondItem.r * 0.82, -diamondItem.r * 0.25);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.strokeStyle = "rgba(255,255,255,.82)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, -diamondItem.r + 4);
+        ctx.lineTo(-diamondItem.r * 0.45, diamondItem.r * 0.55);
+        ctx.moveTo(0, -diamondItem.r + 4);
+        ctx.lineTo(diamondItem.r * 0.45, diamondItem.r * 0.55);
+        ctx.stroke();
+        ctx.fillStyle = "#0c4a6e";
+        ctx.font = "bold 13px -apple-system, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("+3", 0, -diamondItem.r - 8);
+        ctx.restore();
+      }
+
       function drawParticles() {
         particles.forEach(function (p) {
           ctx.globalAlpha = Math.max(0, Math.min(1, p.life * 1.5));
@@ -1055,6 +3768,7 @@
         obstacles.forEach(drawObstacle);
         blocks.forEach(drawBlock);
         bombs.forEach(function (bombItem) { drawBomb(bombItem, now); });
+        drawDiamond(now);
         drawParticles();
         drawCat();
         drawPowerGuide();
