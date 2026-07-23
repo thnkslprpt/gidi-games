@@ -1,0 +1,263 @@
+/* Gidi Games shared visual layer · suite 3.0.1 */
+:root {
+  --gidi-ink: #f7fbff;
+  --gidi-muted: #aeb9d6;
+  --gidi-night: #071426;
+  --gidi-panel: rgba(13, 24, 49, 0.84);
+  --gidi-line: rgba(152, 186, 255, 0.22);
+  --gidi-glow: rgba(82, 214, 255, 0.24);
+  --gidi-radius: 18px;
+  --gidi-vh: 1vh;
+  color-scheme: dark;
+}
+
+html {
+  min-width: 320px;
+  min-height: 100%;
+  background: var(--gidi-night);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body.gidi-suite {
+  min-width: 320px;
+  min-height: 100vh;
+  min-height: calc(var(--gidi-vh) * 100);
+  margin: 0;
+  isolation: isolate;
+  color-scheme: dark;
+  font-family: ui-rounded, "SF Pro Rounded", "SF Pro Display", -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body.gidi-suite::before {
+  content: "";
+  position: fixed;
+  z-index: -2;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 13% 0%, rgba(63, 202, 255, 0.14), transparent 32rem),
+    radial-gradient(circle at 93% 14%, rgba(244, 91, 184, 0.11), transparent 29rem),
+    linear-gradient(180deg, rgba(5, 11, 30, 0.05), rgba(4, 8, 23, 0.22));
+}
+
+body.gidi-suite::after {
+  content: "";
+  position: fixed;
+  z-index: 2147482000;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: max(2px, env(safe-area-inset-top));
+  pointer-events: none;
+  background: linear-gradient(90deg, #51d6ff, #8f7cff 48%, #ff5fa9);
+  opacity: 0.92;
+}
+
+body.gidi-suite *,
+body.gidi-suite *::before,
+body.gidi-suite *::after {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body.gidi-suite button,
+body.gidi-suite input,
+body.gidi-suite select,
+body.gidi-suite textarea {
+  font: inherit;
+}
+
+body.gidi-suite input,
+body.gidi-suite select,
+body.gidi-suite textarea {
+  font-size: max(16px, 1em);
+}
+
+body.gidi-suite button,
+body.gidi-suite a,
+body.gidi-suite [role="button"] {
+  touch-action: manipulation;
+}
+
+body.gidi-suite button:focus-visible,
+body.gidi-suite a:focus-visible,
+body.gidi-suite input:focus-visible,
+body.gidi-suite select:focus-visible,
+body.gidi-suite textarea:focus-visible,
+body.gidi-suite [tabindex]:focus-visible {
+  outline: 3px solid rgba(87, 220, 255, 0.94);
+  outline-offset: 3px;
+}
+
+body.gidi-suite h1,
+body.gidi-suite h2,
+body.gidi-suite h3,
+body.gidi-suite .top-title,
+body.gidi-suite .game-title {
+  font-family: ui-rounded, "SF Pro Rounded", "SF Pro Display", -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  letter-spacing: -0.025em;
+}
+
+body.gidi-suite header,
+body.gidi-suite .topbar,
+body.gidi-suite .top-bar {
+  border-color: var(--gidi-line);
+}
+
+body.gidi-suite .panel,
+body.gidi-suite .modal-content,
+body.gidi-suite .dialog,
+body.gidi-suite .setup-panel,
+body.gidi-suite .scoreboard,
+body.gidi-suite .score-board,
+body.gidi-suite .hud {
+  border-color: var(--gidi-line);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.22);
+}
+
+body.gidi-suite canvas {
+  display: block;
+  max-width: 100%;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: none;
+}
+
+body.gidi-suite img,
+body.gidi-suite svg {
+  max-width: 100%;
+}
+
+body.gidi-suite .gidi-suite-existing-home,
+body.gidi-suite a[href="../../"],
+body.gidi-suite a[href="../../index.html"],
+body.gidi-suite a[href="../.."] {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 8px 12px;
+  border: 1px solid rgba(147, 187, 255, 0.26);
+  border-radius: 999px;
+  color: #eef8ff;
+  background: rgba(8, 18, 42, 0.72);
+  box-shadow: 0 9px 24px rgba(0, 0, 0, 0.18);
+  text-decoration: none;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+.gidi-suite-home {
+  position: fixed;
+  z-index: 2147483000;
+  left: max(10px, env(safe-area-inset-left));
+  bottom: max(10px, env(safe-area-inset-bottom));
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 9px 13px;
+  border: 1px solid rgba(154, 190, 255, 0.3);
+  border-radius: 999px;
+  color: #f7fbff;
+  background: rgba(7, 15, 36, 0.84);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.32), 0 0 24px rgba(86, 206, 255, 0.1);
+  font-size: 13px;
+  font-weight: 850;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  transition: transform 150ms ease, background 150ms ease, opacity 220ms ease;
+}
+
+.gidi-suite-home::before {
+  content: "←";
+  font-size: 17px;
+  line-height: 1;
+}
+
+.gidi-suite-home:active {
+  transform: scale(0.96);
+  background: rgba(15, 30, 66, 0.96);
+}
+
+.gidi-suite-revision {
+  display: inline-flex;
+  vertical-align: middle;
+  align-items: center;
+  min-height: 21px;
+  margin-inline-start: 8px;
+  padding: 3px 7px;
+  border: 1px solid rgba(141, 183, 255, 0.24);
+  border-radius: 999px;
+  color: #b9c9e8;
+  background: rgba(7, 15, 37, 0.58);
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.gidi-suite-toast {
+  position: fixed;
+  z-index: 2147483640;
+  left: 50%;
+  bottom: max(64px, calc(env(safe-area-inset-bottom) + 58px));
+  width: min(calc(100% - 28px), 420px);
+  transform: translate(-50%, 14px);
+  padding: 12px 15px;
+  border: 1px solid rgba(149, 187, 255, 0.26);
+  border-radius: 15px;
+  color: #f8fbff;
+  background: rgba(8, 16, 39, 0.94);
+  box-shadow: 0 20px 55px rgba(0, 0, 0, 0.4);
+  font-size: 14px;
+  font-weight: 760;
+  line-height: 1.35;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.gidi-suite-toast.is-visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+@media (max-width: 380px) {
+  .gidi-suite-home {
+    min-height: 38px;
+    padding: 8px 11px;
+    font-size: 12px;
+  }
+
+  .gidi-suite-revision {
+    margin-inline-start: 5px;
+    padding-inline: 6px;
+    font-size: 9px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.gidi-suite *,
+  body.gidi-suite *::before,
+  body.gidi-suite *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

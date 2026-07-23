@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#172554">
-  <title>Memory Match v1.0.2</title>
+  <meta name="theme-color" content="#071426">
+  <title>Memory Match · Gidi's Game Room</title>
   <style>
     * { box-sizing: border-box; }
 
@@ -380,6 +380,14 @@
       }
     }
   </style>
+
+  <!-- GIDI-SUITE:START -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="stylesheet" href="../shared/gidi-suite.css?v=3.0.1">
+  <script defer src="../shared/gidi-suite.js?v=3.0.1"></script>
+  <!-- GIDI-SUITE:END -->
 </head>
 <body>
   <main class="app">
@@ -797,6 +805,21 @@
       });
 
       renderLevel();
+    /* GIDI-MEMORY-PENDING-GUARD: do not reset under an active pair timer. */
+    var gidiPendingNewGameButton = document.getElementById("newGameButton");
+    if (gidiPendingNewGameButton) {
+      gidiPendingNewGameButton.addEventListener("click", function (event) {
+        var gidiPendingModal = document.getElementById("modalLayer");
+        var gidiPendingStatus = document.getElementById("status");
+        if (locked && !(gidiPendingModal && gidiPendingModal.classList.contains("show"))) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          if (gidiPendingStatus) {
+            gidiPendingStatus.textContent = "Wait for this pair to finish.";
+          }
+        }
+      }, true);
+    }
     }());
   </script>
 </body>
