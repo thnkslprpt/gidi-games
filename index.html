@@ -304,6 +304,78 @@
       *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
     }
   </style>
+
+<!-- WORD-DUEL-CARD-STYLES:START -->
+<style>
+  .word-duel-card {
+    position: relative;
+    isolation: isolate;
+    aspect-ratio: 1 / 1;
+    min-height: 0;
+    padding: 12px !important;
+    overflow: hidden;
+    display: flex !important;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    text-align: center;
+    text-decoration: none !important;
+    color: #fff !important;
+    border: 1px solid rgba(255,255,255,.2) !important;
+    border-radius: 22px !important;
+    background:
+      radial-gradient(circle at 18% 10%, rgba(255,255,255,.25), transparent 28%),
+      linear-gradient(145deg, #31206a, #16102f 62%, #29123f) !important;
+    box-shadow: 0 14px 30px rgba(20, 10, 50, .24) !important;
+    transform: translateZ(0);
+  }
+  .word-duel-card::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    width: 80%;
+    height: 80%;
+    right: -28%;
+    bottom: -35%;
+    border-radius: 50%;
+    background: rgba(255, 91, 173, .22);
+  }
+  .word-duel-card:active { transform: scale(.97); }
+  .word-duel-logo {
+    width: min(88%, 126px);
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px;
+  }
+  .word-duel-logo span {
+    aspect-ratio: 1 / 1;
+    display: grid;
+    place-items: center;
+    border-radius: 6px;
+    color: #fff;
+    background: #555064;
+    box-shadow: inset 0 -2px 0 rgba(0,0,0,.18);
+    font-size: clamp(12px, 4vw, 19px);
+    font-weight: 950;
+  }
+  .word-duel-logo span:nth-child(1),
+  .word-duel-logo span:nth-child(4) { background: #39b86b; }
+  .word-duel-logo span:nth-child(2),
+  .word-duel-logo span:nth-child(5) { background: #e4aa32; }
+  .word-duel-name {
+    font-size: clamp(15px, 4.7vw, 21px);
+    line-height: 1;
+    font-weight: 950;
+    letter-spacing: -.02em;
+  }
+  @media (max-width: 360px) {
+    .word-duel-card { padding: 9px !important; border-radius: 18px !important; }
+    .word-duel-logo { gap: 3px; }
+  }
+</style>
+<!-- WORD-DUEL-CARD-STYLES:END -->
+
 </head>
 <body>
   <header class="hero">
@@ -433,7 +505,17 @@
 </svg></span>
         <span class="game-name">Space Invaders</span>
       </a>
-    </nav>
+    
+<!-- WORD-DUEL-CARD:START -->
+<a class="game-card word-duel-card" href="games/word-duel/" aria-label="Play Word Duel">
+  <span class="word-duel-logo" aria-hidden="true">
+    <span>W</span><span>O</span><span>R</span><span>D</span><span>S</span>
+  </span>
+  <span class="word-duel-name">Word Duel</span>
+</a>
+<!-- WORD-DUEL-CARD:END -->
+
+</nav>
   </main>
 
   <!-- Gidi's Game Room hub revision 2.0.0 -->

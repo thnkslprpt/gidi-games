@@ -1,0 +1,855 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#5f2bc4">
+  <title>Word Duel</title>
+  <style>
+    :root {
+      --bg-1: #f4f2fa;
+      --bg-2: #ffffff;
+      --panel: #ffffff;
+      --panel-border: rgba(54, 30, 103, 0.13);
+      --text: #181426;
+      --muted: #716a80;
+      --tile: #ffffff;
+      --tile-border: #d6d2df;
+      --correct: #39b86b;
+      --present: #e4aa32;
+      --absent: #514c62;
+      --accent: #6b24c7;
+      --accent-2: #0878f2;
+      --key: #dfe2e9;
+      --key-text: #292532;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--bg-1);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+      overscroll-behavior: none;
+    }
+
+    body {
+      min-height: 100vh;
+      min-height: -webkit-fill-available;
+      overflow-x: hidden;
+      background:
+        radial-gradient(circle at 10% 2%, rgba(107, 36, 199, 0.12), transparent 31%),
+        radial-gradient(circle at 92% 9%, rgba(8, 120, 242, 0.10), transparent 29%),
+        linear-gradient(180deg, var(--bg-2), var(--bg-1));
+    }
+
+    button, input { font: inherit; }
+    button { touch-action: manipulation; }
+
+    .app {
+      width: 100%;
+      max-width: 520px;
+      min-height: 100vh;
+      min-height: -webkit-fill-available;
+      margin: 0 auto;
+      padding: max(10px, env(safe-area-inset-top)) 12px max(10px, env(safe-area-inset-bottom));
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .topbar {
+      min-height: 48px;
+      display: grid;
+      grid-template-columns: 48px 1fr 48px;
+      align-items: center;
+      gap: 6px;
+      flex: 0 0 auto;
+      margin-bottom: 7px;
+      padding: 5px;
+      border-radius: 18px;
+      color: #fff;
+      background: linear-gradient(110deg, #6b24c7, #0878f2);
+      box-shadow: 0 10px 24px rgba(50, 50, 135, 0.20);
+    }
+
+    .back-link {
+      color: #fff;
+      text-decoration: none;
+      font-size: 25px;
+      line-height: 38px;
+      width: 42px;
+      height: 38px;
+      text-align: center;
+      border-radius: 13px;
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+    }
+
+    .game-heading { text-align: center; }
+
+    .game-title {
+      margin: 0;
+      color: #fff;
+      font-size: 20px;
+      line-height: 1.05;
+      letter-spacing: 0.02em;
+    }
+
+    .version {
+      display: inline-block;
+      margin-left: 4px;
+      color: rgba(255, 255, 255, 0.78);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      vertical-align: middle;
+    }
+
+    .player-chip {
+      justify-self: end;
+      min-width: 42px;
+      padding: 6px 8px;
+      border-radius: 999px;
+      color: #fff;
+      background: rgba(255, 255, 255, 0.16);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      font-size: 11px;
+      font-weight: 800;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .screen {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .hidden { display: none !important; }
+
+    .setup-card {
+      width: 100%;
+      padding: 22px 16px 18px;
+      border: 1px solid var(--panel-border);
+      border-radius: 24px;
+      background: var(--panel);
+      box-shadow: 0 18px 46px rgba(53, 35, 85, 0.14);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      text-align: center;
+    }
+
+    .duel-mark {
+      width: 58px;
+      height: 58px;
+      margin: 0 auto 12px;
+      display: grid;
+      place-items: center;
+      border-radius: 19px;
+      color: #fff;
+      background: linear-gradient(145deg, var(--accent), var(--accent-2));
+      box-shadow: 0 12px 28px rgba(71, 62, 173, 0.25);
+      font-size: 29px;
+      font-weight: 900;
+      transform: rotate(-4deg);
+    }
+
+    .setup-card h2 {
+      margin: 0 0 6px;
+      font-size: 25px;
+    }
+
+    .setup-card p {
+      margin: 0 auto 16px;
+      max-width: 310px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .secret-wrap {
+      position: relative;
+      width: min(100%, 330px);
+      margin: 0 auto 15px;
+    }
+
+    .secret-input {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0.01;
+      color: transparent;
+      caret-color: transparent;
+      border: 0;
+      padding: 0;
+      z-index: 2;
+    }
+
+    .secret-tiles {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 7px;
+    }
+
+    .secret-tile,
+    .tile {
+      aspect-ratio: 1;
+      display: grid;
+      place-items: center;
+      border: 2px solid var(--tile-border);
+      border-radius: 10px;
+      background: var(--tile);
+      color: var(--text);
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .secret-tile {
+      font-size: clamp(23px, 8vw, 34px);
+      transition: transform 130ms ease, border-color 130ms ease, background 130ms ease;
+    }
+
+    .secret-tile.filled {
+      border-color: rgba(107, 36, 199, 0.62);
+      background: rgba(107, 36, 199, 0.10);
+      transform: translateY(-2px);
+    }
+
+    .secret-tile::after {
+      content: "•";
+      opacity: 0;
+    }
+
+    .secret-tile.filled::after { opacity: 1; }
+
+    .primary-button,
+    .secondary-button {
+      width: min(100%, 330px);
+      min-height: 50px;
+      border: 0;
+      border-radius: 15px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .primary-button {
+      color: #fff;
+      background: linear-gradient(100deg, var(--accent), var(--accent-2));
+      box-shadow: 0 10px 28px rgba(73, 73, 181, 0.25);
+    }
+
+    .primary-button:disabled {
+      opacity: 0.42;
+      box-shadow: none;
+    }
+
+    .secondary-button {
+      margin-top: 10px;
+      color: var(--text);
+      background: #f0eef5;
+      border: 1px solid #ded9e8;
+    }
+
+    .helper {
+      min-height: 19px;
+      margin: 10px 0 0;
+      color: #b12d72;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .handover-card .duel-mark { transform: rotate(4deg); }
+
+    .game-screen {
+      justify-content: flex-start;
+      padding-top: 2px;
+    }
+
+    .status {
+      min-height: 29px;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 750;
+      text-align: center;
+    }
+
+    .status.pop {
+      color: var(--accent);
+      animation: status-pop 260ms ease;
+    }
+
+    @keyframes status-pop {
+      50% { transform: scale(1.06); }
+    }
+
+    .board {
+      width: min(100%, 292px);
+      display: grid;
+      grid-template-rows: repeat(6, 1fr);
+      gap: 5px;
+      margin: 0 auto 10px;
+    }
+
+    .board-row {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 5px;
+    }
+
+    .tile {
+      font-size: clamp(24px, 7.5vw, 34px);
+      line-height: 1;
+      transform-style: preserve-3d;
+      transition: border-color 120ms ease, transform 120ms ease;
+    }
+
+    .tile.filled {
+      border-color: rgba(107, 36, 199, 0.62);
+      animation: tile-pop 120ms ease;
+    }
+
+    @keyframes tile-pop {
+      50% { transform: scale(1.08); }
+    }
+
+    .tile.reveal { animation: flip 520ms ease forwards; }
+    .tile.correct { color: #fff; background: var(--correct); border-color: var(--correct); }
+    .tile.present { color: #fff; background: var(--present); border-color: var(--present); }
+    .tile.absent { color: #fff; background: var(--absent); border-color: var(--absent); }
+
+    @keyframes flip {
+      0% { transform: rotateX(0); }
+      48% { transform: rotateX(90deg); }
+      52% { transform: rotateX(90deg); }
+      100% { transform: rotateX(0); }
+    }
+
+    .board-row.shake { animation: shake 330ms ease; }
+
+    @keyframes shake {
+      20% { transform: translateX(-7px); }
+      40% { transform: translateX(7px); }
+      60% { transform: translateX(-5px); }
+      80% { transform: translateX(5px); }
+    }
+
+    .keyboard {
+      width: 100%;
+      margin-top: auto;
+      padding-bottom: 1px;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .key-row {
+      display: flex;
+      gap: 4px;
+      justify-content: center;
+      margin-top: 5px;
+    }
+
+    .key {
+      flex: 1 1 0;
+      min-width: 0;
+      height: 45px;
+      padding: 0;
+      border: 0;
+      border-radius: 7px;
+      color: var(--key-text);
+      background: var(--key);
+      box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.16);
+      font-size: clamp(12px, 4vw, 15px);
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .key.wide {
+      flex: 1.55 1 0;
+      font-size: 11px;
+    }
+
+    .key.correct { color: #fff; background: var(--correct); }
+    .key.present { color: #fff; background: var(--present); }
+    .key.absent { color: #fff; background: var(--absent); }
+    .key:active { transform: translateY(1px); }
+
+    .result-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 20;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(36, 25, 62, 0.62);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .result-card {
+      width: min(100%, 360px);
+      padding: 25px 18px 20px;
+      border-radius: 24px;
+      border: 1px solid var(--panel-border);
+      background: #ffffff;
+      color: var(--text);
+      text-align: center;
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+      animation: result-in 320ms cubic-bezier(.2, .85, .25, 1.2);
+    }
+
+    @keyframes result-in {
+      from { transform: translateY(18px) scale(.92); opacity: 0; }
+    }
+
+    .result-emoji { font-size: 45px; }
+    .result-card h2 { margin: 6px 0; font-size: 27px; }
+    .result-card p { margin: 0 0 16px; color: var(--muted); }
+
+    .answer-word {
+      display: inline-block;
+      margin-top: 7px;
+      padding: 7px 12px;
+      border-radius: 10px;
+      color: #4f258f;
+      background: #eee8f8;
+      font-weight: 950;
+      letter-spacing: 0.18em;
+    }
+
+    .confetti {
+      position: absolute;
+      width: 9px;
+      height: 14px;
+      top: -18px;
+      border-radius: 3px;
+      pointer-events: none;
+      animation: confetti-fall 1250ms ease-in forwards;
+    }
+
+    @keyframes confetti-fall {
+      to { transform: translate3d(var(--drift), 105vh, 0) rotate(620deg); opacity: .15; }
+    }
+
+    @media (max-height: 620px) {
+      .app { padding-top: 5px; padding-bottom: 5px; }
+      .topbar { min-height: 36px; }
+      .back-link { height: 34px; line-height: 34px; }
+      .status { min-height: 23px; }
+      .board { width: min(100%, 252px); gap: 3px; margin-bottom: 4px; }
+      .board-row { gap: 3px; }
+      .tile { border-radius: 7px; }
+      .key-row { margin-top: 3px; gap: 3px; }
+      .key { height: 38px; }
+    }
+
+    @media (max-width: 340px) {
+      .app { padding-left: 8px; padding-right: 8px; }
+      .game-title { font-size: 18px; }
+      .board { width: 266px; }
+      .key-row { gap: 3px; }
+      .key { height: 43px; border-radius: 6px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 1ms !important; animation-delay: 0ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <a class="back-link" href="../../" aria-label="Back to games">‹</a>
+      <div class="game-heading">
+        <h1 class="game-title">Word Duel <span class="version">v1.0.0</span></h1>
+      </div>
+      <div class="player-chip" id="playerChip">P1</div>
+    </header>
+
+    <section class="screen" id="setupScreen">
+      <div class="setup-card">
+        <div class="duel-mark" aria-hidden="true">W</div>
+        <h2>Choose the secret</h2>
+        <p>Player 1, enter any five-letter word. Player 2 gets six chances to crack it.</p>
+        <div class="secret-wrap" id="secretWrap">
+          <input
+            class="secret-input"
+            id="secretInput"
+            type="text"
+            inputmode="text"
+            maxlength="5"
+            autocomplete="off"
+            autocapitalize="characters"
+            autocorrect="off"
+            spellcheck="false"
+            aria-label="Five-letter secret word"
+          >
+          <div class="secret-tiles" aria-hidden="true">
+            <div class="secret-tile"></div>
+            <div class="secret-tile"></div>
+            <div class="secret-tile"></div>
+            <div class="secret-tile"></div>
+            <div class="secret-tile"></div>
+          </div>
+        </div>
+        <button class="primary-button" id="readyButton" type="button" disabled>Ready — Hide the Word</button>
+        <div class="helper" id="setupMessage" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section class="screen hidden" id="handoverScreen">
+      <div class="setup-card handover-card">
+        <div class="duel-mark" aria-hidden="true">↔</div>
+        <h2>Pass the phone</h2>
+        <p>The secret is hidden. Hand the phone to Player 2, then tap below to begin guessing.</p>
+        <button class="primary-button" id="startButton" type="button">Player 2 Is Ready</button>
+      </div>
+    </section>
+
+    <section class="screen game-screen hidden" id="gameScreen">
+      <div class="status" id="status" aria-live="polite">Guess the five-letter word</div>
+      <div class="board" id="board" aria-label="Word guessing board"></div>
+      <div class="keyboard" id="keyboard" aria-label="On-screen keyboard"></div>
+    </section>
+
+    <div class="result-overlay hidden" id="resultOverlay" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+      <div class="result-card">
+        <div class="result-emoji" id="resultEmoji" aria-hidden="true">🏆</div>
+        <h2 id="resultTitle">Brilliant!</h2>
+        <p id="resultText"></p>
+        <button class="primary-button" id="newRoundButton" type="button">Choose a New Word</button>
+        <a class="secondary-button" style="display:grid;place-items:center;text-decoration:none" href="../../">Back to Games</a>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      'use strict';
+
+      var ROWS = 6;
+      var COLS = 5;
+      var keyboardRows = [
+        ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
+        ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
+        ['ENTER', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'BACK']
+      ];
+      var keyRank = { absent: 1, present: 2, correct: 3 };
+
+      var secret = '';
+      var guesses = [];
+      var currentGuess = '';
+      var currentRow = 0;
+      var inputLocked = false;
+      var roundOver = false;
+
+      var setupScreen = document.getElementById('setupScreen');
+      var handoverScreen = document.getElementById('handoverScreen');
+      var gameScreen = document.getElementById('gameScreen');
+      var secretInput = document.getElementById('secretInput');
+      var secretWrap = document.getElementById('secretWrap');
+      var secretTiles = Array.prototype.slice.call(document.querySelectorAll('.secret-tile'));
+      var readyButton = document.getElementById('readyButton');
+      var setupMessage = document.getElementById('setupMessage');
+      var startButton = document.getElementById('startButton');
+      var board = document.getElementById('board');
+      var keyboard = document.getElementById('keyboard');
+      var status = document.getElementById('status');
+      var playerChip = document.getElementById('playerChip');
+      var resultOverlay = document.getElementById('resultOverlay');
+      var resultEmoji = document.getElementById('resultEmoji');
+      var resultTitle = document.getElementById('resultTitle');
+      var resultText = document.getElementById('resultText');
+      var newRoundButton = document.getElementById('newRoundButton');
+
+      function lettersOnly(value) {
+        return value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 5);
+      }
+
+      function showScreen(screen) {
+        setupScreen.classList.add('hidden');
+        handoverScreen.classList.add('hidden');
+        gameScreen.classList.add('hidden');
+        screen.classList.remove('hidden');
+      }
+
+      function updateSecretTiles() {
+        var value = lettersOnly(secretInput.value);
+        if (secretInput.value !== value) secretInput.value = value;
+        secretTiles.forEach(function (tile, index) {
+          tile.classList.toggle('filled', index < value.length);
+        });
+        readyButton.disabled = value.length !== 5;
+        setupMessage.textContent = value.length && value.length < 5 ? (5 - value.length) + ' more letter' + (value.length === 4 ? '' : 's') : '';
+      }
+
+      function buildBoard() {
+        board.innerHTML = '';
+        for (var r = 0; r < ROWS; r += 1) {
+          var row = document.createElement('div');
+          row.className = 'board-row';
+          row.setAttribute('data-row', String(r));
+          for (var c = 0; c < COLS; c += 1) {
+            var tile = document.createElement('div');
+            tile.className = 'tile';
+            tile.setAttribute('data-col', String(c));
+            row.appendChild(tile);
+          }
+          board.appendChild(row);
+        }
+      }
+
+      function buildKeyboard() {
+        keyboard.innerHTML = '';
+        keyboardRows.forEach(function (letters) {
+          var row = document.createElement('div');
+          row.className = 'key-row';
+          letters.forEach(function (letter) {
+            var key = document.createElement('button');
+            key.type = 'button';
+            key.className = 'key' + (letter === 'ENTER' || letter === 'BACK' ? ' wide' : '');
+            key.setAttribute('data-key', letter);
+            key.setAttribute('aria-label', letter === 'BACK' ? 'Backspace' : letter);
+            key.textContent = letter === 'BACK' ? '⌫' : letter;
+            row.appendChild(key);
+          });
+          keyboard.appendChild(row);
+        });
+      }
+
+      function getRow(rowIndex) {
+        return board.querySelector('[data-row="' + rowIndex + '"]');
+      }
+
+      function drawCurrentGuess() {
+        var row = getRow(currentRow);
+        if (!row) return;
+        var tiles = row.children;
+        for (var i = 0; i < COLS; i += 1) {
+          tiles[i].textContent = currentGuess.charAt(i) || '';
+          tiles[i].classList.toggle('filled', i < currentGuess.length);
+        }
+      }
+
+      function flashStatus(message) {
+        status.textContent = message;
+        status.classList.remove('pop');
+        void status.offsetWidth;
+        status.classList.add('pop');
+      }
+
+      function shakeCurrentRow() {
+        var row = getRow(currentRow);
+        if (!row) return;
+        row.classList.remove('shake');
+        void row.offsetWidth;
+        row.classList.add('shake');
+      }
+
+      function scoreGuess(guess, answer) {
+        var result = ['absent', 'absent', 'absent', 'absent', 'absent'];
+        var remaining = {};
+        var i;
+
+        for (i = 0; i < COLS; i += 1) {
+          if (guess.charAt(i) === answer.charAt(i)) {
+            result[i] = 'correct';
+          } else {
+            remaining[answer.charAt(i)] = (remaining[answer.charAt(i)] || 0) + 1;
+          }
+        }
+
+        for (i = 0; i < COLS; i += 1) {
+          if (result[i] === 'correct') continue;
+          var letter = guess.charAt(i);
+          if (remaining[letter] > 0) {
+            result[i] = 'present';
+            remaining[letter] -= 1;
+          }
+        }
+        return result;
+      }
+
+      function colorKeyboard(letter, state) {
+        var key = keyboard.querySelector('[data-key="' + letter + '"]');
+        if (!key) return;
+        var currentState = key.getAttribute('data-state');
+        if (!currentState || keyRank[state] > keyRank[currentState]) {
+          key.classList.remove('correct', 'present', 'absent');
+          key.classList.add(state);
+          key.setAttribute('data-state', state);
+        }
+      }
+
+      function submitGuess() {
+        if (inputLocked || roundOver) return;
+        if (currentGuess.length !== COLS) {
+          flashStatus('Not enough letters');
+          shakeCurrentRow();
+          return;
+        }
+
+        inputLocked = true;
+        var guess = currentGuess;
+        var result = scoreGuess(guess, secret);
+        var row = getRow(currentRow);
+        var tiles = row.children;
+        guesses.push(guess);
+
+        result.forEach(function (state, index) {
+          window.setTimeout(function () {
+            tiles[index].classList.add('reveal');
+            window.setTimeout(function () {
+              tiles[index].classList.add(state);
+              colorKeyboard(guess.charAt(index), state);
+            }, 245);
+          }, index * 260);
+        });
+
+        window.setTimeout(function () {
+          var won = guess === secret;
+          var usedRows = currentRow + 1;
+          currentRow += 1;
+          currentGuess = '';
+
+          if (won) {
+            finishRound(true, usedRows);
+          } else if (currentRow >= ROWS) {
+            finishRound(false, usedRows);
+          } else {
+            inputLocked = false;
+            flashStatus('Try ' + (currentRow + 1) + ' of ' + ROWS);
+          }
+        }, COLS * 260 + 420);
+      }
+
+      function handleKey(key) {
+        if (inputLocked || roundOver || gameScreen.classList.contains('hidden')) return;
+        if (key === 'ENTER') {
+          submitGuess();
+          return;
+        }
+        if (key === 'BACK') {
+          currentGuess = currentGuess.slice(0, -1);
+          drawCurrentGuess();
+          return;
+        }
+        if (/^[A-Z]$/.test(key) && currentGuess.length < COLS) {
+          currentGuess += key;
+          drawCurrentGuess();
+        }
+      }
+
+      function launchConfetti() {
+        var colors = ['#9b63ff', '#ff6db3', '#39b86b', '#e4aa32', '#65d5ff'];
+        for (var i = 0; i < 42; i += 1) {
+          var piece = document.createElement('div');
+          piece.className = 'confetti';
+          piece.style.left = Math.round(Math.random() * 100) + '%';
+          piece.style.background = colors[i % colors.length];
+          piece.style.setProperty('--drift', Math.round(Math.random() * 160 - 80) + 'px');
+          piece.style.animationDelay = Math.round(Math.random() * 260) + 'ms';
+          document.body.appendChild(piece);
+          window.setTimeout((function (node) {
+            return function () { if (node.parentNode) node.parentNode.removeChild(node); };
+          }(piece)), 1800);
+        }
+      }
+
+      function finishRound(won, attempts) {
+        roundOver = true;
+        inputLocked = true;
+        resultEmoji.textContent = won ? '🏆' : '😮';
+        resultTitle.textContent = won ? 'Word cracked!' : 'So close!';
+        resultText.innerHTML = won
+          ? 'Player 2 solved it in <strong>' + attempts + '</strong> ' + (attempts === 1 ? 'guess' : 'guesses') + '.<br><span class="answer-word">' + secret + '</span>'
+          : 'The secret word was:<br><span class="answer-word">' + secret + '</span>';
+        window.setTimeout(function () {
+          resultOverlay.classList.remove('hidden');
+          if (won) launchConfetti();
+        }, 380);
+      }
+
+      function resetRound() {
+        secret = '';
+        guesses = [];
+        currentGuess = '';
+        currentRow = 0;
+        inputLocked = false;
+        roundOver = false;
+        secretInput.value = '';
+        setupMessage.textContent = '';
+        resultOverlay.classList.add('hidden');
+        playerChip.textContent = 'P1';
+        buildBoard();
+        buildKeyboard();
+        updateSecretTiles();
+        showScreen(setupScreen);
+        window.setTimeout(function () { secretInput.focus(); }, 120);
+      }
+
+      secretWrap.addEventListener('click', function () { secretInput.focus(); });
+      secretInput.addEventListener('input', updateSecretTiles);
+      secretInput.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter' && !readyButton.disabled) {
+          event.preventDefault();
+          readyButton.click();
+        }
+      });
+
+      readyButton.addEventListener('click', function () {
+        var value = lettersOnly(secretInput.value);
+        if (value.length !== 5) {
+          setupMessage.textContent = 'Enter exactly five letters.';
+          return;
+        }
+        secret = value;
+        secretInput.value = '';
+        updateSecretTiles();
+        secretInput.blur();
+        playerChip.textContent = 'PASS';
+        showScreen(handoverScreen);
+      });
+
+      startButton.addEventListener('click', function () {
+        playerChip.textContent = 'P2';
+        status.textContent = 'Guess the five-letter word';
+        showScreen(gameScreen);
+      });
+
+      keyboard.addEventListener('click', function (event) {
+        var button = event.target.closest('button[data-key]');
+        if (button) handleKey(button.getAttribute('data-key'));
+      });
+
+      document.addEventListener('keydown', function (event) {
+        if (gameScreen.classList.contains('hidden')) return;
+        if (event.key === 'Enter') handleKey('ENTER');
+        else if (event.key === 'Backspace' || event.key === 'Delete') handleKey('BACK');
+        else if (/^[a-zA-Z]$/.test(event.key)) handleKey(event.key.toUpperCase());
+      });
+
+      newRoundButton.addEventListener('click', resetRound);
+
+      buildBoard();
+      buildKeyboard();
+      updateSecretTiles();
+      window.setTimeout(function () { secretInput.focus(); }, 180);
+    }());
+  </script>
+</body>
+</html>
