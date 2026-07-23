@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#172554">
-  <title>Memory Match v1.0.0</title>
+  <title>Memory Match v1.0.1</title>
   <style>
     * { box-sizing: border-box; }
 
@@ -163,9 +163,11 @@
 
     .board {
       --columns: 4;
+      --card-size: clamp(38px, 11vw, 48px);
       display: grid;
-      grid-template-columns: repeat(var(--columns), minmax(0, 1fr));
-      gap: 6px;
+      grid-template-columns: repeat(var(--columns), var(--card-size));
+      justify-content: center;
+      gap: 5px;
       width: 100%;
       user-select: none;
       -webkit-user-select: none;
@@ -173,9 +175,10 @@
 
     .card {
       position: relative;
+      width: var(--card-size);
+      height: var(--card-size);
       min-width: 0;
-      min-height: 44px;
-      aspect-ratio: 1 / 1;
+      min-height: 0;
       padding: 0;
       border: 2px solid #1e3a8a;
       border-radius: 10px;
@@ -214,7 +217,7 @@
       justify-content: center;
       background: white;
       color: var(--letter-color, #ef4444);
-      font-size: clamp(1.45rem, 9vw, 3.3rem);
+      font-size: clamp(1.25rem, 7.2vw, 2.15rem);
       font-weight: 1000;
       line-height: 1;
       text-shadow: 0 1px 0 rgba(0, 0, 0, 0.05);
@@ -243,10 +246,31 @@
       border-color: #22c55e;
       box-shadow: 0 2px 0 #15803d;
       cursor: default;
+      animation: match-pop 650ms ease-out;
     }
 
     .card.matched .letter {
       background: #f0fdf4;
+    }
+
+    .player.score-pop {
+      animation: score-pop 550ms ease-out;
+    }
+
+    @keyframes match-pop {
+      0% { transform: scale(1); }
+      35% {
+        transform: scale(1.2) rotate(-4deg);
+        box-shadow: 0 0 0 5px rgba(34, 197, 94, 0.25), 0 5px 0 #15803d;
+      }
+      65% { transform: scale(0.94) rotate(3deg); }
+      100% { transform: scale(1) rotate(0); }
+    }
+
+    @keyframes score-pop {
+      0% { transform: translateY(-1px) scale(1); }
+      45% { transform: translateY(-2px) scale(1.08); }
+      100% { transform: translateY(-1px) scale(1); }
     }
 
     .modal-layer {
@@ -313,16 +337,46 @@
         padding-right: 8px;
       }
 
-      .board { gap: 5px; }
+      .board {
+        --card-size: clamp(36px, 11vw, 40px);
+        gap: 4px;
+      }
       .card { border-radius: 8px; }
       .status { font-size: 0.88rem; }
       .instructions { font-size: 0.88rem; }
+    }
+
+    @media (max-height: 680px) {
+      .app {
+        padding-top: calc(6px + env(safe-area-inset-top));
+        padding-bottom: calc(10px + env(safe-area-inset-bottom));
+      }
+      .back-link {
+        min-height: 34px;
+        padding-top: 6px;
+        padding-bottom: 6px;
+      }
+      h1 { font-size: clamp(1.65rem, 8vw, 2.4rem); }
+      .instructions {
+        margin-bottom: 8px;
+        font-size: 0.84rem;
+      }
+      .player { padding: 7px 6px; }
+      .player-score { font-size: 1.4rem; }
+      .scoreboard { margin-bottom: 7px; }
+      .game-info { margin-bottom: 5px; }
+      .status {
+        min-height: 36px;
+        margin-bottom: 6px;
+        padding: 6px 8px;
+      }
     }
 
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
         scroll-behavior: auto !important;
         transition: none !important;
+        animation: none !important;
       }
     }
   </style>
@@ -333,12 +387,12 @@
 
     <div class="title-row">
       <h1>Memory Match</h1>
-      <span class="version">v1.0.0</span>
+      <span class="version">v1.0.1</span>
     </div>
 
     <p class="instructions">
       Find matching coloured letters. A match earns one point and another turn.
-      A miss passes the phone to the other player.
+      After a miss, the cards hide after one second and the turn switches automatically.
     </p>
 
     <section class="scoreboard" aria-label="Scores">
@@ -377,7 +431,7 @@
     (function () {
       "use strict";
 
-      var VERSION = "1.0.0";
+      var VERSION = "1.0.1";
       var LEVELS = [
         { pairs: 4, columns: 4 },
         { pairs: 6, columns: 4 },
@@ -610,6 +664,12 @@
           matchesRemaining -= 1;
           clearSelection();
           updateScoreboard();
+          playerPanels[currentPlayer].classList.remove("score-pop");
+          void playerPanels[currentPlayer].offsetWidth;
+          playerPanels[currentPlayer].classList.add("score-pop");
+          window.setTimeout(function () {
+            playerPanels[currentPlayer].classList.remove("score-pop");
+          }, 600);
 
           if (matchesRemaining === 0) {
             finishLevel();
@@ -632,19 +692,9 @@
           clearSelection();
           currentPlayer = nextPlayer;
           updateScoreboard();
-          status.textContent = playerName(currentPlayer) + "'s turn.";
-
-          showModal(
-            "Pass the phone",
-            "Give the phone to " + playerName(currentPlayer) + ". The cards are hidden and ready.",
-            playerName(currentPlayer) + " is ready",
-            "Do not press until the next player has the phone.",
-            function () {
-              hideModal();
-              status.textContent = playerName(currentPlayer) + ": pick two cards.";
-            }
-          );
-        }, 950);
+          status.textContent = playerName(currentPlayer) + ": pick two cards.";
+          locked = false;
+        }, 1000);
       }
 
       function scoreSummary() {

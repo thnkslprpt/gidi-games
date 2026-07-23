@@ -426,13 +426,13 @@
       <select id="levelPicker" class="level-picker" aria-label="Choose level"></select>
     </div>
 
-    <h1>Rush Hour <span class="version">v1.0.0</span></h1>
+    <h1>Rush Hour <span class="version">v1.1.0</span></h1>
     <p class="subtitle">Slide the colourful cars. Get the red car to the exit on the right.</p>
 
     <section class="stats" aria-label="Game status">
       <div class="stat">
         <span class="stat-label">Level</span>
-        <span id="levelStat" class="stat-value">1 / 15</span>
+        <span id="levelStat" class="stat-value">1 / 50</span>
       </div>
       <div class="stat">
         <span class="stat-label">Moves</span>
@@ -481,7 +481,7 @@
     (function () {
       "use strict";
 
-      var VERSION = "1.0.0";
+      var VERSION = "1.1.0";
       var BOARD_SIZE = 6;
 
       var cars = [
@@ -496,23 +496,59 @@
         { id: "H", name: "Indigo car", orientation: "H", lane: 5, length: 2, color: "#818cf8" }
       ];
 
-      // The levels were checked with a solver. Their shortest solutions rise from 1 to 14 moves.
+      // Solver-checked progression: four puzzles at each minimum-move count from 1–10,
+      // then three at 11–12 and two at 13–14. This makes the 50-level curve rise gradually.
       var levels = [
-        { positions: [3, 4, 2, 3, 0, 0, 2, 1, 2], difficulty: "Easy" },
-        { positions: [3, 4, 1, 4, 0, 1, 2, 3, 2], difficulty: "Easy" },
-        { positions: [1, 1, 0, 3, 0, 1, 3, 1, 1], difficulty: "Easy" },
-        { positions: [0, 2, 1, 4, 1, 4, 2, 0, 1], difficulty: "Easy" },
-        { positions: [0, 2, 2, 4, 1, 1, 2, 0, 1], difficulty: "Medium" },
-        { positions: [0, 2, 4, 4, 1, 2, 3, 0, 4], difficulty: "Medium" },
-        { positions: [2, 2, 3, 4, 1, 4, 4, 2, 3], difficulty: "Medium" },
-        { positions: [2, 1, 3, 4, 1, 2, 3, 2, 3], difficulty: "Medium" },
-        { positions: [2, 1, 4, 4, 0, 1, 3, 3, 0], difficulty: "Tricky" },
-        { positions: [0, 2, 3, 3, 0, 3, 4, 4, 3], difficulty: "Tricky" },
-        { positions: [0, 2, 1, 4, 0, 3, 1, 3, 0], difficulty: "Tricky" },
-        { positions: [0, 2, 2, 4, 0, 1, 2, 3, 2], difficulty: "Hard" },
-        { positions: [0, 4, 2, 3, 0, 4, 2, 4, 1], difficulty: "Hard" },
-        { positions: [0, 3, 2, 3, 0, 0, 2, 4, 2], difficulty: "Expert" },
-        { positions: [0, 3, 2, 3, 0, 2, 2, 3, 2], difficulty: "Expert" }
+        { positions: [2, 3, 0, 0, 2, 0, 3, 2, 4], difficulty: "Easy", minimumMoves: 1 },
+        { positions: [1, 3, 1, 0, 3, 3, 0, 3, 0], difficulty: "Easy", minimumMoves: 1 },
+        { positions: [0, 3, 0, 4, 1, 4, 4, 0, 3], difficulty: "Easy", minimumMoves: 1 },
+        { positions: [3, 4, 2, 3, 0, 0, 2, 1, 2], difficulty: "Easy", minimumMoves: 1 },
+        { positions: [3, 3, 2, 1, 3, 2, 1, 0, 4], difficulty: "Easy", minimumMoves: 2 },
+        { positions: [2, 1, 0, 4, 0, 3, 3, 1, 0], difficulty: "Easy", minimumMoves: 2 },
+        { positions: [1, 4, 0, 1, 3, 2, 3, 1, 2], difficulty: "Easy", minimumMoves: 2 },
+        { positions: [3, 4, 1, 4, 0, 1, 2, 3, 2], difficulty: "Easy", minimumMoves: 2 },
+        { positions: [2, 2, 1, 0, 3, 1, 0, 2, 0], difficulty: "Easy+", minimumMoves: 3 },
+        { positions: [0, 1, 3, 0, 3, 4, 0, 3, 1], difficulty: "Easy+", minimumMoves: 3 },
+        { positions: [0, 3, 1, 0, 2, 4, 2, 4, 3], difficulty: "Easy+", minimumMoves: 3 },
+        { positions: [1, 1, 0, 3, 0, 1, 3, 1, 1], difficulty: "Easy+", minimumMoves: 3 },
+        { positions: [2, 1, 4, 0, 3, 2, 0, 4, 3], difficulty: "Easy+", minimumMoves: 4 },
+        { positions: [0, 3, 2, 1, 3, 1, 2, 3, 0], difficulty: "Easy+", minimumMoves: 4 },
+        { positions: [0, 4, 2, 1, 3, 2, 1, 0, 2], difficulty: "Easy+", minimumMoves: 4 },
+        { positions: [0, 2, 1, 4, 1, 4, 2, 0, 1], difficulty: "Easy+", minimumMoves: 4 },
+        { positions: [1, 1, 3, 0, 3, 4, 3, 4, 1], difficulty: "Medium", minimumMoves: 5 },
+        { positions: [0, 2, 3, 0, 2, 3, 4, 3, 4], difficulty: "Medium", minimumMoves: 5 },
+        { positions: [0, 1, 1, 0, 2, 0, 1, 3, 2], difficulty: "Medium", minimumMoves: 5 },
+        { positions: [0, 2, 2, 4, 1, 1, 2, 0, 1], difficulty: "Medium", minimumMoves: 5 },
+        { positions: [2, 1, 3, 4, 1, 3, 4, 0, 0], difficulty: "Medium", minimumMoves: 6 },
+        { positions: [2, 2, 4, 0, 3, 1, 3, 3, 3], difficulty: "Medium", minimumMoves: 6 },
+        { positions: [0, 2, 3, 1, 3, 2, 1, 4, 2], difficulty: "Medium", minimumMoves: 6 },
+        { positions: [0, 2, 4, 4, 1, 2, 3, 0, 4], difficulty: "Medium", minimumMoves: 6 },
+        { positions: [1, 1, 3, 0, 2, 0, 4, 4, 4], difficulty: "Tricky", minimumMoves: 7 },
+        { positions: [1, 1, 3, 1, 3, 3, 3, 1, 3], difficulty: "Tricky", minimumMoves: 7 },
+        { positions: [1, 2, 4, 0, 3, 2, 4, 1, 0], difficulty: "Tricky", minimumMoves: 7 },
+        { positions: [2, 2, 3, 4, 1, 4, 4, 2, 3], difficulty: "Tricky", minimumMoves: 7 },
+        { positions: [2, 2, 4, 0, 2, 0, 3, 3, 2], difficulty: "Tricky", minimumMoves: 8 },
+        { positions: [1, 2, 3, 4, 0, 3, 3, 4, 1], difficulty: "Tricky", minimumMoves: 8 },
+        { positions: [0, 1, 3, 4, 1, 4, 3, 3, 0], difficulty: "Tricky", minimumMoves: 8 },
+        { positions: [2, 1, 3, 4, 1, 2, 3, 2, 3], difficulty: "Tricky", minimumMoves: 8 },
+        { positions: [1, 1, 3, 3, 0, 4, 4, 1, 3], difficulty: "Hard", minimumMoves: 9 },
+        { positions: [1, 1, 4, 0, 2, 0, 4, 1, 0], difficulty: "Hard", minimumMoves: 9 },
+        { positions: [0, 2, 4, 4, 1, 1, 4, 4, 3], difficulty: "Hard", minimumMoves: 9 },
+        { positions: [2, 1, 4, 4, 0, 1, 3, 3, 0], difficulty: "Hard", minimumMoves: 9 },
+        { positions: [2, 2, 3, 3, 0, 0, 3, 2, 2], difficulty: "Hard", minimumMoves: 10 },
+        { positions: [1, 2, 4, 3, 0, 2, 3, 1, 1], difficulty: "Hard", minimumMoves: 10 },
+        { positions: [0, 1, 1, 4, 1, 3, 1, 3, 1], difficulty: "Hard", minimumMoves: 10 },
+        { positions: [0, 2, 3, 3, 0, 3, 4, 4, 3], difficulty: "Hard", minimumMoves: 10 },
+        { positions: [1, 1, 4, 3, 0, 0, 4, 3, 0], difficulty: "Expert", minimumMoves: 11 },
+        { positions: [0, 1, 3, 4, 0, 1, 2, 3, 4], difficulty: "Expert", minimumMoves: 11 },
+        { positions: [0, 2, 1, 4, 0, 3, 1, 3, 0], difficulty: "Expert", minimumMoves: 11 },
+        { positions: [0, 1, 2, 3, 0, 4, 2, 4, 1], difficulty: "Expert", minimumMoves: 12 },
+        { positions: [0, 4, 2, 4, 1, 2, 1, 4, 1], difficulty: "Expert", minimumMoves: 12 },
+        { positions: [0, 2, 2, 4, 0, 1, 2, 3, 2], difficulty: "Expert", minimumMoves: 12 },
+        { positions: [0, 1, 4, 3, 0, 0, 1, 3, 4], difficulty: "Master", minimumMoves: 13 },
+        { positions: [0, 4, 2, 3, 0, 4, 2, 4, 1], difficulty: "Master", minimumMoves: 13 },
+        { positions: [0, 3, 2, 3, 0, 0, 2, 4, 2], difficulty: "Master", minimumMoves: 14 },
+        { positions: [0, 3, 2, 3, 0, 2, 2, 3, 2], difficulty: "Master", minimumMoves: 14 }
       ];
 
       var board = document.getElementById("board");
