@@ -117,8 +117,8 @@
   <header>
     <div class="shell">
       <a class="back" href="../../">← All games</a>
-      <h1>Crazy Cats <span class="version">v1.1.0</span></h1>
-      <p>Pull the slingshot back, let go, and smash the block towers.</p>
+      <h1>Crazy Cats <span class="version">v1.2.0</span></h1>
+      <p>Smash explosive towers, trigger bombs, and survive all 10 levels.</p>
     </div>
   </header>
 
@@ -126,7 +126,7 @@
     <section class="hud" aria-label="Game status">
       <div class="stat"><span>ANGRY PARENTS</span><strong id="parents">0</strong></div>
       <div class="stat"><span>CATS LEFT</span><strong id="catsLeft">5</strong></div>
-      <div class="stat"><span>LEVEL</span><strong id="level">1</strong></div>
+      <div class="stat"><span>LEVEL</span><strong id="level">1 / 10</strong></div>
     </section>
 
     <div class="game-wrap">
@@ -137,7 +137,7 @@
       <p class="message" id="message" aria-live="polite">Grab the cat, pull back, and let go!</p>
       <button id="restart" type="button">Restart level</button>
     </div>
-    <p class="help">Every block you knock down equals <strong>1 angry parent</strong>.</p>
+    <p class="help">Hard impacts explode blocks. Bombs destroy nearby blocks. Every destroyed or toppled block equals <strong>1 angry parent</strong>.</p>
   </main>
 
   <script>
@@ -155,38 +155,168 @@
       var W = 900;
       var H = 520;
       var groundY = 445;
-      var sling = { x: 145, y: 335, maxPull: 128 };
-      var launchPower = 10.2;
-      var gravity = 900;
+      var sling = { x: 145, y: 335, maxPull: 132 };
+      var launchPower = 10.4;
+      var gravity = 930;
       var level = 1;
       var angryParents = 0;
       var catsLeft = 5;
       var cat;
       var blocks = [];
+      var bombs = [];
+      var obstacles = [];
+      var particles = [];
       var dragging = false;
       var pointerId = null;
       var shotSettledAt = 0;
       var lastTime = performance.now();
+      var levelCompleteAt = 0;
+      var gameWon = false;
 
-      var layouts = [
-        [
-          [650, 405, 34, 80], [735, 405, 34, 80],
-          [692, 348, 145, 28], [675, 302, 34, 64], [712, 302, 34, 64],
-          [692, 259, 118, 25]
-        ],
-        [
-          [610, 405, 32, 80], [690, 405, 32, 80], [770, 405, 32, 80],
-          [650, 350, 110, 28], [730, 350, 110, 28],
-          [650, 300, 30, 72], [730, 300, 30, 72],
-          [690, 250, 180, 27]
-        ],
-        [
-          [625, 407, 32, 76], [690, 407, 32, 76], [755, 407, 32, 76],
-          [657, 357, 96, 26], [723, 357, 96, 26],
-          [657, 311, 30, 66], [723, 311, 30, 66],
-          [690, 268, 152, 26], [690, 225, 34, 62]
-        ]
+      var materials = {
+        glass: { fill: "#8ee7ef", stroke: "#247b86", breakSpeed: 340, groundSpeed: 300, mass: 0.72 },
+        wood: { fill: "#d58a3e", stroke: "#7a3f18", breakSpeed: 515, groundSpeed: 430, mass: 1 },
+        stone: { fill: "#9ca3af", stroke: "#4b5563", breakSpeed: 690, groundSpeed: 575, mass: 1.45 }
+      };
+
+      function block(x, y, w, h, material) {
+        return [x, y, w, h, material || "wood"];
+      }
+
+      function obstacle(x, y, w, h, kind) {
+        return [x, y, w, h, kind || "metal"];
+      }
+
+      function bomb(x, y, radius) {
+        return [x, y, radius || 18];
+      }
+
+      var levels = [
+        {
+          name: "First Crash",
+          cats: 5,
+          blocks: [
+            block(650, 405, 34, 80), block(735, 405, 34, 80),
+            block(692, 348, 145, 28), block(675, 302, 34, 64),
+            block(712, 302, 34, 64), block(692, 259, 118, 25, "glass")
+          ],
+          bombs: [], obstacles: []
+        },
+        {
+          name: "High Rise",
+          cats: 5,
+          blocks: [
+            block(625, 407, 32, 76), block(690, 407, 32, 76), block(755, 407, 32, 76),
+            block(657, 357, 96, 26), block(723, 357, 96, 26),
+            block(657, 311, 30, 66), block(723, 311, 30, 66),
+            block(690, 268, 152, 26), block(690, 225, 34, 62, "glass")
+          ],
+          bombs: [], obstacles: []
+        },
+        {
+          name: "Twin Trouble",
+          cats: 6,
+          blocks: [
+            block(560, 407, 30, 76), block(620, 407, 30, 76), block(590, 357, 94, 25),
+            block(575, 314, 28, 62, "glass"), block(605, 314, 28, 62, "glass"), block(590, 275, 82, 22),
+            block(735, 407, 30, 76), block(795, 407, 30, 76), block(765, 357, 94, 25),
+            block(750, 314, 28, 62, "glass"), block(780, 314, 28, 62, "glass"), block(765, 275, 82, 22)
+          ],
+          bombs: [], obstacles: []
+        },
+        {
+          name: "Bomb School",
+          cats: 6,
+          blocks: [
+            block(585, 407, 34, 76), block(655, 407, 34, 76), block(620, 356, 112, 26),
+            block(620, 311, 32, 64, "glass"), block(620, 267, 105, 24),
+            block(740, 407, 34, 76), block(810, 407, 34, 76), block(775, 356, 112, 26),
+            block(775, 311, 32, 64, "glass"), block(775, 267, 105, 24)
+          ],
+          bombs: [bomb(697, 424, 18)], obstacles: []
+        },
+        {
+          name: "Stone Gate",
+          cats: 6,
+          blocks: [
+            block(610, 405, 38, 80, "stone"), block(680, 405, 38, 80, "stone"),
+            block(645, 350, 116, 28, "stone"), block(630, 301, 32, 70), block(660, 301, 32, 70),
+            block(645, 257, 105, 24, "glass"),
+            block(775, 405, 34, 80), block(830, 405, 34, 80), block(802, 350, 92, 26),
+            block(802, 304, 30, 66, "glass")
+          ],
+          bombs: [bomb(724, 424, 19)],
+          obstacles: [obstacle(520, 395, 24, 100, "shield")]
+        },
+        {
+          name: "Bridge Blast",
+          cats: 7,
+          blocks: [
+            block(548, 352, 30, 68), block(600, 352, 30, 68), block(574, 306, 88, 24, "glass"),
+            block(750, 352, 30, 68), block(802, 352, 30, 68), block(776, 306, 88, 24, "glass"),
+            block(675, 270, 250, 24, "stone"), block(640, 226, 30, 62), block(710, 226, 30, 62),
+            block(675, 185, 112, 22, "glass")
+          ],
+          bombs: [bomb(625, 424, 18), bomb(724, 424, 18)],
+          obstacles: [obstacle(520, 390, 118, 18, "platform"), obstacle(804, 390, 118, 18, "platform")]
+        },
+        {
+          name: "Three Peaks",
+          cats: 7,
+          blocks: [
+            block(535, 407, 30, 76), block(585, 407, 30, 76), block(560, 357, 82, 24), block(560, 314, 28, 62, "glass"),
+            block(655, 407, 34, 76, "stone"), block(715, 407, 34, 76, "stone"), block(685, 357, 98, 26), block(685, 312, 30, 64, "glass"),
+            block(785, 407, 30, 76), block(835, 407, 30, 76), block(810, 357, 82, 24), block(810, 314, 28, 62, "glass"),
+            block(685, 260, 300, 24, "stone"), block(685, 218, 34, 60, "glass")
+          ],
+          bombs: [bomb(620, 424, 18), bomb(750, 424, 18)], obstacles: []
+        },
+        {
+          name: "Fortress",
+          cats: 8,
+          blocks: [
+            block(585, 405, 40, 80, "stone"), block(650, 405, 40, 80, "stone"),
+            block(715, 405, 40, 80, "stone"), block(780, 405, 40, 80, "stone"),
+            block(618, 348, 105, 28), block(748, 348, 105, 28),
+            block(618, 300, 34, 68, "glass"), block(748, 300, 34, 68, "glass"),
+            block(683, 253, 270, 28, "stone"), block(650, 206, 34, 66), block(716, 206, 34, 66),
+            block(683, 162, 116, 24, "glass")
+          ],
+          bombs: [bomb(683, 424, 20), bomb(683, 303, 17)],
+          obstacles: [obstacle(515, 404, 24, 82, "shield"), obstacle(850, 404, 24, 82, "shield")]
+        },
+        {
+          name: "Bomb Alley",
+          cats: 8,
+          blocks: [
+            block(545, 355, 30, 68), block(595, 355, 30, 68), block(570, 309, 84, 24, "glass"),
+            block(655, 407, 34, 76, "stone"), block(715, 407, 34, 76, "stone"), block(685, 357, 98, 26),
+            block(685, 311, 30, 66, "glass"), block(685, 267, 90, 24),
+            block(785, 355, 30, 68), block(835, 355, 30, 68), block(810, 309, 84, 24, "glass"),
+            block(690, 214, 315, 24, "stone")
+          ],
+          bombs: [bomb(520, 424, 17), bomb(625, 424, 18), bomb(750, 424, 18), bomb(855, 424, 17)],
+          obstacles: [obstacle(570, 390, 112, 18, "platform"), obstacle(810, 390, 112, 18, "platform")]
+        },
+        {
+          name: "Catastrophe Castle",
+          cats: 9,
+          blocks: [
+            block(520, 405, 38, 80, "stone"), block(575, 405, 32, 80), block(547, 350, 94, 26), block(547, 304, 30, 66, "glass"),
+            block(650, 405, 40, 80, "stone"), block(715, 405, 40, 80, "stone"), block(682, 348, 108, 28, "stone"),
+            block(665, 300, 32, 68), block(700, 300, 32, 68), block(682, 255, 108, 24, "glass"),
+            block(790, 405, 32, 80), block(845, 405, 38, 80, "stone"), block(817, 350, 94, 26), block(817, 304, 30, 66, "glass"),
+            block(682, 210, 330, 26, "stone"), block(640, 162, 34, 66), block(724, 162, 34, 66),
+            block(682, 118, 125, 24, "glass")
+          ],
+          bombs: [bomb(612, 424, 18), bomb(752, 424, 18), bomb(610, 258, 16), bomb(755, 258, 16)],
+          obstacles: [obstacle(475, 404, 24, 82, "shield"), obstacle(875, 404, 24, 82, "shield")]
+        }
       ];
+
+      function currentLevel() {
+        return levels[level - 1];
+      }
 
       function newCat() {
         cat = {
@@ -204,32 +334,42 @@
         shotSettledAt = 0;
       }
 
-      function makeBlocks() {
-        var layout = layouts[(level - 1) % layouts.length];
-        blocks = layout.map(function (b, i) {
+      function makeLevel() {
+        var spec = currentLevel();
+        blocks = spec.blocks.map(function (b, i) {
+          var material = b[4] || "wood";
           return {
-            x: b[0], y: b[1], w: b[2], h: b[3],
-            x0: b[0], y0: b[1],
-            vx: 0, vy: 0, angle: 0, spin: 0,
-            scored: false, gone: false, sleeping: true,
-            hitAt: 0, shade: i % 3
+            x: b[0], y: b[1], w: b[2], h: b[3], material: material,
+            x0: b[0], y0: b[1], vx: 0, vy: 0, angle: 0, spin: 0,
+            scored: false, gone: false, sleeping: true, hitAt: 0,
+            shade: i % 3, damage: 0, flash: 0,
+            mass: materials[material].mass
           };
         });
+        bombs = spec.bombs.map(function (b) {
+          return { x: b[0], y: b[1], r: b[2], exploded: false, pulse: Math.random() * 6.28 };
+        });
+        obstacles = spec.obstacles.map(function (o) {
+          return { x: o[0], y: o[1], w: o[2], h: o[3], kind: o[4] };
+        });
+        particles = [];
       }
 
       function resetLevel(keepScore) {
         if (!keepScore) angryParents = 0;
-        catsLeft = 5;
-        makeBlocks();
+        gameWon = false;
+        levelCompleteAt = 0;
+        catsLeft = currentLevel().cats;
+        makeLevel();
         newCat();
-        setMessage("Grab the cat, pull back, and let go!");
+        setMessage("Level " + level + ": " + currentLevel().name + ". Pull back and fire!");
         updateHud();
       }
 
       function updateHud() {
         parentsEl.textContent = angryParents;
         catsLeftEl.textContent = catsLeft;
-        levelEl.textContent = level;
+        levelEl.textContent = level + " / " + levels.length;
       }
 
       function setMessage(text) {
@@ -257,7 +397,7 @@
       }
 
       function onPointerDown(event) {
-        if (cat.launched) return;
+        if (cat.launched || gameWon || levelCompleteAt) return;
         var p = getPoint(event);
         var dx = p.x - cat.x;
         var dy = p.y - cat.y;
@@ -318,80 +458,194 @@
         return dx * dx + dy * dy < c.r * c.r;
       }
 
-      function markBlockScored(block) {
-        if (block.scored) return;
-        block.scored = true;
-        angryParents += 1;
-        updateHud();
-        setMessage("+1 angry parent!");
+      function aabbOverlap(a, b) {
+        return Math.abs(a.x - b.x) * 2 < a.w + b.w &&
+          Math.abs(a.y - b.y) * 2 < a.h + b.h;
       }
 
-      function hitBlock(block, impactX, impactY, now) {
-        if (now - block.hitAt < 120) return;
-        block.hitAt = now;
-        markBlockScored(block);
-        block.sleeping = false;
-        block.vx += impactX * 0.42;
-        block.vy += impactY * 0.22 - 75;
-        block.spin += impactX * 0.002 + (Math.random() - 0.5) * 1.6;
+      function markBlockScored(blockItem) {
+        if (blockItem.scored) return;
+        blockItem.scored = true;
+        angryParents += 1;
+        updateHud();
+      }
+
+      function addParticles(x, y, count, fill, power) {
+        for (var i = 0; i < count; i += 1) {
+          var angle = Math.random() * Math.PI * 2;
+          var speed = (55 + Math.random() * power);
+          particles.push({
+            x: x, y: y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed - 80,
+            life: 0.55 + Math.random() * 0.55,
+            size: 3 + Math.random() * 7,
+            fill: fill
+          });
+        }
+      }
+
+      function explodeBlock(blockItem, force, source) {
+        if (blockItem.gone) return;
+        markBlockScored(blockItem);
+        blockItem.gone = true;
+        addParticles(blockItem.x, blockItem.y, 13, materials[blockItem.material].fill, Math.min(360, 120 + force * 0.25));
+        if (source === "ground") setMessage("Ground smash! +1 angry parent!");
+        else if (source === "bomb") setMessage("Bomb chain! Blocks destroyed!");
+        else setMessage("Block exploded! +1 angry parent!");
+      }
+
+      function triggerBomb(bombItem) {
+        if (bombItem.exploded) return;
+        bombItem.exploded = true;
+        addParticles(bombItem.x, bombItem.y, 34, "#ffb020", 410);
+        addParticles(bombItem.x, bombItem.y, 18, "#ef4444", 310);
+        setMessage("BOOM! The bomb destroyed nearby blocks!");
+
+        blocks.forEach(function (blockItem) {
+          if (blockItem.gone) return;
+          var dx = blockItem.x - bombItem.x;
+          var dy = blockItem.y - bombItem.y;
+          var distance = Math.sqrt(dx * dx + dy * dy) || 1;
+          var radius = 142;
+          if (distance < radius * 0.78) {
+            explodeBlock(blockItem, 900, "bomb");
+          } else if (distance < radius) {
+            var strength = (radius - distance) / radius;
+            blockItem.sleeping = false;
+            blockItem.vx += dx / distance * (280 + 420 * strength) / blockItem.mass;
+            blockItem.vy += dy / distance * (220 + 330 * strength) / blockItem.mass - 150;
+            blockItem.spin += (Math.random() - 0.5) * 8;
+            blockItem.flash = 0.15;
+          }
+        });
+
+        bombs.forEach(function (other) {
+          if (other.exploded || other === bombItem) return;
+          var dx = other.x - bombItem.x;
+          var dy = other.y - bombItem.y;
+          if (dx * dx + dy * dy < 165 * 165) triggerBomb(other);
+        });
+      }
+
+      function hitBlock(blockItem, impactX, impactY, speed, now) {
+        if (blockItem.gone || now - blockItem.hitAt < 95) return;
+        blockItem.hitAt = now;
+        blockItem.flash = 0.12;
+        blockItem.damage += speed;
+        var spec = materials[blockItem.material];
+        if (speed >= spec.breakSpeed || blockItem.damage >= spec.breakSpeed * 1.55) {
+          explodeBlock(blockItem, speed, "cat");
+          return;
+        }
+        markBlockScored(blockItem);
+        blockItem.sleeping = false;
+        blockItem.vx += impactX * 0.42 / blockItem.mass;
+        blockItem.vy += impactY * 0.22 / blockItem.mass - 75;
+        blockItem.spin += impactX * 0.002 / blockItem.mass + (Math.random() - 0.5) * 1.6;
+        setMessage("Tower hit! +1 angry parent!");
       }
 
       function horizontalOverlap(a, b) {
         return Math.min(a.x + a.w / 2, b.x + b.w / 2) -
-               Math.max(a.x - a.w / 2, b.x - b.w / 2);
+          Math.max(a.x - a.w / 2, b.x - b.w / 2);
+      }
+
+      function resolveObstacleCollision(blockItem, obstacleItem, oldX, oldY) {
+        if (!aabbOverlap(blockItem, obstacleItem)) return;
+        var overlapX = (blockItem.w + obstacleItem.w) / 2 - Math.abs(blockItem.x - obstacleItem.x);
+        var overlapY = (blockItem.h + obstacleItem.h) / 2 - Math.abs(blockItem.y - obstacleItem.y);
+        if (overlapY <= overlapX) {
+          var landingSpeed = blockItem.vy;
+          if (oldY < obstacleItem.y) blockItem.y = obstacleItem.y - obstacleItem.h / 2 - blockItem.h / 2;
+          else blockItem.y = obstacleItem.y + obstacleItem.h / 2 + blockItem.h / 2;
+          blockItem.vy = oldY < obstacleItem.y ? 0 : Math.max(0, blockItem.vy);
+          blockItem.vx *= 0.85;
+          blockItem.spin *= 0.8;
+          if (oldY < obstacleItem.y && landingSpeed > materials[blockItem.material].groundSpeed * 1.08) {
+            explodeBlock(blockItem, landingSpeed, "ground");
+          }
+        } else {
+          if (oldX < obstacleItem.x) blockItem.x = obstacleItem.x - obstacleItem.w / 2 - blockItem.w / 2;
+          else blockItem.x = obstacleItem.x + obstacleItem.w / 2 + blockItem.w / 2;
+          blockItem.vx *= -0.22;
+          blockItem.spin += (oldX < obstacleItem.x ? -1 : 1) * 0.8;
+        }
       }
 
       function resolveBlockPhysics(dt) {
-        var previousY = [];
+        var previous = [];
 
-        blocks.forEach(function (block, index) {
-          if (block.gone) return;
-          previousY[index] = block.y;
-          block.vy += gravity * dt;
-          block.x += block.vx * dt;
-          block.y += block.vy * dt;
-          block.angle += block.spin * dt;
-          block.vx *= Math.pow(0.987, dt * 60);
-          block.spin *= Math.pow(0.982, dt * 60);
-          block.sleeping = false;
+        blocks.forEach(function (blockItem, index) {
+          if (blockItem.gone) return;
+          previous[index] = { x: blockItem.x, y: blockItem.y };
+          blockItem.flash = Math.max(0, blockItem.flash - dt);
+          blockItem.vy += gravity * dt;
+          blockItem.x += blockItem.vx * dt;
+          blockItem.y += blockItem.vy * dt;
+          blockItem.angle += blockItem.spin * dt;
+          blockItem.vx *= Math.pow(0.987, dt * 60);
+          blockItem.spin *= Math.pow(0.982, dt * 60);
+          blockItem.sleeping = false;
+
+          obstacles.forEach(function (obstacleItem) {
+            if (!blockItem.gone) resolveObstacleCollision(blockItem, obstacleItem, previous[index].x, previous[index].y);
+          });
         });
 
         for (var pass = 0; pass < 4; pass += 1) {
-          blocks.forEach(function (block, index) {
-            if (block.gone) return;
+          blocks.forEach(function (blockItem, index) {
+            if (blockItem.gone) return;
             var supported = false;
-            var bottom = block.y + block.h / 2;
+            var bottom = blockItem.y + blockItem.h / 2;
 
             if (bottom >= groundY) {
-              block.y = groundY - block.h / 2;
-              if (block.vy > 45) block.vy *= -0.12;
-              else block.vy = 0;
-              block.vx *= 0.82;
-              block.spin *= 0.75;
+              var landingSpeed = blockItem.vy;
+              blockItem.y = groundY - blockItem.h / 2;
+              if (landingSpeed > materials[blockItem.material].groundSpeed) {
+                explodeBlock(blockItem, landingSpeed, "ground");
+                return;
+              }
+              if (blockItem.vy > 45) blockItem.vy *= -0.12;
+              else blockItem.vy = 0;
+              blockItem.vx *= 0.82;
+              blockItem.spin *= 0.75;
               supported = true;
             } else {
               var contacts = [];
-              var newBottom = block.y + block.h / 2;
-              var oldBottom = previousY[index] + block.h / 2;
+              var newBottom = blockItem.y + blockItem.h / 2;
+              var oldBottom = previous[index].y + blockItem.h / 2;
 
               blocks.forEach(function (support, supportIndex) {
-                if (supportIndex === index || support.gone || block.y >= support.y) return;
-                var overlap = horizontalOverlap(block, support);
-                if (overlap < Math.min(12, block.w * 0.24)) return;
-
+                if (supportIndex === index || support.gone || blockItem.y >= support.y) return;
+                var overlap = horizontalOverlap(blockItem, support);
+                if (overlap < Math.min(12, blockItem.w * 0.24)) return;
                 var supportTop = support.y - support.h / 2;
-                var crossingTop = block.vy >= -20 &&
-                  oldBottom <= supportTop + 14 &&
-                  newBottom >= supportTop - 4 &&
-                  newBottom <= supportTop + 20;
+                var crossingTop = blockItem.vy >= -20 && oldBottom <= supportTop + 14 &&
+                  newBottom >= supportTop - 4 && newBottom <= supportTop + 20;
                 if (!crossingTop) return;
-
                 contacts.push({
                   block: support,
                   top: supportTop,
-                  left: Math.max(block.x - block.w / 2, support.x - support.w / 2),
-                  right: Math.min(block.x + block.w / 2, support.x + support.w / 2)
+                  left: Math.max(blockItem.x - blockItem.w / 2, support.x - support.w / 2),
+                  right: Math.min(blockItem.x + blockItem.w / 2, support.x + support.w / 2)
                 });
+              });
+
+              obstacles.forEach(function (support) {
+                if (blockItem.y >= support.y) return;
+                var overlap = horizontalOverlap(blockItem, support);
+                if (overlap < Math.min(12, blockItem.w * 0.24)) return;
+                var supportTop = support.y - support.h / 2;
+                if (blockItem.vy >= -20 && oldBottom <= supportTop + 14 &&
+                    newBottom >= supportTop - 4 && newBottom <= supportTop + 20) {
+                  contacts.push({
+                    block: null,
+                    top: supportTop,
+                    left: Math.max(blockItem.x - blockItem.w / 2, support.x - support.w / 2),
+                    right: Math.min(blockItem.x + blockItem.w / 2, support.x + support.w / 2)
+                  });
+                }
               });
 
               if (contacts.length) {
@@ -407,49 +661,96 @@
                 var supportRight = levelContacts.reduce(function (right, contact) {
                   return Math.max(right, contact.right);
                 }, levelContacts[0].right);
-                var balanceMargin = Math.min(6, block.w * 0.08);
-                var balanced = block.x >= supportLeft + balanceMargin &&
-                  block.x <= supportRight - balanceMargin;
+                var balanceMargin = Math.min(6, blockItem.w * 0.08);
+                var balanced = blockItem.x >= supportLeft + balanceMargin &&
+                  blockItem.x <= supportRight - balanceMargin;
 
                 if (balanced) {
-                  var landingSpeed = block.vy;
-                  block.y = highestTop - block.h / 2;
-                  block.vy = 0;
-                  block.vx *= 0.88;
-                  block.spin *= 0.84;
+                  var supportLandingSpeed = blockItem.vy;
+                  blockItem.y = highestTop - blockItem.h / 2;
+                  blockItem.vy = 0;
+                  blockItem.vx *= 0.88;
+                  blockItem.spin *= 0.84;
                   supported = true;
 
-                  if (landingSpeed > 180) {
+                  if (supportLandingSpeed > materials[blockItem.material].groundSpeed * 1.18) {
+                    explodeBlock(blockItem, supportLandingSpeed, "ground");
+                    return;
+                  }
+                  if (supportLandingSpeed > 180) {
                     levelContacts.forEach(function (contact) {
+                      if (!contact.block) return;
                       contact.block.sleeping = false;
-                      contact.block.vx += block.vx * 0.06;
-                      contact.block.vy += Math.min(75, landingSpeed * 0.05);
+                      contact.block.vx += blockItem.vx * 0.06;
+                      contact.block.vy += Math.min(75, supportLandingSpeed * 0.05);
                     });
                   }
                 } else {
-                  var tipDirection = block.x > (supportLeft + supportRight) / 2 ? 1 : -1;
-                  block.spin += tipDirection * 1.8 * dt;
-                  block.vx += tipDirection * 42 * dt;
+                  var tipDirection = blockItem.x > (supportLeft + supportRight) / 2 ? 1 : -1;
+                  blockItem.spin += tipDirection * 1.8 * dt;
+                  blockItem.vx += tipDirection * 42 * dt;
                 }
               }
             }
 
-            if (supported && Math.abs(block.vx) < 4 && Math.abs(block.spin) < 0.08) {
-              block.vx = 0;
-              block.spin = 0;
-              block.sleeping = true;
+            if (supported && Math.abs(blockItem.vx) < 4 && Math.abs(blockItem.spin) < 0.08) {
+              blockItem.vx = 0;
+              blockItem.spin = 0;
+              blockItem.sleeping = true;
             }
 
-            if (Math.abs(block.x - block.x0) > 12 ||
-                block.y > block.y0 + 10 || Math.abs(block.angle) > 0.11) {
-              markBlockScored(block);
+            if (Math.abs(blockItem.x - blockItem.x0) > 12 ||
+                blockItem.y > blockItem.y0 + 10 || Math.abs(blockItem.angle) > 0.11) {
+              markBlockScored(blockItem);
             }
 
-            if (block.x > W + 120 || block.x < -120 || block.y > H + 140) {
-              block.gone = true;
+            if (blockItem.x > W + 120 || blockItem.x < -120 || blockItem.y > H + 140) {
+              blockItem.gone = true;
             }
           });
         }
+
+        bombs.forEach(function (bombItem) {
+          if (bombItem.exploded) return;
+          blocks.some(function (blockItem) {
+            if (blockItem.gone) return false;
+            var speed = Math.sqrt(blockItem.vx * blockItem.vx + blockItem.vy * blockItem.vy);
+            var hitBox = { x: bombItem.x, y: bombItem.y, w: bombItem.r * 2, h: bombItem.r * 2 };
+            if (speed > 70 && aabbOverlap(blockItem, hitBox)) {
+              triggerBomb(bombItem);
+              return true;
+            }
+            return false;
+          });
+        });
+      }
+
+      function bounceCatFromObstacle(obstacleItem) {
+        if (!circleRectHit(cat, obstacleItem)) return;
+        var dx = cat.x - obstacleItem.x;
+        var dy = cat.y - obstacleItem.y;
+        var px = obstacleItem.w / 2 + cat.r - Math.abs(dx);
+        var py = obstacleItem.h / 2 + cat.r - Math.abs(dy);
+        if (px < py) {
+          cat.x += dx < 0 ? -px : px;
+          cat.vx *= -0.48;
+          cat.vy *= 0.9;
+        } else {
+          cat.y += dy < 0 ? -py : py;
+          cat.vy *= -0.42;
+          cat.vx *= 0.9;
+        }
+      }
+
+      function updateParticles(dt) {
+        particles.forEach(function (p) {
+          p.life -= dt;
+          p.vy += gravity * 0.72 * dt;
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+          p.vx *= Math.pow(0.985, dt * 60);
+        });
+        particles = particles.filter(function (p) { return p.life > 0; });
       }
 
       function update(dt, now) {
@@ -466,14 +767,26 @@
             if (Math.abs(cat.vy) < 38) cat.vy = 0;
           }
 
-          blocks.forEach(function (block) {
-            if (circleRectHit(cat, block)) {
-              var speed = Math.sqrt(cat.vx * cat.vx + cat.vy * cat.vy);
-              if (speed > 70) {
-                hitBlock(block, cat.vx, cat.vy, now);
-                cat.vx *= 0.66;
-                cat.vy *= 0.74;
-              }
+          obstacles.forEach(bounceCatFromObstacle);
+
+          blocks.forEach(function (blockItem) {
+            if (!circleRectHit(cat, blockItem)) return;
+            var speed = Math.sqrt(cat.vx * cat.vx + cat.vy * cat.vy);
+            if (speed > 70) {
+              hitBlock(blockItem, cat.vx, cat.vy, speed, now);
+              cat.vx *= blockItem.material === "stone" ? 0.48 : 0.66;
+              cat.vy *= blockItem.material === "stone" ? 0.58 : 0.74;
+            }
+          });
+
+          bombs.forEach(function (bombItem) {
+            if (bombItem.exploded) return;
+            var dx = cat.x - bombItem.x;
+            var dy = cat.y - bombItem.y;
+            if (dx * dx + dy * dy < (cat.r + bombItem.r) * (cat.r + bombItem.r)) {
+              triggerBomb(bombItem);
+              cat.vx *= 0.72;
+              cat.vy -= 180;
             }
           });
 
@@ -485,16 +798,28 @@
         }
 
         resolveBlockPhysics(dt);
+        updateParticles(dt);
 
-        var remaining = blocks.some(function (block) { return !block.scored; });
-        if (!remaining) {
+        var remaining = blocks.some(function (blockItem) { return !blockItem.scored && !blockItem.gone; });
+        if (!remaining && !levelCompleteAt) {
+          levelCompleteAt = now;
+          if (level === levels.length) {
+            gameWon = true;
+            setMessage("You beat all 10 levels! Total angry parents: " + angryParents + ".");
+          } else {
+            setMessage("Level smashed! Get ready for " + levels[level].name + "!");
+          }
+        }
+
+        if (levelCompleteAt && !gameWon && now - levelCompleteAt > 1200) {
           level += 1;
-          setMessage("Tower smashed! Next level!");
-          makeBlocks();
-          catsLeft = 5;
+          levelCompleteAt = 0;
+          catsLeft = currentLevel().cats;
+          makeLevel();
           newCat();
           updateHud();
-        } else if (cat.resting && now - shotSettledAt > 850) {
+          setMessage("Level " + level + ": " + currentLevel().name + ". Pull back and fire!");
+        } else if (!levelCompleteAt && cat.resting && now - shotSettledAt > 850) {
           if (catsLeft > 0) {
             newCat();
             setMessage("Next cat ready. Pull back and fire!");
@@ -548,24 +873,61 @@
         ctx.stroke();
       }
 
-      function drawBlock(block) {
-        if (block.gone) return;
-        var colors = ["#c97b32", "#de9a4b", "#b96528"];
+      function drawObstacle(obstacleItem) {
         ctx.save();
-        ctx.translate(block.x, block.y);
-        ctx.rotate(block.angle);
-        ctx.fillStyle = colors[block.shade];
-        ctx.strokeStyle = "#7a3f18";
+        ctx.translate(obstacleItem.x, obstacleItem.y);
+        ctx.fillStyle = obstacleItem.kind === "platform" ? "#64748b" : "#475569";
+        ctx.strokeStyle = "#1e293b";
         ctx.lineWidth = 3;
-        ctx.fillRect(-block.w / 2, -block.h / 2, block.w, block.h);
-        ctx.strokeRect(-block.w / 2, -block.h / 2, block.w, block.h);
+        ctx.fillRect(-obstacleItem.w / 2, -obstacleItem.h / 2, obstacleItem.w, obstacleItem.h);
+        ctx.strokeRect(-obstacleItem.w / 2, -obstacleItem.h / 2, obstacleItem.w, obstacleItem.h);
         ctx.strokeStyle = "rgba(255,255,255,.35)";
         ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(-block.w / 2 + 6, -block.h / 2 + 7);
-        ctx.lineTo(block.w / 2 - 6, -block.h / 2 + 7);
-        ctx.stroke();
-        if (block.scored) {
+        for (var x = -obstacleItem.w / 2 + 8; x < obstacleItem.w / 2; x += 18) {
+          ctx.beginPath();
+          ctx.moveTo(x, -obstacleItem.h / 2 + 4);
+          ctx.lineTo(x + 8, obstacleItem.h / 2 - 4);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+      function drawBlock(blockItem) {
+        if (blockItem.gone) return;
+        var spec = materials[blockItem.material];
+        ctx.save();
+        ctx.translate(blockItem.x, blockItem.y);
+        ctx.rotate(blockItem.angle);
+        ctx.fillStyle = blockItem.flash > 0 ? "#ffffff" : spec.fill;
+        ctx.strokeStyle = spec.stroke;
+        ctx.lineWidth = 3;
+        ctx.fillRect(-blockItem.w / 2, -blockItem.h / 2, blockItem.w, blockItem.h);
+        ctx.strokeRect(-blockItem.w / 2, -blockItem.h / 2, blockItem.w, blockItem.h);
+
+        if (blockItem.material === "glass") {
+          ctx.strokeStyle = "rgba(255,255,255,.7)";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(-blockItem.w / 2 + 5, blockItem.h / 2 - 5);
+          ctx.lineTo(blockItem.w / 2 - 5, -blockItem.h / 2 + 5);
+          ctx.stroke();
+        } else if (blockItem.material === "stone") {
+          ctx.strokeStyle = "rgba(255,255,255,.32)";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(-blockItem.w / 2 + 6, 0);
+          ctx.lineTo(blockItem.w / 2 - 6, 0);
+          ctx.stroke();
+        } else {
+          ctx.strokeStyle = "rgba(255,255,255,.35)";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(-blockItem.w / 2 + 6, -blockItem.h / 2 + 7);
+          ctx.lineTo(blockItem.w / 2 - 6, -blockItem.h / 2 + 7);
+          ctx.stroke();
+        }
+
+        if (blockItem.scored) {
           ctx.fillStyle = "rgba(255,255,255,.78)";
           ctx.font = "bold 18px -apple-system, sans-serif";
           ctx.textAlign = "center";
@@ -573,6 +935,46 @@
           ctx.fillText("😡", 0, 0);
         }
         ctx.restore();
+      }
+
+      function drawBomb(bombItem, now) {
+        if (bombItem.exploded) return;
+        var pulse = 1 + Math.sin(now * 0.008 + bombItem.pulse) * 0.08;
+        ctx.save();
+        ctx.translate(bombItem.x, bombItem.y);
+        ctx.scale(pulse, pulse);
+        ctx.fillStyle = "#1f2937";
+        ctx.strokeStyle = "#111827";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(0, 0, bombItem.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.strokeStyle = "#7c2d12";
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(8, -14);
+        ctx.quadraticCurveTo(17, -30, 26, -18);
+        ctx.stroke();
+        ctx.fillStyle = "#fbbf24";
+        ctx.beginPath();
+        ctx.arc(27, -18, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "white";
+        ctx.font = "bold 18px -apple-system, sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("!", 0, 1);
+        ctx.restore();
+      }
+
+      function drawParticles() {
+        particles.forEach(function (p) {
+          ctx.globalAlpha = Math.max(0, Math.min(1, p.life * 1.5));
+          ctx.fillStyle = p.fill;
+          ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+        });
+        ctx.globalAlpha = 1;
       }
 
       function drawCat() {
@@ -639,19 +1041,31 @@
         ctx.fillText("POWER", 24, 19);
       }
 
-      function draw() {
+      function drawLevelLabel() {
+        ctx.fillStyle = "rgba(23,37,84,.82)";
+        ctx.font = "bold 18px -apple-system, sans-serif";
+        ctx.textAlign = "right";
+        ctx.fillText("L" + level + " · " + currentLevel().name, W - 22, 32);
+        ctx.textAlign = "left";
+      }
+
+      function draw(now) {
         drawSky();
         drawSling();
+        obstacles.forEach(drawObstacle);
         blocks.forEach(drawBlock);
+        bombs.forEach(function (bombItem) { drawBomb(bombItem, now); });
+        drawParticles();
         drawCat();
         drawPowerGuide();
+        drawLevelLabel();
       }
 
       function frame(now) {
         var dt = Math.min(0.032, (now - lastTime) / 1000);
         lastTime = now;
         update(dt, now);
-        draw();
+        draw(now);
         requestAnimationFrame(frame);
       }
 
