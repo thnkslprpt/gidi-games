@@ -1,0 +1,1393 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  >
+  <meta name="theme-color" content="#082f49">
+  <title>Tiny Submarine</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-width: 320px;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      min-width: 320px;
+      min-height: 100vh;
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      background: #e0f2fe;
+      color: #102238;
+    }
+
+    .shell {
+      width: 100%;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding-left: max(12px, env(safe-area-inset-left));
+      padding-right: max(12px, env(safe-area-inset-right));
+    }
+
+    header {
+      padding-top: calc(12px + env(safe-area-inset-top));
+      padding-bottom: 14px;
+      background: #082f49;
+      color: white;
+    }
+
+    header a {
+      display: inline-flex;
+      min-height: 44px;
+      align-items: center;
+      color: white;
+      font-weight: 700;
+      text-decoration: none;
+      touch-action: manipulation;
+    }
+
+    h1 {
+      margin: 2px 0 4px;
+      font-size: clamp(1.8rem, 8vw, 3rem);
+      line-height: 1.05;
+    }
+
+    header p {
+      margin: 0;
+      color: #bae6fd;
+    }
+
+    main {
+      padding-top: 12px;
+      padding-bottom: calc(22px + env(safe-area-inset-bottom));
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .stat {
+      min-width: 0;
+      padding: 8px 5px;
+      border: 1px solid #b8d7e8;
+      border-radius: 13px;
+      background: white;
+      text-align: center;
+    }
+
+    .stat span {
+      display: block;
+      overflow: hidden;
+      color: #52697c;
+      font-size: 0.7rem;
+      font-weight: 800;
+      text-overflow: ellipsis;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .stat strong {
+      display: block;
+      margin-top: 2px;
+      font-size: 1.25rem;
+      line-height: 1.2;
+    }
+
+    .oxygen-stat {
+      grid-column: span 2;
+    }
+
+    .oxygen-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-top: 5px;
+    }
+
+    .oxygen-track {
+      flex: 1;
+      height: 12px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #dbeafe;
+    }
+
+    #oxygen-fill {
+      width: 100%;
+      height: 100%;
+      border-radius: inherit;
+      background: #0284c7;
+      transition: width 120ms linear, background 120ms linear;
+    }
+
+    #oxygen-value {
+      min-width: 38px;
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    .game-wrap {
+      position: relative;
+      overflow: hidden;
+      border: 2px solid #0c4a6e;
+      border-radius: 17px;
+      background: #075985;
+      box-shadow: 0 8px 24px rgba(8, 47, 73, 0.18);
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 16 / 9;
+      background: #075985;
+      touch-action: none;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: rgba(3, 24, 43, 0.66);
+      text-align: center;
+    }
+
+    .overlay[hidden] {
+      display: none;
+    }
+
+    .overlay-card {
+      width: min(430px, 100%);
+      padding: 18px;
+      border: 2px solid rgba(255, 255, 255, 0.55);
+      border-radius: 17px;
+      background: rgba(255, 255, 255, 0.95);
+    }
+
+    .overlay-card h2 {
+      margin: 0 0 8px;
+      color: #082f49;
+      font-size: clamp(1.45rem, 6vw, 2.2rem);
+    }
+
+    .overlay-card p {
+      margin: 8px 0;
+      color: #334e62;
+    }
+
+    .result-line {
+      font-weight: 800;
+    }
+
+    button {
+      font: inherit;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button:focus,
+    a:focus {
+      outline: 3px solid #f59e0b;
+      outline-offset: 3px;
+    }
+
+    #start-button,
+    #rise-button {
+      width: 100%;
+      min-height: 52px;
+      border: 0;
+      border-radius: 13px;
+      color: white;
+      font-weight: 900;
+    }
+
+    #start-button {
+      margin-top: 10px;
+      background: #0369a1;
+    }
+
+    #rise-button {
+      margin-top: 10px;
+      background: #0c4a6e;
+      letter-spacing: 0.04em;
+    }
+
+    #rise-button.is-held {
+      background: #0284c7;
+      transform: translateY(1px);
+    }
+
+    .message {
+      min-height: 24px;
+      margin: 9px 0 0;
+      color: #334e62;
+      text-align: center;
+    }
+
+    .instructions {
+      margin: 10px 0 0;
+      padding: 12px 14px;
+      border: 1px solid #b8d7e8;
+      border-radius: 13px;
+      background: white;
+      color: #40596d;
+    }
+
+    .instructions strong {
+      color: #0c4a6e;
+    }
+
+    @media (max-width: 640px) {
+      .stats {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .oxygen-stat {
+        grid-column: span 2;
+      }
+
+      .stat strong {
+        font-size: 1.08rem;
+      }
+
+      .overlay-card {
+        padding: 14px;
+      }
+    }
+
+    @media (max-width: 390px) {
+      .stat {
+        padding-left: 3px;
+        padding-right: 3px;
+      }
+
+      .stat span {
+        font-size: 0.62rem;
+      }
+
+      .instructions {
+        font-size: 0.92rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="shell">
+      <a href="../../">← All games</a>
+      <h1>Tiny Submarine v1.0.0</h1>
+      <p>Hold to rise, release to sink, and survive the deep.</p>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="stats" aria-label="Game status">
+      <div class="stat">
+        <span>Score</span>
+        <strong id="score">0</strong>
+      </div>
+      <div class="stat">
+        <span>Treasure</span>
+        <strong id="treasure">0</strong>
+      </div>
+      <div class="stat">
+        <span>Divers</span>
+        <strong id="divers">0</strong>
+      </div>
+      <div class="stat">
+        <span>Hull</span>
+        <strong id="hull" aria-label="3 hull points">♥♥♥</strong>
+      </div>
+      <div class="stat oxygen-stat">
+        <span>Oxygen</span>
+        <div class="oxygen-row">
+          <div class="oxygen-track" aria-hidden="true">
+            <div id="oxygen-fill"></div>
+          </div>
+          <strong id="oxygen-value">100%</strong>
+        </div>
+      </div>
+    </section>
+
+    <div class="game-wrap">
+      <canvas
+        id="game"
+        width="960"
+        height="540"
+        aria-label="Tiny Submarine game area"
+      ></canvas>
+
+      <div class="overlay" id="overlay">
+        <div class="overlay-card">
+          <h2 id="overlay-title">Ready to dive?</h2>
+          <p id="overlay-text">
+            Hold the screen, the button, Space, W, or ↑ to rise. Release to sink.
+          </p>
+          <p class="result-line" id="overlay-result" hidden></p>
+          <button type="button" id="start-button">Start dive</button>
+        </div>
+      </div>
+    </div>
+
+    <button type="button" id="rise-button" aria-pressed="false">
+      HOLD TO RISE
+    </button>
+
+    <p class="message" id="message" aria-live="polite">
+      Collect treasure, rescue divers, avoid mines, and grab oxygen tanks.
+    </p>
+
+    <p class="instructions">
+      <strong>Controls:</strong> hold anywhere on the water or hold the button to rise;
+      release to sink. On a keyboard, hold Space, W, or the up arrow.
+    </p>
+  </main>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var canvas = document.getElementById("game");
+      var ctx = canvas.getContext("2d");
+      var startButton = document.getElementById("start-button");
+      var riseButton = document.getElementById("rise-button");
+      var overlay = document.getElementById("overlay");
+      var overlayTitle = document.getElementById("overlay-title");
+      var overlayText = document.getElementById("overlay-text");
+      var overlayResult = document.getElementById("overlay-result");
+      var scoreElement = document.getElementById("score");
+      var treasureElement = document.getElementById("treasure");
+      var diversElement = document.getElementById("divers");
+      var hullElement = document.getElementById("hull");
+      var oxygenFill = document.getElementById("oxygen-fill");
+      var oxygenValue = document.getElementById("oxygen-value");
+      var messageElement = document.getElementById("message");
+
+      var WIDTH = canvas.width;
+      var HEIGHT = canvas.height;
+      var SEGMENT_WIDTH = 72;
+      var SUB_X = 215;
+      var running = false;
+      var rising = false;
+      var lastTime = 0;
+      var animationId = 0;
+      var elapsed = 0;
+      var distance = 0;
+      var score = 0;
+      var treasure = 0;
+      var divers = 0;
+      var oxygen = 100;
+      var hull = 3;
+      var speed = 185;
+      var shake = 0;
+      var spawnTimers = {};
+      var cave = [];
+      var entities = [];
+      var particles = [];
+      var ambientBubbles = [];
+      var noticeTimer = 0;
+      var bestScore = readNumber("tinySubmarineBestScore");
+      var bestDistance = readNumber("tinySubmarineBestDistance");
+
+      var submarine = {
+        x: SUB_X,
+        y: HEIGHT * 0.5,
+        velocityY: 0,
+        radiusX: 43,
+        radiusY: 22,
+        invincible: 0,
+        tilt: 0
+      };
+
+      function readNumber(key) {
+        try {
+          var value = Number(window.localStorage.getItem(key));
+          return isFinite(value) && value > 0 ? value : 0;
+        } catch (error) {
+          return 0;
+        }
+      }
+
+      function saveNumber(key, value) {
+        try {
+          window.localStorage.setItem(key, String(value));
+        } catch (error) {
+          // The game still works if private browsing blocks storage.
+        }
+      }
+
+      function clamp(value, minimum, maximum) {
+        return Math.max(minimum, Math.min(maximum, value));
+      }
+
+      function random(minimum, maximum) {
+        return minimum + Math.random() * (maximum - minimum);
+      }
+
+      function circleHit(ax, ay, ar, bx, by, br) {
+        var dx = ax - bx;
+        var dy = ay - by;
+        var total = ar + br;
+        return dx * dx + dy * dy < total * total;
+      }
+
+      function resetGame() {
+        elapsed = 0;
+        distance = 0;
+        score = 0;
+        treasure = 0;
+        divers = 0;
+        oxygen = 100;
+        hull = 3;
+        speed = 185;
+        shake = 0;
+        noticeTimer = 0;
+        rising = false;
+        entities = [];
+        particles = [];
+        submarine.y = HEIGHT * 0.5;
+        submarine.velocityY = 0;
+        submarine.invincible = 0;
+        submarine.tilt = 0;
+        spawnTimers = {
+          treasure: 0.8,
+          mine: 1.4,
+          diver: 5.5,
+          oxygen: 7.5
+        };
+        buildCave();
+        buildAmbientBubbles();
+        setRise(false);
+        setNotice("Collect treasure, rescue divers, avoid mines, and grab oxygen tanks.", 0);
+        updateHud();
+      }
+
+      function buildCave() {
+        cave = [];
+        var center = HEIGHT * 0.5;
+        var opening = 330;
+        var count = Math.ceil(WIDTH / SEGMENT_WIDTH) + 5;
+        var index;
+
+        for (index = 0; index < count; index += 1) {
+          cave.push({
+            x: index * SEGMENT_WIDTH,
+            center: center,
+            opening: opening
+          });
+          center = clamp(center + random(-30, 30), 220, 320);
+          opening = clamp(opening + random(-12, 12), 300, 350);
+        }
+      }
+
+      function buildAmbientBubbles() {
+        ambientBubbles = [];
+        var index;
+        for (index = 0; index < 34; index += 1) {
+          ambientBubbles.push({
+            x: random(0, WIDTH),
+            y: random(0, HEIGHT),
+            radius: random(1.5, 5),
+            speed: random(9, 25),
+            drift: random(-5, 5)
+          });
+        }
+      }
+
+      function caveBoundsAt(x) {
+        var index;
+        var left;
+        var right;
+        var amount;
+        var center;
+        var opening;
+
+        if (x <= cave[0].x) {
+          center = cave[0].center;
+          opening = cave[0].opening;
+        } else {
+          index = 0;
+          while (index < cave.length - 2 && cave[index + 1].x < x) {
+            index += 1;
+          }
+          left = cave[index];
+          right = cave[Math.min(index + 1, cave.length - 1)];
+          amount = right.x === left.x ? 0 : (x - left.x) / (right.x - left.x);
+          amount = clamp(amount, 0, 1);
+          center = left.center + (right.center - left.center) * amount;
+          opening = left.opening + (right.opening - left.opening) * amount;
+        }
+
+        return {
+          top: center - opening * 0.5,
+          bottom: center + opening * 0.5
+        };
+      }
+
+      function updateCave(delta) {
+        var movement = speed * delta;
+        var last;
+        var previous;
+        var difficulty = clamp(elapsed / 95, 0, 1);
+        var targetMinimumOpening = 300 - difficulty * 52;
+        var targetMaximumOpening = 350 - difficulty * 34;
+        var change;
+
+        cave.forEach(function (segment) {
+          segment.x -= movement;
+        });
+
+        while (cave.length && cave[1].x < -SEGMENT_WIDTH) {
+          cave.shift();
+        }
+
+        while (cave[cave.length - 1].x < WIDTH + SEGMENT_WIDTH * 3) {
+          previous = cave[cave.length - 1];
+          change = random(-44, 44) * (0.75 + difficulty * 0.55);
+          last = {
+            x: previous.x + SEGMENT_WIDTH,
+            center: clamp(previous.center + change, 190, 350),
+            opening: clamp(
+              previous.opening + random(-16, 16),
+              targetMinimumOpening,
+              targetMaximumOpening
+            )
+          };
+          cave.push(last);
+        }
+      }
+
+      function safeSpawnY(x, margin) {
+        var bounds = caveBoundsAt(x);
+        return random(bounds.top + margin, bounds.bottom - margin);
+      }
+
+      function addEntity(type) {
+        var x = WIDTH + 55;
+        var entity = {
+          type: type,
+          x: x,
+          y: safeSpawnY(x, 54),
+          radius: 20,
+          phase: random(0, Math.PI * 2),
+          collected: false
+        };
+
+        if (type === "mine") {
+          entity.radius = 22;
+        } else if (type === "treasure") {
+          entity.radius = 19;
+        } else if (type === "diver") {
+          entity.radius = 22;
+        } else if (type === "oxygen") {
+          entity.radius = 21;
+        }
+
+        entities.push(entity);
+      }
+
+      function updateSpawning(delta) {
+        var difficulty = clamp(elapsed / 90, 0, 1);
+
+        spawnTimers.treasure -= delta;
+        spawnTimers.mine -= delta;
+        spawnTimers.diver -= delta;
+        spawnTimers.oxygen -= delta;
+
+        if (spawnTimers.treasure <= 0) {
+          addEntity("treasure");
+          spawnTimers.treasure = random(1.25, 2.1);
+        }
+
+        if (spawnTimers.mine <= 0) {
+          addEntity("mine");
+          spawnTimers.mine = random(1.2 - difficulty * 0.25, 2.0 - difficulty * 0.35);
+        }
+
+        if (spawnTimers.diver <= 0) {
+          addEntity("diver");
+          spawnTimers.diver = random(6.0, 9.0);
+        }
+
+        if (spawnTimers.oxygen <= 0) {
+          addEntity("oxygen");
+          spawnTimers.oxygen = random(7.0, 10.5);
+        }
+      }
+
+      function updateEntities(delta) {
+        var movement = speed * delta;
+        var index;
+        var entity;
+
+        for (index = entities.length - 1; index >= 0; index -= 1) {
+          entity = entities[index];
+          entity.x -= movement;
+          entity.phase += delta * 2.2;
+          entity.y += Math.sin(entity.phase) * delta * (entity.type === "mine" ? 5 : 10);
+
+          if (entity.x < -70) {
+            entities.splice(index, 1);
+            continue;
+          }
+
+          if (
+            !entity.collected &&
+            circleHit(submarine.x, submarine.y, 29, entity.x, entity.y, entity.radius)
+          ) {
+            collectEntity(entity);
+            entities.splice(index, 1);
+          }
+        }
+      }
+
+      function collectEntity(entity) {
+        if (entity.type === "mine") {
+          damageSubmarine("Mine hit! Hull damaged.");
+          burst(entity.x, entity.y, "danger", 18);
+          return;
+        }
+
+        if (entity.type === "treasure") {
+          treasure += 1;
+          score += 125;
+          setNotice("Treasure recovered! +125", 1.5);
+          burst(entity.x, entity.y, "gold", 12);
+        } else if (entity.type === "diver") {
+          divers += 1;
+          score += 350;
+          oxygen = clamp(oxygen + 8, 0, 100);
+          setNotice("Diver rescued! +350 and a little oxygen", 2);
+          burst(entity.x, entity.y, "rescue", 15);
+        } else if (entity.type === "oxygen") {
+          oxygen = clamp(oxygen + 34, 0, 100);
+          score += 50;
+          setNotice("Oxygen tank collected!", 1.6);
+          burst(entity.x, entity.y, "oxygen", 14);
+        }
+      }
+
+      function damageSubmarine(text) {
+        if (submarine.invincible > 0 || !running) {
+          return;
+        }
+
+        hull -= 1;
+        oxygen = clamp(oxygen - 9, 0, 100);
+        submarine.invincible = 1.25;
+        submarine.velocityY *= -0.45;
+        shake = 12;
+        setNotice(text, 1.8);
+
+        if (hull <= 0) {
+          endGame("The submarine hull broke apart.");
+        }
+      }
+
+      function burst(x, y, style, count) {
+        var index;
+        for (index = 0; index < count; index += 1) {
+          particles.push({
+            x: x,
+            y: y,
+            velocityX: random(-95, 95),
+            velocityY: random(-110, 60),
+            life: random(0.45, 0.9),
+            maximumLife: 0.9,
+            radius: random(2, 5),
+            style: style
+          });
+        }
+      }
+
+      function updateParticles(delta) {
+        var index;
+        var particle;
+        for (index = particles.length - 1; index >= 0; index -= 1) {
+          particle = particles[index];
+          particle.life -= delta;
+          if (particle.life <= 0) {
+            particles.splice(index, 1);
+            continue;
+          }
+          particle.x += particle.velocityX * delta;
+          particle.y += particle.velocityY * delta;
+          particle.velocityY += 70 * delta;
+        }
+      }
+
+      function updateAmbientBubbles(delta) {
+        ambientBubbles.forEach(function (bubble) {
+          bubble.y -= bubble.speed * delta;
+          bubble.x += bubble.drift * delta;
+          if (bubble.y < -10) {
+            bubble.y = HEIGHT + 10;
+            bubble.x = random(0, WIDTH);
+          }
+          if (bubble.x < -10) {
+            bubble.x = WIDTH + 10;
+          } else if (bubble.x > WIDTH + 10) {
+            bubble.x = -10;
+          }
+        });
+      }
+
+      function updateSubmarine(delta) {
+        var acceleration = rising ? -620 : 430;
+        var bounds;
+        var topLimit;
+        var bottomLimit;
+
+        submarine.velocityY += acceleration * delta;
+        submarine.velocityY *= Math.pow(0.985, delta * 60);
+        submarine.velocityY = clamp(submarine.velocityY, -300, 300);
+        submarine.y += submarine.velocityY * delta;
+        submarine.tilt += ((submarine.velocityY / 520) - submarine.tilt) * Math.min(1, delta * 6);
+
+        if (submarine.invincible > 0) {
+          submarine.invincible -= delta;
+        }
+
+        bounds = caveBoundsAt(submarine.x);
+        topLimit = bounds.top + submarine.radiusY + 6;
+        bottomLimit = bounds.bottom - submarine.radiusY - 6;
+
+        if (submarine.y < topLimit) {
+          submarine.y = topLimit;
+          submarine.velocityY = Math.max(75, Math.abs(submarine.velocityY) * 0.45);
+          damageSubmarine("You scraped the cave roof!");
+          burst(submarine.x, submarine.y - submarine.radiusY, "rock", 8);
+        } else if (submarine.y > bottomLimit) {
+          submarine.y = bottomLimit;
+          submarine.velocityY = -Math.max(75, Math.abs(submarine.velocityY) * 0.45);
+          damageSubmarine("You hit the cave floor!");
+          burst(submarine.x, submarine.y + submarine.radiusY, "rock", 8);
+        }
+      }
+
+      function setNotice(text, seconds) {
+        messageElement.textContent = text;
+        noticeTimer = seconds;
+      }
+
+      function updateNotice(delta) {
+        if (noticeTimer <= 0) {
+          return;
+        }
+        noticeTimer -= delta;
+        if (noticeTimer <= 0 && running) {
+          messageElement.textContent = "Keep moving. Oxygen is always running out.";
+        }
+      }
+
+      function updateHud() {
+        var roundedOxygen = Math.max(0, Math.round(oxygen));
+        var hearts = "";
+        var index;
+
+        scoreElement.textContent = String(Math.floor(score));
+        treasureElement.textContent = String(treasure);
+        diversElement.textContent = String(divers);
+
+        for (index = 0; index < 3; index += 1) {
+          hearts += index < hull ? "♥" : "♡";
+        }
+        hullElement.textContent = hearts;
+        hullElement.setAttribute("aria-label", String(Math.max(hull, 0)) + " hull points");
+
+        oxygenFill.style.width = roundedOxygen + "%";
+        oxygenValue.textContent = roundedOxygen + "%";
+
+        if (roundedOxygen <= 20) {
+          oxygenFill.style.background = "#dc2626";
+        } else if (roundedOxygen <= 45) {
+          oxygenFill.style.background = "#f59e0b";
+        } else {
+          oxygenFill.style.background = "#0284c7";
+        }
+      }
+
+      function update(delta) {
+        elapsed += delta;
+        speed = Math.min(290, 185 + elapsed * 0.72);
+        distance += speed * delta / 10;
+        score += speed * delta / 38;
+        oxygen -= delta * (rising ? 1.42 : 1.15);
+
+        updateCave(delta);
+        updateSpawning(delta);
+        updateSubmarine(delta);
+        updateEntities(delta);
+        updateParticles(delta);
+        updateAmbientBubbles(delta);
+        updateNotice(delta);
+
+        if (shake > 0) {
+          shake = Math.max(0, shake - delta * 34);
+        }
+
+        if (oxygen <= 0) {
+          oxygen = 0;
+          endGame("The submarine ran out of oxygen.");
+        }
+
+        updateHud();
+      }
+
+      function drawBackground() {
+        var gradient = ctx.createLinearGradient(0, 0, 0, HEIGHT);
+        gradient.addColorStop(0, "#0ea5e9");
+        gradient.addColorStop(0.48, "#0369a1");
+        gradient.addColorStop(1, "#082f49");
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+        ctx.globalAlpha = 0.16;
+        ctx.fillStyle = "#e0f2fe";
+        ctx.beginPath();
+        ctx.moveTo(40, 0);
+        ctx.lineTo(210, 0);
+        ctx.lineTo(330, HEIGHT);
+        ctx.lineTo(235, HEIGHT);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(420, 0);
+        ctx.lineTo(500, 0);
+        ctx.lineTo(610, HEIGHT);
+        ctx.lineTo(555, HEIGHT);
+        ctx.closePath();
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+
+      function traceBoundary(useTop) {
+        var first = cave[0];
+        var firstY = useTop
+          ? first.center - first.opening * 0.5
+          : first.center + first.opening * 0.5;
+        var index;
+        var segment;
+        var next;
+        var y;
+        var nextY;
+
+        ctx.moveTo(first.x, firstY);
+        for (index = 0; index < cave.length - 1; index += 1) {
+          segment = cave[index];
+          next = cave[index + 1];
+          y = useTop
+            ? segment.center - segment.opening * 0.5
+            : segment.center + segment.opening * 0.5;
+          nextY = useTop
+            ? next.center - next.opening * 0.5
+            : next.center + next.opening * 0.5;
+          ctx.quadraticCurveTo(
+            segment.x + SEGMENT_WIDTH * 0.5,
+            y,
+            next.x,
+            nextY
+          );
+        }
+      }
+
+      function drawCave() {
+        var lastX = cave[cave.length - 1].x;
+        var topGradient = ctx.createLinearGradient(0, 0, 0, 190);
+        var bottomGradient = ctx.createLinearGradient(0, HEIGHT - 190, 0, HEIGHT);
+        var index;
+        var pebbleX;
+        var bounds;
+
+        topGradient.addColorStop(0, "#111827");
+        topGradient.addColorStop(1, "#374151");
+        bottomGradient.addColorStop(0, "#4b5563");
+        bottomGradient.addColorStop(1, "#111827");
+
+        ctx.beginPath();
+        ctx.moveTo(cave[0].x, 0);
+        ctx.lineTo(lastX, 0);
+        for (index = cave.length - 1; index >= 0; index -= 1) {
+          ctx.lineTo(
+            cave[index].x,
+            cave[index].center - cave[index].opening * 0.5
+          );
+        }
+        ctx.closePath();
+        ctx.fillStyle = topGradient;
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(cave[0].x, HEIGHT);
+        ctx.lineTo(lastX, HEIGHT);
+        for (index = cave.length - 1; index >= 0; index -= 1) {
+          ctx.lineTo(
+            cave[index].x,
+            cave[index].center + cave[index].opening * 0.5
+          );
+        }
+        ctx.closePath();
+        ctx.fillStyle = bottomGradient;
+        ctx.fill();
+
+        ctx.strokeStyle = "rgba(148, 163, 184, 0.52)";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        traceBoundary(true);
+        ctx.stroke();
+        ctx.beginPath();
+        traceBoundary(false);
+        ctx.stroke();
+
+        ctx.fillStyle = "rgba(203, 213, 225, 0.18)";
+        for (index = 0; index < 18; index += 1) {
+          pebbleX = ((index * 151 + distance * -3.1) % (WIDTH + 120)) - 60;
+          if (pebbleX < -60) {
+            pebbleX += WIDTH + 120;
+          }
+          bounds = caveBoundsAt(pebbleX);
+          ctx.beginPath();
+          ctx.arc(pebbleX, bounds.bottom + 22 + (index % 3) * 13, 5 + (index % 4), 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      function drawAmbientBubbles() {
+        ctx.strokeStyle = "rgba(224, 242, 254, 0.45)";
+        ctx.lineWidth = 1.5;
+        ambientBubbles.forEach(function (bubble) {
+          var bounds = caveBoundsAt(bubble.x);
+          if (bubble.y > bounds.top && bubble.y < bounds.bottom) {
+            ctx.beginPath();
+            ctx.arc(bubble.x, bubble.y, bubble.radius, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+        });
+      }
+
+      function drawMine(entity) {
+        var spikes = 10;
+        var index;
+        var angle;
+        var innerRadius = 16;
+        var outerRadius = 29;
+
+        ctx.save();
+        ctx.translate(entity.x, entity.y);
+        ctx.rotate(entity.phase * 0.22);
+        ctx.fillStyle = "#111827";
+        ctx.strokeStyle = "#94a3b8";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        for (index = 0; index < spikes * 2; index += 1) {
+          angle = index * Math.PI / spikes;
+          var radius = index % 2 === 0 ? outerRadius : innerRadius;
+          var x = Math.cos(angle) * radius;
+          var y = Math.sin(angle) * radius;
+          if (index === 0) {
+            ctx.moveTo(x, y);
+          } else {
+            ctx.lineTo(x, y);
+          }
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = "#ef4444";
+        ctx.beginPath();
+        ctx.arc(0, 0, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      function drawTreasure(entity) {
+        ctx.save();
+        ctx.translate(entity.x, entity.y);
+        ctx.rotate(Math.sin(entity.phase) * 0.08);
+        ctx.fillStyle = "#7c2d12";
+        ctx.fillRect(-22, -8, 44, 25);
+        ctx.fillStyle = "#92400e";
+        ctx.beginPath();
+        ctx.arc(0, -8, 22, Math.PI, 0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = "#fbbf24";
+        ctx.lineWidth = 4;
+        ctx.strokeRect(-22, -8, 44, 25);
+        ctx.fillStyle = "#fde047";
+        ctx.fillRect(-4, -5, 8, 13);
+        ctx.restore();
+      }
+
+      function drawDiver(entity) {
+        ctx.save();
+        ctx.translate(entity.x, entity.y);
+        ctx.rotate(Math.sin(entity.phase) * 0.12);
+        ctx.strokeStyle = "#f8fafc";
+        ctx.lineWidth = 6;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.arc(0, -12, 8, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, -3);
+        ctx.lineTo(0, 15);
+        ctx.moveTo(0, 4);
+        ctx.lineTo(-15, 10);
+        ctx.moveTo(0, 4);
+        ctx.lineTo(14, -2);
+        ctx.moveTo(0, 15);
+        ctx.lineTo(-12, 28);
+        ctx.moveTo(0, 15);
+        ctx.lineTo(15, 24);
+        ctx.stroke();
+        ctx.fillStyle = "#f97316";
+        ctx.fillRect(5, -3, 9, 22);
+        ctx.restore();
+      }
+
+      function drawOxygen(entity) {
+        ctx.save();
+        ctx.translate(entity.x, entity.y);
+        ctx.rotate(Math.sin(entity.phase) * 0.12);
+        ctx.fillStyle = "#e0f2fe";
+        ctx.strokeStyle = "#38bdf8";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(-13, -18);
+        ctx.lineTo(13, -18);
+        ctx.quadraticCurveTo(19, -18, 19, -10);
+        ctx.lineTo(19, 17);
+        ctx.quadraticCurveTo(19, 23, 13, 23);
+        ctx.lineTo(-13, 23);
+        ctx.quadraticCurveTo(-19, 23, -19, 17);
+        ctx.lineTo(-19, -10);
+        ctx.quadraticCurveTo(-19, -18, -13, -18);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = "#0284c7";
+        ctx.fillRect(-6, -25, 12, 8);
+        ctx.fillStyle = "#0ea5e9";
+        ctx.fillRect(-15, -3, 30, 8);
+        ctx.restore();
+      }
+
+      function drawEntities() {
+        entities.forEach(function (entity) {
+          if (entity.type === "mine") {
+            drawMine(entity);
+          } else if (entity.type === "treasure") {
+            drawTreasure(entity);
+          } else if (entity.type === "diver") {
+            drawDiver(entity);
+          } else if (entity.type === "oxygen") {
+            drawOxygen(entity);
+          }
+        });
+      }
+
+      function drawSubmarine() {
+        var flashing = submarine.invincible > 0 && Math.floor(submarine.invincible * 12) % 2 === 0;
+        var propellerAngle = elapsed * 18;
+
+        if (flashing) {
+          ctx.globalAlpha = 0.36;
+        }
+
+        ctx.save();
+        ctx.translate(submarine.x, submarine.y);
+        ctx.rotate(submarine.tilt);
+
+        ctx.strokeStyle = "#78350f";
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(-43, 0);
+        ctx.lineTo(-61, -14);
+        ctx.moveTo(-43, 0);
+        ctx.lineTo(-61, 14);
+        ctx.stroke();
+
+        ctx.save();
+        ctx.translate(-63, 0);
+        ctx.rotate(propellerAngle);
+        ctx.strokeStyle = "#cbd5e1";
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(-12, 0);
+        ctx.lineTo(12, 0);
+        ctx.moveTo(0, -12);
+        ctx.lineTo(0, 12);
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.fillStyle = "#fbbf24";
+        ctx.strokeStyle = "#92400e";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 46, 23, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = "#f59e0b";
+        ctx.beginPath();
+        ctx.moveTo(-4, -20);
+        ctx.lineTo(8, -38);
+        ctx.lineTo(18, -20);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = "#bae6fd";
+        ctx.strokeStyle = "#0c4a6e";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(11, -13, 15, Math.PI, 0);
+        ctx.lineTo(26, -8);
+        ctx.lineTo(-4, -8);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = "#0ea5e9";
+        ctx.strokeStyle = "#075985";
+        ctx.lineWidth = 3;
+        [-17, 8, 31].forEach(function (x) {
+          ctx.beginPath();
+          ctx.arc(x, 3, 7, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        });
+
+        ctx.fillStyle = "#78350f";
+        ctx.fillRect(-9, 19, 32, 6);
+
+        ctx.restore();
+        ctx.globalAlpha = 1;
+
+        ctx.strokeStyle = "rgba(224, 242, 254, 0.7)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(submarine.x - 82, submarine.y + 5, 4, 0, Math.PI * 2);
+        ctx.arc(submarine.x - 96, submarine.y - 3, 6, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      function drawParticles() {
+        particles.forEach(function (particle) {
+          var alpha = clamp(particle.life / particle.maximumLife, 0, 1);
+          ctx.globalAlpha = alpha;
+          if (particle.style === "danger") {
+            ctx.fillStyle = "#ef4444";
+          } else if (particle.style === "gold") {
+            ctx.fillStyle = "#fde047";
+          } else if (particle.style === "rescue") {
+            ctx.fillStyle = "#f8fafc";
+          } else if (particle.style === "oxygen") {
+            ctx.fillStyle = "#7dd3fc";
+          } else {
+            ctx.fillStyle = "#94a3b8";
+          }
+          ctx.beginPath();
+          ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        ctx.globalAlpha = 1;
+      }
+
+      function drawDistanceMarker() {
+        ctx.fillStyle = "rgba(255, 255, 255, 0.82)";
+        ctx.font = "700 18px -apple-system, BlinkMacSystemFont, Segoe UI, Arial";
+        ctx.textAlign = "right";
+        ctx.fillText(Math.floor(distance) + " m", WIDTH - 18, 30);
+      }
+
+      function draw() {
+        var offsetX = shake > 0 ? random(-shake, shake) : 0;
+        var offsetY = shake > 0 ? random(-shake * 0.6, shake * 0.6) : 0;
+
+        ctx.save();
+        ctx.translate(offsetX, offsetY);
+        drawBackground();
+        drawAmbientBubbles();
+        drawCave();
+        drawEntities();
+        drawParticles();
+        drawSubmarine();
+        drawDistanceMarker();
+        ctx.restore();
+      }
+
+      function frame(timestamp) {
+        var delta;
+
+        if (!running) {
+          return;
+        }
+
+        if (!lastTime) {
+          lastTime = timestamp;
+        }
+
+        delta = Math.min(0.035, (timestamp - lastTime) / 1000);
+        lastTime = timestamp;
+
+        update(delta);
+        draw();
+
+        if (running) {
+          animationId = window.requestAnimationFrame(frame);
+        }
+      }
+
+      function startGame() {
+        if (animationId) {
+          window.cancelAnimationFrame(animationId);
+        }
+        resetGame();
+        running = true;
+        overlay.hidden = true;
+        lastTime = 0;
+        animationId = window.requestAnimationFrame(frame);
+      }
+
+      function endGame(reason) {
+        if (!running) {
+          return;
+        }
+
+        running = false;
+        setRise(false);
+        window.cancelAnimationFrame(animationId);
+        animationId = 0;
+
+        score = Math.floor(score);
+        if (score > bestScore) {
+          bestScore = score;
+          saveNumber("tinySubmarineBestScore", bestScore);
+        }
+        if (distance > bestDistance) {
+          bestDistance = Math.floor(distance);
+          saveNumber("tinySubmarineBestDistance", bestDistance);
+        }
+
+        updateHud();
+        draw();
+        overlayTitle.textContent = "Dive over";
+        overlayText.textContent = reason;
+        overlayResult.hidden = false;
+        overlayResult.textContent =
+          "Score " + score +
+          " · " + Math.floor(distance) + " m" +
+          " · Best " + bestScore;
+        startButton.textContent = "Dive again";
+        overlay.hidden = false;
+        messageElement.textContent = "Best distance: " + bestDistance + " m";
+      }
+
+      function setRise(value) {
+        rising = Boolean(value) && running;
+        riseButton.classList.toggle("is-held", rising);
+        riseButton.setAttribute("aria-pressed", rising ? "true" : "false");
+      }
+
+      function beginRise(event) {
+        if (event && event.cancelable) {
+          event.preventDefault();
+        }
+        setRise(true);
+      }
+
+      function stopRise(event) {
+        if (event && event.cancelable) {
+          event.preventDefault();
+        }
+        setRise(false);
+      }
+
+      function addHoldEvents(element) {
+        if (window.PointerEvent) {
+          element.addEventListener("pointerdown", beginRise);
+          element.addEventListener("pointerup", stopRise);
+          element.addEventListener("pointercancel", stopRise);
+          element.addEventListener("pointerleave", function (event) {
+            if (event.buttons === 0) {
+              stopRise(event);
+            }
+          });
+        } else {
+          element.addEventListener("touchstart", beginRise, { passive: false });
+          element.addEventListener("touchend", stopRise, { passive: false });
+          element.addEventListener("touchcancel", stopRise, { passive: false });
+          element.addEventListener("mousedown", beginRise);
+          element.addEventListener("mouseup", stopRise);
+          element.addEventListener("mouseleave", stopRise);
+        }
+      }
+
+      startButton.addEventListener("click", function () {
+        overlayResult.hidden = true;
+        startButton.textContent = "Start dive";
+        startGame();
+      });
+
+      addHoldEvents(canvas);
+      addHoldEvents(riseButton);
+
+      document.addEventListener("pointerup", function () {
+        setRise(false);
+      });
+      document.addEventListener("pointercancel", function () {
+        setRise(false);
+      });
+      window.addEventListener("blur", function () {
+        setRise(false);
+      });
+
+      document.addEventListener("keydown", function (event) {
+        var key = event.key;
+        if (key === " " || key === "ArrowUp" || key === "w" || key === "W") {
+          event.preventDefault();
+          if (!event.repeat) {
+            setRise(true);
+          }
+        }
+      });
+
+      document.addEventListener("keyup", function (event) {
+        var key = event.key;
+        if (key === " " || key === "ArrowUp" || key === "w" || key === "W") {
+          event.preventDefault();
+          setRise(false);
+        }
+      });
+
+      document.addEventListener("visibilitychange", function () {
+        if (document.hidden) {
+          setRise(false);
+          lastTime = 0;
+        }
+      });
+
+      resetGame();
+      draw();
+    }());
+  </script>
+</body>
+</html>
