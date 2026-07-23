@@ -168,7 +168,7 @@
     <div class="shell">
       <a href="../../">← All games</a>
       <h1>Tap the Target</h1>
-      <p>Score as many taps as possible in 20 seconds.</p>
+      <p>Score as many taps as possible in 20 seconds. Miss the target and lose 3 seconds.</p>
     </div>
   </header>
 
@@ -315,6 +315,18 @@
         moveTarget();
         updateTimer();
       });
+
+  // Miss penalty: subtract 3 seconds.
+  start.parentElement.addEventListener("click", function (event) {
+    if (
+      finishAt <= Date.now() ||
+      start.contains(event.target)
+    ) {
+      return;
+    }
+
+    finishAt -= 3000;
+  });
 
       target.addEventListener("click", function () {
         if (!running) {
