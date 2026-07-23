@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#111827">
+  <title>Reaction Duel</title>
+  <style>
+    :root {
+      --ink: #f8fafc;
+      --muted: #cbd5e1;
+      --dark: #111827;
+      --panel: #1e293b;
+      --wait-a: #4338ca;
+      --wait-b: #7c3aed;
+      --go: #16a34a;
+      --foul: #dc2626;
+      --win: #f59e0b;
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      min-width: 320px;
+      height: 100%;
+      -webkit-text-size-adjust: 100%;
+      background: var(--dark);
+    }
+
+    body {
+      min-width: 320px;
+      min-height: 100%;
+      margin: 0;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      background: var(--dark);
+      color: var(--ink);
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      overscroll-behavior: none;
+    }
+
+    button, a { font: inherit; }
+
+    .game {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      grid-template-rows: minmax(0, 1fr) auto minmax(0, 1fr);
+      padding-top: env(safe-area-inset-top);
+      padding-right: env(safe-area-inset-right);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+      background: linear-gradient(160deg, var(--wait-a), var(--wait-b));
+      transition: background 120ms ease;
+    }
+
+    .game.is-ready { background: var(--go); }
+    .game.is-foul { background: var(--foul); }
+    .game.is-winner { background: var(--win); }
+
+    .player-button {
+      position: relative;
+      display: grid;
+      min-width: 0;
+      min-height: 0;
+      place-items: center;
+      padding: 14px;
+      border: 0;
+      border-radius: 0;
+      background: rgba(255, 255, 255, 0.055);
+      color: var(--ink);
+      cursor: pointer;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .player-button:active {
+      background: rgba(255, 255, 255, 0.14);
+    }
+
+    .player-button:focus-visible {
+      outline: 4px solid white;
+      outline-offset: -7px;
+    }
+
+    .player-one .player-content { transform: rotate(180deg); }
+
+    .player-content {
+      display: grid;
+      gap: 6px;
+      place-items: center;
+      text-align: center;
+    }
+
+    .player-name {
+      font-size: clamp(1rem, 4.7vw, 1.55rem);
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .tap-label {
+      font-size: clamp(2.7rem, 15vw, 6.8rem);
+      font-weight: 1000;
+      line-height: 0.88;
+      text-shadow: 0 4px 0 rgba(0, 0, 0, 0.16);
+    }
+
+    .player-hint {
+      min-height: 1.25em;
+      font-size: clamp(0.8rem, 3.7vw, 1rem);
+      color: rgba(255, 255, 255, 0.82);
+    }
+
+    .middle {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: 1fr minmax(112px, auto) 1fr;
+      align-items: center;
+      gap: 8px;
+      min-height: 92px;
+      padding: 10px max(10px, env(safe-area-inset-right)) 10px max(10px, env(safe-area-inset-left));
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(15, 23, 42, 0.88);
+      box-shadow: 0 0 24px rgba(0, 0, 0, 0.2);
+      text-align: center;
+    }
+
+    .score {
+      font-size: clamp(2.2rem, 10vw, 4rem);
+      font-weight: 1000;
+      line-height: 1;
+    }
+
+    .score-one { transform: rotate(180deg); }
+
+    .status-wrap {
+      display: grid;
+      gap: 3px;
+      place-items: center;
+    }
+
+    .status {
+      font-size: clamp(0.9rem, 4vw, 1.15rem);
+      font-weight: 900;
+      line-height: 1.05;
+      text-transform: uppercase;
+    }
+
+    .round {
+      font-size: 0.74rem;
+      color: var(--muted);
+    }
+
+    .home-link {
+      position: fixed;
+      z-index: 5;
+      top: max(9px, env(safe-area-inset-top));
+      left: max(9px, env(safe-area-inset-left));
+      padding: 8px 10px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.68);
+      color: white;
+      font-size: 0.78rem;
+      font-weight: 800;
+      text-decoration: none;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .version {
+      position: fixed;
+      z-index: 5;
+      top: max(12px, env(safe-area-inset-top));
+      right: max(10px, env(safe-area-inset-right));
+      font-size: 0.68rem;
+      color: rgba(255, 255, 255, 0.72);
+    }
+
+    .overlay {
+      position: fixed;
+      z-index: 10;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: max(18px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) max(18px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left));
+      background: rgba(15, 23, 42, 0.76);
+      backdrop-filter: blur(9px);
+      -webkit-backdrop-filter: blur(9px);
+    }
+
+    .overlay[hidden] { display: none; }
+
+    .card {
+      width: min(100%, 420px);
+      padding: 24px 20px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 24px;
+      background: rgba(30, 41, 59, 0.97);
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.34);
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0 0 5px;
+      font-size: clamp(2rem, 10vw, 3.1rem);
+      line-height: 1;
+    }
+
+    .subtitle {
+      margin: 0 0 18px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .rules {
+      display: grid;
+      gap: 8px;
+      margin: 0 0 20px;
+      padding: 0;
+      list-style: none;
+      text-align: left;
+    }
+
+    .rules li {
+      padding: 9px 11px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.07);
+      font-size: 0.93rem;
+    }
+
+    .start-button {
+      width: 100%;
+      min-height: 56px;
+      padding: 12px 16px;
+      border: 0;
+      border-radius: 16px;
+      background: #f8fafc;
+      color: #111827;
+      font-size: 1.1rem;
+      font-weight: 1000;
+      cursor: pointer;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .start-button:active { transform: translateY(1px); }
+
+    @media (max-height: 540px) {
+      .middle { min-height: 72px; padding-top: 6px; padding-bottom: 6px; }
+      .player-content { gap: 2px; }
+      .tap-label { font-size: clamp(2.1rem, 11vh, 4.2rem); }
+      .player-hint { font-size: 0.75rem; }
+      .card { padding: 18px; }
+      .rules { gap: 5px; margin-bottom: 14px; }
+      .rules li { padding: 6px 9px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="game" id="game" aria-label="Reaction Duel game">
+    <button class="player-button player-one" id="playerOne" type="button" aria-label="Player 1 tap area">
+      <span class="player-content">
+        <span class="player-name">Player 1</span>
+        <span class="tap-label" id="labelOne">WAIT</span>
+        <span class="player-hint" id="hintOne">Keep your finger ready</span>
+      </span>
+    </button>
+
+    <section class="middle" aria-label="Scoreboard">
+      <div class="score score-one" id="scoreOne">0</div>
+      <div class="status-wrap">
+        <div class="status" id="status" aria-live="assertive">Start duel</div>
+        <div class="round" id="roundText">First to 5</div>
+      </div>
+      <div class="score" id="scoreTwo">0</div>
+    </section>
+
+    <button class="player-button player-two" id="playerTwo" type="button" aria-label="Player 2 tap area">
+      <span class="player-content">
+        <span class="player-name">Player 2</span>
+        <span class="tap-label" id="labelTwo">WAIT</span>
+        <span class="player-hint" id="hintTwo">Keep your finger ready</span>
+      </span>
+    </button>
+  </main>
+
+  <a class="home-link" href="../../">← Games</a>
+  <span class="version">Reaction Duel v1.0.0</span>
+
+  <div class="overlay" id="overlay">
+    <section class="card" aria-labelledby="gameTitle">
+      <h1 id="gameTitle">Reaction Duel</h1>
+      <p class="subtitle" id="overlayMessage">Two players. One phone. Fastest finger wins.</p>
+      <ul class="rules">
+        <li> Wait for the whole screen to turn green.</li>
+        <li> First player to tap scores the round.</li>
+        <li> Tap early and the other player scores.</li>
+        <li> First player to 5 points wins.</li>
+      </ul>
+      <button class="start-button" id="startButton" type="button">Start duel</button>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var WINNING_SCORE = 5;
+      var MIN_DELAY = 1500;
+      var MAX_DELAY = 4500;
+      var RESULT_DELAY = 1450;
+
+      var game = document.getElementById("game");
+      var overlay = document.getElementById("overlay");
+      var overlayMessage = document.getElementById("overlayMessage");
+      var startButton = document.getElementById("startButton");
+      var playerOne = document.getElementById("playerOne");
+      var playerTwo = document.getElementById("playerTwo");
+      var scoreOne = document.getElementById("scoreOne");
+      var scoreTwo = document.getElementById("scoreTwo");
+      var status = document.getElementById("status");
+      var roundText = document.getElementById("roundText");
+      var labelOne = document.getElementById("labelOne");
+      var labelTwo = document.getElementById("labelTwo");
+      var hintOne = document.getElementById("hintOne");
+      var hintTwo = document.getElementById("hintTwo");
+
+      var scores = [0, 0];
+      var roundNumber = 0;
+      var state = "idle";
+      var readyAt = 0;
+      var waitTimer = 0;
+      var nextTimer = 0;
+      var audioContext = null;
+
+      function now() {
+        return window.performance && performance.now ? performance.now() : Date.now();
+      }
+
+      function ensureAudio() {
+        if (audioContext) return;
+        var AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        try {
+          audioContext = new AudioContextClass();
+        } catch (error) {
+          audioContext = null;
+        }
+      }
+
+      function beep(frequency, duration) {
+        if (!audioContext) return;
+        try {
+          if (audioContext.state === "suspended") audioContext.resume();
+          var oscillator = audioContext.createOscillator();
+          var gain = audioContext.createGain();
+          oscillator.type = "sine";
+          oscillator.frequency.value = frequency;
+          gain.gain.setValueAtTime(0.0001, audioContext.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.18, audioContext.currentTime + 0.01);
+          gain.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + duration);
+          oscillator.connect(gain);
+          gain.connect(audioContext.destination);
+          oscillator.start();
+          oscillator.stop(audioContext.currentTime + duration + 0.02);
+        } catch (error) {
+          // Sound is optional; gameplay continues without it.
+        }
+      }
+
+      function vibrate(pattern) {
+        if (navigator.vibrate) navigator.vibrate(pattern);
+      }
+
+      function clearTimers() {
+        window.clearTimeout(waitTimer);
+        window.clearTimeout(nextTimer);
+      }
+
+      function setLabels(mainText, hintText) {
+        labelOne.textContent = mainText;
+        labelTwo.textContent = mainText;
+        hintOne.textContent = hintText;
+        hintTwo.textContent = hintText;
+      }
+
+      function setTheme(theme) {
+        game.classList.remove("is-ready", "is-foul", "is-winner");
+        if (theme) game.classList.add(theme);
+      }
+
+      function updateScoreboard() {
+        scoreOne.textContent = String(scores[0]);
+        scoreTwo.textContent = String(scores[1]);
+        roundText.textContent = "Round " + roundNumber + " · First to " + WINNING_SCORE;
+      }
+
+      function startMatch() {
+        ensureAudio();
+        clearTimers();
+        scores = [0, 0];
+        roundNumber = 0;
+        overlay.hidden = true;
+        updateScoreboard();
+        nextRound();
+      }
+
+      function nextRound() {
+        clearTimers();
+        roundNumber += 1;
+        state = "waiting";
+        readyAt = 0;
+        setTheme("");
+        status.textContent = "Wait...";
+        setLabels("WAIT", "Do not tap early");
+        updateScoreboard();
+
+        var delay = MIN_DELAY + Math.random() * (MAX_DELAY - MIN_DELAY);
+        waitTimer = window.setTimeout(goSignal, delay);
+      }
+
+      function goSignal() {
+        if (state !== "waiting") return;
+        state = "ready";
+        readyAt = now();
+        setTheme("is-ready");
+        status.textContent = "TAP!";
+        setLabels("TAP!", "Go go go!");
+        beep(880, 0.11);
+        vibrate(35);
+      }
+
+      function handleTap(playerIndex, event) {
+        event.preventDefault();
+        ensureAudio();
+
+        if (state === "waiting") {
+          finishRound(1 - playerIndex, playerIndex, true, 0);
+          return;
+        }
+
+        if (state === "ready") {
+          finishRound(playerIndex, 1 - playerIndex, false, Math.max(0, Math.round(now() - readyAt)));
+        }
+      }
+
+      function finishRound(winnerIndex, loserIndex, falseStart, reactionMs) {
+        if (state !== "waiting" && state !== "ready") return;
+
+        clearTimers();
+        state = "result";
+        scores[winnerIndex] += 1;
+        updateScoreboard();
+
+        var winnerName = "Player " + (winnerIndex + 1);
+        var loserName = "Player " + (loserIndex + 1);
+
+        if (falseStart) {
+          setTheme("is-foul");
+          status.textContent = loserName + " tapped early";
+          setLabels("FOUL", winnerName + " gets the point");
+          beep(185, 0.2);
+          vibrate([80, 50, 80]);
+        } else {
+          setTheme("is-ready");
+          status.textContent = winnerName + " wins";
+          setLabels(winnerName.toUpperCase(), reactionMs + " ms reaction");
+          beep(1040, 0.14);
+          vibrate(60);
+        }
+
+        if (scores[winnerIndex] >= WINNING_SCORE) {
+          nextTimer = window.setTimeout(function () {
+            showWinner(winnerIndex);
+          }, RESULT_DELAY);
+        } else {
+          nextTimer = window.setTimeout(nextRound, RESULT_DELAY);
+        }
+      }
+
+      function showWinner(winnerIndex) {
+        state = "match-over";
+        setTheme("is-winner");
+        status.textContent = "Player " + (winnerIndex + 1) + " wins!";
+        setLabels("CHAMPION", "Player " + (winnerIndex + 1));
+        overlayMessage.textContent = "Player " + (winnerIndex + 1) + " wins " + scores[winnerIndex] + "–" + scores[1 - winnerIndex] + "!";
+        startButton.textContent = "Play again";
+        overlay.hidden = false;
+        beep(660, 0.12);
+        window.setTimeout(function () { beep(880, 0.12); }, 130);
+        window.setTimeout(function () { beep(1100, 0.2); }, 260);
+        vibrate([60, 50, 60, 50, 120]);
+      }
+
+      startButton.addEventListener("click", startMatch);
+      playerOne.addEventListener("pointerdown", function (event) { handleTap(0, event); });
+      playerTwo.addEventListener("pointerdown", function (event) { handleTap(1, event); });
+
+      document.addEventListener("contextmenu", function (event) {
+        if (event.target.closest(".player-button")) event.preventDefault();
+      });
+
+      window.addEventListener("pagehide", clearTimers);
+    }());
+  </script>
+</body>
+</html>
