@@ -1,0 +1,1339 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#071426">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Air Hockey · Gidi's Game Room</title>
+  <style>
+    :root {
+      --app-height: 100vh;
+      --blue: #28b6ff;
+      --blue-deep: #0876c9;
+      --red: #ff4d68;
+      --red-deep: #c82042;
+      --ice: #e8fbff;
+      --navy: #071426;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html,
+    body {
+      width: 100%;
+      min-width: 320px;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      overscroll-behavior: none;
+      background: var(--navy);
+      color: white;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      -webkit-text-size-adjust: 100%;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      position: fixed;
+      inset: 0;
+      height: var(--app-height);
+      touch-action: none;
+    }
+
+    button,
+    a {
+      font: inherit;
+    }
+
+    #game {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 18% 50%, rgba(40, 182, 255, 0.18), transparent 34%),
+        radial-gradient(circle at 82% 50%, rgba(255, 77, 104, 0.18), transparent 34%),
+        #071426;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+
+    .topbar {
+      position: absolute;
+      z-index: 5;
+      top: max(8px, env(safe-area-inset-top));
+      left: max(8px, env(safe-area-inset-left));
+      right: max(8px, env(safe-area-inset-right));
+      display: grid;
+      grid-template-columns: 44px 1fr auto 1fr 44px;
+      align-items: center;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .icon-button {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      border-radius: 14px;
+      background: rgba(5, 16, 31, 0.68);
+      color: white;
+      text-decoration: none;
+      font-size: 1.25rem;
+      font-weight: 900;
+      box-shadow: 0 5px 16px rgba(0, 0, 0, 0.22);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      pointer-events: auto;
+      touch-action: manipulation;
+    }
+
+    .score {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      font-weight: 900;
+      text-shadow: 0 2px 7px rgba(0, 0, 0, 0.58);
+    }
+
+    .score.left {
+      justify-self: end;
+      color: var(--blue);
+    }
+
+    .score.right {
+      justify-self: start;
+      color: var(--red);
+    }
+
+    .score-number {
+      min-width: 1ch;
+      font-size: clamp(1.8rem, 7vw, 3.1rem);
+      line-height: 1;
+    }
+
+    .player-label {
+      font-size: clamp(0.62rem, 2.2vw, 0.85rem);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .match-label {
+      min-width: 84px;
+      padding: 6px 11px;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 999px;
+      background: rgba(5, 16, 31, 0.6);
+      color: rgba(255, 255, 255, 0.86);
+      font-size: clamp(0.66rem, 2vw, 0.8rem);
+      font-weight: 800;
+      text-align: center;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .overlay {
+      position: absolute;
+      z-index: 10;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding:
+        max(16px, env(safe-area-inset-top))
+        max(18px, env(safe-area-inset-right))
+        max(16px, env(safe-area-inset-bottom))
+        max(18px, env(safe-area-inset-left));
+      background: rgba(3, 12, 25, 0.68);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    .overlay[hidden] {
+      display: none;
+    }
+
+    .panel {
+      width: min(540px, 94vw);
+      max-height: 94vh;
+      overflow: auto;
+      padding: clamp(18px, 4vw, 30px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 26px;
+      background: linear-gradient(145deg, rgba(18, 39, 67, 0.96), rgba(7, 20, 38, 0.97));
+      box-shadow: 0 22px 60px rgba(0, 0, 0, 0.38);
+      text-align: center;
+    }
+
+    .puck-logo {
+      width: clamp(62px, 12vw, 86px);
+      aspect-ratio: 1;
+      margin: 0 auto 10px;
+      border: clamp(6px, 1vw, 9px) solid rgba(255, 255, 255, 0.9);
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 25%, #50627b 0 8%, #1a2638 27%, #080f1b 68%);
+      box-shadow: 0 9px 0 #020713, 0 13px 24px rgba(0, 0, 0, 0.42);
+    }
+
+    h1,
+    h2 {
+      margin: 0;
+      line-height: 1;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 7vw, 3.5rem);
+      letter-spacing: -0.045em;
+    }
+
+    h2 {
+      font-size: clamp(2rem, 7vw, 3.25rem);
+    }
+
+    .version {
+      margin-left: 0.35em;
+      color: rgba(255, 255, 255, 0.48);
+      font-size: 0.34em;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      vertical-align: middle;
+    }
+
+    .subtitle {
+      margin: 10px auto 16px;
+      color: rgba(255, 255, 255, 0.72);
+      font-size: clamp(0.82rem, 2.4vw, 1rem);
+      line-height: 1.35;
+    }
+
+    .rules {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin: 14px 0;
+    }
+
+    .rule {
+      padding: 10px 7px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.055);
+      font-size: clamp(0.67rem, 2vw, 0.82rem);
+      line-height: 1.25;
+    }
+
+    .rule strong {
+      display: block;
+      margin-bottom: 3px;
+      color: white;
+      font-size: 1.1em;
+    }
+
+    .length-picker {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 14px 0 12px;
+    }
+
+    .length-button,
+    .primary-button,
+    .secondary-button {
+      min-height: 46px;
+      border-radius: 15px;
+      font-weight: 900;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .length-button {
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.07);
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .length-button.selected {
+      border-color: #60d2ff;
+      background: rgba(40, 182, 255, 0.2);
+      color: white;
+      box-shadow: 0 0 0 3px rgba(40, 182, 255, 0.11) inset;
+    }
+
+    .primary-button {
+      width: 100%;
+      border: 0;
+      background: linear-gradient(135deg, #28b6ff, #1f84ff);
+      color: #03111f;
+      box-shadow: 0 8px 0 #075a9b, 0 12px 24px rgba(0, 0, 0, 0.28);
+      font-size: 1.05rem;
+    }
+
+    .primary-button:active {
+      transform: translateY(4px);
+      box-shadow: 0 4px 0 #075a9b, 0 7px 15px rgba(0, 0, 0, 0.24);
+    }
+
+    .secondary-button {
+      width: 100%;
+      margin-top: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.08);
+      color: white;
+    }
+
+    .winner-name {
+      margin: 11px 0 5px;
+      font-size: clamp(1.05rem, 3vw, 1.35rem);
+      font-weight: 900;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .final-score {
+      margin: 0 0 18px;
+      color: rgba(255, 255, 255, 0.72);
+      font-size: clamp(1.1rem, 4vw, 1.5rem);
+      font-weight: 800;
+    }
+
+    .center-message {
+      position: absolute;
+      z-index: 6;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: max-content;
+      max-width: 80%;
+      padding: 8px 16px;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 999px;
+      background: rgba(3, 12, 25, 0.64);
+      font-size: clamp(1.1rem, 5vw, 2.25rem);
+      font-weight: 1000;
+      letter-spacing: 0.03em;
+      text-align: center;
+      text-shadow: 0 3px 9px rgba(0, 0, 0, 0.5);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 120ms ease, transform 120ms ease;
+    }
+
+    .center-message.show {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1.05);
+    }
+
+    .rotate-overlay {
+      display: none;
+    }
+
+    .rotate-phone {
+      width: 52px;
+      height: 82px;
+      margin: 0 auto 20px;
+      border: 5px solid white;
+      border-radius: 12px;
+      animation: rotate-phone 1.8s ease-in-out infinite;
+    }
+
+    @keyframes rotate-phone {
+      0%, 25% { transform: rotate(0deg); }
+      65%, 100% { transform: rotate(90deg); }
+    }
+
+    @media (orientation: portrait) and (max-width: 700px) {
+      .rotate-overlay {
+        display: grid;
+        z-index: 30;
+      }
+    }
+
+    @media (max-height: 380px) {
+      .topbar {
+        top: max(5px, env(safe-area-inset-top));
+      }
+
+      .icon-button {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+      }
+
+      .topbar {
+        grid-template-columns: 38px 1fr auto 1fr 38px;
+      }
+
+      .panel {
+        padding: 14px 18px;
+        border-radius: 20px;
+      }
+
+      .puck-logo {
+        width: 52px;
+        margin-bottom: 7px;
+        border-width: 6px;
+        box-shadow: 0 6px 0 #020713, 0 9px 18px rgba(0, 0, 0, 0.38);
+      }
+
+      .subtitle {
+        margin: 6px auto 10px;
+      }
+
+      .rules {
+        margin: 9px 0;
+      }
+
+      .rule {
+        padding: 7px 5px;
+      }
+
+      .length-picker {
+        margin: 9px 0 10px;
+      }
+
+      .length-button,
+      .primary-button,
+      .secondary-button {
+        min-height: 40px;
+      }
+    }
+
+    @media (max-width: 520px) and (orientation: landscape) {
+      .player-label {
+        display: none;
+      }
+
+      .match-label {
+        min-width: 68px;
+        padding-inline: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main id="game" aria-label="Two-player air hockey game">
+    <canvas id="rink" aria-label="Air hockey rink"></canvas>
+
+    <div class="topbar" aria-label="Match information">
+      <a class="icon-button" href="../../" aria-label="Back to game room">‹</a>
+      <div class="score left"><span class="player-label">Blue</span><span class="score-number" id="blueScore">0</span></div>
+      <div class="match-label" id="matchLabel">First to 3</div>
+      <div class="score right"><span class="score-number" id="redScore">0</span><span class="player-label">Red</span></div>
+      <button class="icon-button" id="menuButton" type="button" aria-label="Open game menu">↻</button>
+    </div>
+
+    <div class="center-message" id="centerMessage" aria-live="polite"></div>
+
+    <section class="overlay" id="startOverlay">
+      <div class="panel">
+        <div class="puck-logo" aria-hidden="true"></div>
+        <h1>Air Hockey <span class="version">v1.0.0</span></h1>
+        <p class="subtitle">Two players. One phone. Drag your paddle and defend your goal.</p>
+        <div class="rules" aria-label="How to play">
+          <div class="rule"><strong>1</strong>Turn the phone sideways</div>
+          <div class="rule"><strong>2</strong>Stay on your own half</div>
+          <div class="rule"><strong>3</strong>Score in the other goal</div>
+        </div>
+        <div class="length-picker" aria-label="Choose match length">
+          <button class="length-button selected" type="button" data-target="3">First to 3</button>
+          <button class="length-button" type="button" data-target="5">First to 5</button>
+        </div>
+        <button class="primary-button" id="startButton" type="button">Start match</button>
+      </div>
+    </section>
+
+    <section class="overlay" id="winnerOverlay" hidden>
+      <div class="panel">
+        <div class="puck-logo" aria-hidden="true"></div>
+        <h2 id="winnerTitle">Blue wins!</h2>
+        <p class="winner-name" id="winnerName">Great match</p>
+        <p class="final-score" id="finalScore">3 – 1</p>
+        <button class="primary-button" id="rematchButton" type="button">Play again</button>
+        <button class="secondary-button" id="changeLengthButton" type="button">Change match length</button>
+      </div>
+    </section>
+
+    <section class="overlay rotate-overlay" aria-label="Rotate your phone">
+      <div class="panel">
+        <div class="rotate-phone" aria-hidden="true"></div>
+        <h2>Turn sideways</h2>
+        <p class="subtitle">Air Hockey is made for landscape mode.</p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var canvas = document.getElementById("rink");
+      var ctx = canvas.getContext("2d");
+      var game = document.getElementById("game");
+      var startOverlay = document.getElementById("startOverlay");
+      var winnerOverlay = document.getElementById("winnerOverlay");
+      var startButton = document.getElementById("startButton");
+      var rematchButton = document.getElementById("rematchButton");
+      var changeLengthButton = document.getElementById("changeLengthButton");
+      var menuButton = document.getElementById("menuButton");
+      var blueScoreElement = document.getElementById("blueScore");
+      var redScoreElement = document.getElementById("redScore");
+      var matchLabel = document.getElementById("matchLabel");
+      var centerMessage = document.getElementById("centerMessage");
+      var winnerTitle = document.getElementById("winnerTitle");
+      var winnerName = document.getElementById("winnerName");
+      var finalScore = document.getElementById("finalScore");
+      var lengthButtons = Array.prototype.slice.call(document.querySelectorAll(".length-button"));
+
+      var width = 0;
+      var height = 0;
+      var dpr = 1;
+      var lastTime = 0;
+      var phase = "menu";
+      var targetScore = 3;
+      var blueScore = 0;
+      var redScore = 0;
+      var pauseUntil = 0;
+      var countdownValue = "";
+      var audioContext = null;
+      var particles = [];
+      var activeTouches = {};
+      var mouseDown = false;
+      var mousePlayer = null;
+
+      var rink = {
+        margin: 13,
+        corner: 26,
+        goalHalf: 62,
+        wall: 7
+      };
+
+      var blue = makePaddle("blue");
+      var red = makePaddle("red");
+      var puck = {
+        x: 0,
+        y: 0,
+        vx: 0,
+        vy: 0,
+        r: 15,
+        trail: []
+      };
+
+      function makePaddle(side) {
+        return {
+          side: side,
+          x: 0,
+          y: 0,
+          oldX: 0,
+          oldY: 0,
+          vx: 0,
+          vy: 0,
+          r: 29,
+          glow: 0
+        };
+      }
+
+      function setAppHeight() {
+        document.documentElement.style.setProperty("--app-height", window.innerHeight + "px");
+      }
+
+      function resize() {
+        setAppHeight();
+        var rect = game.getBoundingClientRect();
+        width = Math.max(320, rect.width);
+        height = Math.max(240, rect.height);
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.round(width * dpr);
+        canvas.height = Math.round(height * dpr);
+        canvas.style.width = width + "px";
+        canvas.style.height = height + "px";
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        rink.margin = Math.max(8, Math.min(15, height * 0.034));
+        rink.wall = Math.max(5, Math.min(8, height * 0.018));
+        rink.corner = Math.max(20, Math.min(34, height * 0.08));
+        rink.goalHalf = Math.max(43, Math.min(72, height * 0.18));
+
+        var base = Math.min(width, height);
+        blue.r = red.r = Math.max(23, Math.min(34, base * 0.085));
+        puck.r = Math.max(12, Math.min(17, base * 0.042));
+
+        if (!blue.x || phase === "menu") {
+          positionPaddles();
+          resetPuck(0);
+        } else {
+          constrainPaddle(blue);
+          constrainPaddle(red);
+          puck.x = clamp(puck.x, rink.margin + puck.r, width - rink.margin - puck.r);
+          puck.y = clamp(puck.y, rink.margin + puck.r, height - rink.margin - puck.r);
+        }
+      }
+
+      function positionPaddles() {
+        blue.x = width * 0.23;
+        blue.y = height * 0.5;
+        red.x = width * 0.77;
+        red.y = height * 0.5;
+        blue.oldX = blue.x;
+        blue.oldY = blue.y;
+        red.oldX = red.x;
+        red.oldY = red.y;
+        blue.vx = blue.vy = red.vx = red.vy = 0;
+      }
+
+      function resetPuck(direction) {
+        puck.x = width * 0.5;
+        puck.y = height * 0.5;
+        puck.vx = 0;
+        puck.vy = 0;
+        puck.trail.length = 0;
+        if (direction) {
+          var angle = (Math.random() * 0.62 - 0.31);
+          var speed = Math.max(235, Math.min(330, width * 0.43));
+          puck.vx = Math.cos(angle) * speed * direction;
+          puck.vy = Math.sin(angle) * speed;
+        }
+      }
+
+      function startMatch() {
+        unlockAudio();
+        blueScore = 0;
+        redScore = 0;
+        updateScore();
+        positionPaddles();
+        resetPuck(0);
+        particles.length = 0;
+        startOverlay.hidden = true;
+        winnerOverlay.hidden = true;
+        phase = "countdown";
+        pauseUntil = performance.now() + 2250;
+        countdownValue = "3";
+      }
+
+      function beginRound(direction) {
+        positionPaddles();
+        resetPuck(0);
+        phase = "countdown";
+        pauseUntil = performance.now() + 1450;
+        countdownValue = direction < 0 ? "Blue serves" : "Red serves";
+        puck.serveDirection = direction;
+      }
+
+      function updateCountdown(now) {
+        var remaining = pauseUntil - now;
+        if (remaining <= 0) {
+          phase = "playing";
+          hideMessage();
+          var direction = puck.serveDirection || (Math.random() < 0.5 ? -1 : 1);
+          puck.serveDirection = 0;
+          resetPuck(direction);
+          sound("start");
+          return;
+        }
+
+        if (remaining > 1500) {
+          showMessage("3");
+        } else if (remaining > 850) {
+          showMessage(countdownValue === "3" ? "2" : countdownValue);
+        } else if (remaining > 300) {
+          showMessage(countdownValue === "3" ? "1" : "Ready");
+        } else {
+          showMessage("GO!");
+        }
+      }
+
+      function updateScore() {
+        blueScoreElement.textContent = String(blueScore);
+        redScoreElement.textContent = String(redScore);
+        matchLabel.textContent = "First to " + targetScore;
+      }
+
+      function goal(scoringSide) {
+        if (phase !== "playing") {
+          return;
+        }
+
+        phase = "goal";
+        puck.vx = 0;
+        puck.vy = 0;
+
+        if (scoringSide === "blue") {
+          blueScore += 1;
+          blue.glow = 1;
+          spawnGoalParticles(width - rink.margin, height * 0.5, "blue");
+          showMessage("BLUE GOAL!");
+        } else {
+          redScore += 1;
+          red.glow = 1;
+          spawnGoalParticles(rink.margin, height * 0.5, "red");
+          showMessage("RED GOAL!");
+        }
+
+        updateScore();
+        sound("goal");
+        vibrate([35, 35, 70]);
+
+        if (blueScore >= targetScore || redScore >= targetScore) {
+          window.setTimeout(function () {
+            if (phase === "goal") {
+              showWinner();
+            }
+          }, 950);
+        } else {
+          window.setTimeout(function () {
+            if (phase === "goal") {
+              hideMessage();
+              beginRound(scoringSide === "blue" ? 1 : -1);
+            }
+          }, 900);
+        }
+      }
+
+      function showWinner() {
+        phase = "finished";
+        var blueWon = blueScore > redScore;
+        winnerTitle.textContent = blueWon ? "Blue wins!" : "Red wins!";
+        winnerTitle.style.color = blueWon ? "#28b6ff" : "#ff4d68";
+        winnerName.textContent = "Great match";
+        finalScore.textContent = blueScore + " – " + redScore;
+        hideMessage();
+        winnerOverlay.hidden = false;
+        sound("win");
+      }
+
+      function openMenu() {
+        phase = "menu";
+        puck.vx = puck.vy = 0;
+        startButton.textContent = "Start new match";
+        startOverlay.hidden = false;
+        winnerOverlay.hidden = true;
+        hideMessage();
+      }
+
+      function showMessage(text) {
+        if (centerMessage.textContent !== text) {
+          centerMessage.textContent = text;
+        }
+        centerMessage.classList.add("show");
+      }
+
+      function hideMessage() {
+        centerMessage.classList.remove("show");
+      }
+
+      function playerForX(x) {
+        return x < width * 0.5 ? blue : red;
+      }
+
+      function movePaddle(paddle, x, y, dt) {
+        var oldX = paddle.x;
+        var oldY = paddle.y;
+        paddle.x = x;
+        paddle.y = y;
+        constrainPaddle(paddle);
+        var safeDt = Math.max(0.008, Math.min(dt || 0.016, 0.05));
+        paddle.vx = (paddle.x - oldX) / safeDt;
+        paddle.vy = (paddle.y - oldY) / safeDt;
+      }
+
+      function constrainPaddle(paddle) {
+        var inset = rink.margin + rink.wall + paddle.r;
+        paddle.y = clamp(paddle.y, inset, height - inset);
+        if (paddle.side === "blue") {
+          paddle.x = clamp(paddle.x, inset, width * 0.5 - paddle.r - 6);
+        } else {
+          paddle.x = clamp(paddle.x, width * 0.5 + paddle.r + 6, width - inset);
+        }
+      }
+
+      function getPoint(clientX, clientY) {
+        var rect = canvas.getBoundingClientRect();
+        return {
+          x: clientX - rect.left,
+          y: clientY - rect.top
+        };
+      }
+
+      function handleTouches(event) {
+        if (phase !== "playing" && phase !== "countdown") {
+          return;
+        }
+        event.preventDefault();
+        var now = performance.now();
+        for (var i = 0; i < event.changedTouches.length; i += 1) {
+          var touch = event.changedTouches[i];
+          var point = getPoint(touch.clientX, touch.clientY);
+          var record = activeTouches[touch.identifier];
+          var paddle = record ? record.paddle : playerForX(point.x);
+          var previousTime = record ? record.time : now - 16;
+          activeTouches[touch.identifier] = {
+            paddle: paddle,
+            time: now
+          };
+          movePaddle(paddle, point.x, point.y, (now - previousTime) / 1000);
+        }
+      }
+
+      function endTouches(event) {
+        for (var i = 0; i < event.changedTouches.length; i += 1) {
+          delete activeTouches[event.changedTouches[i].identifier];
+        }
+      }
+
+      function handleMouseDown(event) {
+        if (phase !== "playing" && phase !== "countdown") {
+          return;
+        }
+        var point = getPoint(event.clientX, event.clientY);
+        mouseDown = true;
+        mousePlayer = playerForX(point.x);
+        movePaddle(mousePlayer, point.x, point.y, 0.016);
+      }
+
+      function handleMouseMove(event) {
+        if (!mouseDown || !mousePlayer) {
+          return;
+        }
+        var point = getPoint(event.clientX, event.clientY);
+        movePaddle(mousePlayer, point.x, point.y, 0.016);
+      }
+
+      function update(dt) {
+        if (phase !== "playing") {
+          decayEffects(dt);
+          updateParticles(dt);
+          return;
+        }
+
+        blue.vx *= Math.pow(0.04, dt);
+        blue.vy *= Math.pow(0.04, dt);
+        red.vx *= Math.pow(0.04, dt);
+        red.vy *= Math.pow(0.04, dt);
+
+        puck.trail.unshift({ x: puck.x, y: puck.y });
+        if (puck.trail.length > 10) {
+          puck.trail.pop();
+        }
+
+        var steps = Math.max(1, Math.ceil(dt / 0.008));
+        var step = dt / steps;
+        for (var i = 0; i < steps; i += 1) {
+          puck.x += puck.vx * step;
+          puck.y += puck.vy * step;
+          collideWalls();
+          collidePaddle(blue);
+          collidePaddle(red);
+        }
+
+        var drag = Math.pow(0.995, dt * 60);
+        puck.vx *= drag;
+        puck.vy *= drag;
+        capPuckSpeed();
+        decayEffects(dt);
+        updateParticles(dt);
+      }
+
+      function collideWalls() {
+        var top = rink.margin + rink.wall + puck.r;
+        var bottom = height - rink.margin - rink.wall - puck.r;
+        var left = rink.margin + rink.wall + puck.r;
+        var right = width - rink.margin - rink.wall - puck.r;
+        var inGoal = Math.abs(puck.y - height * 0.5) < rink.goalHalf - puck.r * 0.2;
+
+        if (puck.y < top) {
+          puck.y = top;
+          puck.vy = Math.abs(puck.vy) * 0.97;
+          sound("wall");
+        } else if (puck.y > bottom) {
+          puck.y = bottom;
+          puck.vy = -Math.abs(puck.vy) * 0.97;
+          sound("wall");
+        }
+
+        if (!inGoal && puck.x < left) {
+          puck.x = left;
+          puck.vx = Math.abs(puck.vx) * 0.97;
+          sound("wall");
+        } else if (!inGoal && puck.x > right) {
+          puck.x = right;
+          puck.vx = -Math.abs(puck.vx) * 0.97;
+          sound("wall");
+        }
+
+        if (inGoal && puck.x < rink.margin - puck.r * 1.4) {
+          goal("red");
+        } else if (inGoal && puck.x > width - rink.margin + puck.r * 1.4) {
+          goal("blue");
+        }
+      }
+
+      function collidePaddle(paddle) {
+        var dx = puck.x - paddle.x;
+        var dy = puck.y - paddle.y;
+        var distanceSquared = dx * dx + dy * dy;
+        var minimum = puck.r + paddle.r;
+        if (distanceSquared >= minimum * minimum) {
+          return;
+        }
+
+        var distance = Math.sqrt(distanceSquared) || 0.001;
+        var nx = dx / distance;
+        var ny = dy / distance;
+        var overlap = minimum - distance;
+        puck.x += nx * overlap;
+        puck.y += ny * overlap;
+
+        var relativeVx = puck.vx - paddle.vx;
+        var relativeVy = puck.vy - paddle.vy;
+        var movingTogether = relativeVx * nx + relativeVy * ny;
+        if (movingTogether < 0) {
+          var impulse = -1.75 * movingTogether;
+          puck.vx += impulse * nx;
+          puck.vy += impulse * ny;
+        }
+
+        puck.vx += paddle.vx * 0.28;
+        puck.vy += paddle.vy * 0.28;
+        var minimumKick = 150;
+        var speed = Math.sqrt(puck.vx * puck.vx + puck.vy * puck.vy);
+        if (speed < minimumKick) {
+          puck.vx += nx * (minimumKick - speed);
+          puck.vy += ny * (minimumKick - speed);
+        }
+
+        paddle.glow = 1;
+        sound("hit");
+        vibrate(10);
+        capPuckSpeed();
+      }
+
+      function capPuckSpeed() {
+        var maxSpeed = Math.max(720, Math.min(1050, width * 1.45));
+        var speed = Math.sqrt(puck.vx * puck.vx + puck.vy * puck.vy);
+        if (speed > maxSpeed) {
+          puck.vx = puck.vx / speed * maxSpeed;
+          puck.vy = puck.vy / speed * maxSpeed;
+        }
+      }
+
+      function decayEffects(dt) {
+        blue.glow = Math.max(0, blue.glow - dt * 3.5);
+        red.glow = Math.max(0, red.glow - dt * 3.5);
+      }
+
+      function spawnGoalParticles(x, y, side) {
+        for (var i = 0; i < 42; i += 1) {
+          var angle = Math.random() * Math.PI * 2;
+          var speed = 90 + Math.random() * 420;
+          particles.push({
+            x: x,
+            y: y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            life: 0.55 + Math.random() * 0.65,
+            maxLife: 1.2,
+            radius: 2 + Math.random() * 5,
+            side: side
+          });
+        }
+      }
+
+      function updateParticles(dt) {
+        for (var i = particles.length - 1; i >= 0; i -= 1) {
+          var particle = particles[i];
+          particle.life -= dt;
+          if (particle.life <= 0) {
+            particles.splice(i, 1);
+            continue;
+          }
+          particle.x += particle.vx * dt;
+          particle.y += particle.vy * dt;
+          particle.vx *= Math.pow(0.12, dt);
+          particle.vy *= Math.pow(0.12, dt);
+        }
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, width, height);
+        drawBackground();
+        drawRink();
+        drawParticles();
+        drawPuckTrail();
+        drawPaddle(blue);
+        drawPaddle(red);
+        drawPuck();
+      }
+
+      function drawBackground() {
+        var gradient = ctx.createLinearGradient(0, 0, width, 0);
+        gradient.addColorStop(0, "#061d36");
+        gradient.addColorStop(0.5, "#0a1b2d");
+        gradient.addColorStop(1, "#34101b");
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, width, height);
+      }
+
+      function roundedRectPath(x, y, w, h, radius) {
+        var r = Math.min(radius, w * 0.5, h * 0.5);
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
+      }
+
+      function drawRink() {
+        var x = rink.margin;
+        var y = rink.margin;
+        var w = width - rink.margin * 2;
+        var h = height - rink.margin * 2;
+
+        ctx.save();
+        roundedRectPath(x, y, w, h, rink.corner);
+        ctx.clip();
+
+        var ice = ctx.createLinearGradient(0, 0, 0, height);
+        ice.addColorStop(0, "#f3fdff");
+        ice.addColorStop(0.5, "#dff8fb");
+        ice.addColorStop(1, "#cceff5");
+        ctx.fillStyle = ice;
+        ctx.fillRect(x, y, w, h);
+
+        ctx.fillStyle = "rgba(40, 182, 255, 0.075)";
+        ctx.fillRect(x, y, w * 0.5, h);
+        ctx.fillStyle = "rgba(255, 77, 104, 0.07)";
+        ctx.fillRect(x + w * 0.5, y, w * 0.5, h);
+
+        ctx.strokeStyle = "rgba(15, 71, 99, 0.07)";
+        ctx.lineWidth = 1;
+        var spacing = Math.max(22, height * 0.085);
+        for (var gy = y; gy < y + h; gy += spacing) {
+          ctx.beginPath();
+          ctx.moveTo(x, gy);
+          ctx.lineTo(x + w, gy);
+          ctx.stroke();
+        }
+        for (var gx = x; gx < x + w; gx += spacing) {
+          ctx.beginPath();
+          ctx.moveTo(gx, y);
+          ctx.lineTo(gx, y + h);
+          ctx.stroke();
+        }
+
+        ctx.setLineDash([8, 8]);
+        ctx.strokeStyle = "rgba(24, 101, 128, 0.38)";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(width * 0.5, y + rink.wall);
+        ctx.lineTo(width * 0.5, y + h - rink.wall);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.strokeStyle = "rgba(24, 101, 128, 0.42)";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(width * 0.5, height * 0.5, Math.min(56, height * 0.17), 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = "rgba(24, 101, 128, 0.34)";
+        ctx.beginPath();
+        ctx.arc(width * 0.5, height * 0.5, 5, 0, Math.PI * 2);
+        ctx.fill();
+
+        drawGoalArea("blue");
+        drawGoalArea("red");
+        ctx.restore();
+
+        ctx.strokeStyle = "rgba(235, 253, 255, 0.94)";
+        ctx.lineWidth = rink.wall;
+        roundedRectPath(x, y, w, h, rink.corner);
+        ctx.stroke();
+
+        ctx.strokeStyle = "rgba(5, 25, 42, 0.54)";
+        ctx.lineWidth = 2;
+        roundedRectPath(x + rink.wall * 0.5, y + rink.wall * 0.5, w - rink.wall, h - rink.wall, rink.corner - 2);
+        ctx.stroke();
+
+        drawGoalMouth("blue");
+        drawGoalMouth("red");
+      }
+
+      function drawGoalArea(side) {
+        var isBlue = side === "blue";
+        var color = isBlue ? "rgba(40, 182, 255, 0.20)" : "rgba(255, 77, 104, 0.18)";
+        var x = isBlue ? rink.margin + rink.wall : width - rink.margin - rink.wall;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        if (isBlue) {
+          ctx.arc(x, height * 0.5, rink.goalHalf * 0.92, -Math.PI * 0.5, Math.PI * 0.5);
+        } else {
+          ctx.arc(x, height * 0.5, rink.goalHalf * 0.92, Math.PI * 0.5, Math.PI * 1.5);
+        }
+        ctx.stroke();
+      }
+
+      function drawGoalMouth(side) {
+        var isBlue = side === "blue";
+        var x = isBlue ? rink.margin - 3 : width - rink.margin + 3;
+        var top = height * 0.5 - rink.goalHalf;
+        var bottom = height * 0.5 + rink.goalHalf;
+        var depth = Math.min(18, width * 0.03);
+        ctx.save();
+        ctx.strokeStyle = isBlue ? "#28b6ff" : "#ff4d68";
+        ctx.lineWidth = 5;
+        ctx.shadowColor = ctx.strokeStyle;
+        ctx.shadowBlur = 13;
+        ctx.beginPath();
+        ctx.moveTo(x, top);
+        ctx.lineTo(x + (isBlue ? -depth : depth), top);
+        ctx.lineTo(x + (isBlue ? -depth : depth), bottom);
+        ctx.lineTo(x, bottom);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function drawPuckTrail() {
+        for (var i = puck.trail.length - 1; i >= 0; i -= 1) {
+          var point = puck.trail[i];
+          var alpha = (1 - i / puck.trail.length) * 0.075;
+          ctx.fillStyle = "rgba(4, 14, 26, " + alpha + ")";
+          ctx.beginPath();
+          ctx.arc(point.x, point.y, puck.r * (0.55 + i * 0.025), 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      function drawPaddle(paddle) {
+        var isBlue = paddle.side === "blue";
+        var light = isBlue ? "#66d7ff" : "#ff7b90";
+        var dark = isBlue ? "#0876c9" : "#c82042";
+        ctx.save();
+        ctx.shadowColor = isBlue ? "rgba(40, 182, 255, 0.72)" : "rgba(255, 77, 104, 0.72)";
+        ctx.shadowBlur = 10 + paddle.glow * 22;
+        ctx.shadowOffsetY = 8;
+
+        var gradient = ctx.createRadialGradient(
+          paddle.x - paddle.r * 0.28,
+          paddle.y - paddle.r * 0.34,
+          paddle.r * 0.08,
+          paddle.x,
+          paddle.y,
+          paddle.r
+        );
+        gradient.addColorStop(0, "#ffffff");
+        gradient.addColorStop(0.12, light);
+        gradient.addColorStop(0.68, dark);
+        gradient.addColorStop(1, "#04101e");
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(paddle.x, paddle.y, paddle.r, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetY = 0;
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.82)";
+        ctx.lineWidth = Math.max(3, paddle.r * 0.12);
+        ctx.beginPath();
+        ctx.arc(paddle.x, paddle.y, paddle.r * 0.62, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.fillStyle = isBlue ? "rgba(4, 92, 154, 0.92)" : "rgba(151, 16, 48, 0.92)";
+        ctx.beginPath();
+        ctx.arc(paddle.x, paddle.y, paddle.r * 0.31, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      function drawPuck() {
+        ctx.save();
+        ctx.shadowColor = "rgba(0, 0, 0, 0.58)";
+        ctx.shadowBlur = 12;
+        ctx.shadowOffsetY = 7;
+        var gradient = ctx.createRadialGradient(
+          puck.x - puck.r * 0.32,
+          puck.y - puck.r * 0.35,
+          puck.r * 0.08,
+          puck.x,
+          puck.y,
+          puck.r
+        );
+        gradient.addColorStop(0, "#718299");
+        gradient.addColorStop(0.25, "#233248");
+        gradient.addColorStop(0.78, "#08111e");
+        gradient.addColorStop(1, "#02060c");
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(puck.x, puck.y, puck.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.26)";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function drawParticles() {
+        for (var i = 0; i < particles.length; i += 1) {
+          var particle = particles[i];
+          var alpha = Math.max(0, particle.life / particle.maxLife);
+          ctx.fillStyle = particle.side === "blue"
+            ? "rgba(40, 182, 255, " + alpha + ")"
+            : "rgba(255, 77, 104, " + alpha + ")";
+          ctx.beginPath();
+          ctx.arc(particle.x, particle.y, particle.radius * alpha, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      function loop(now) {
+        var dt = lastTime ? Math.min((now - lastTime) / 1000, 0.034) : 0.016;
+        lastTime = now;
+        if (phase === "countdown") {
+          updateCountdown(now);
+        }
+        update(dt);
+        draw();
+        window.requestAnimationFrame(loop);
+      }
+
+      function unlockAudio() {
+        if (!audioContext) {
+          var AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (AudioContextClass) {
+            audioContext = new AudioContextClass();
+          }
+        }
+        if (audioContext && audioContext.state === "suspended") {
+          audioContext.resume();
+        }
+      }
+
+      var lastSoundAt = 0;
+      function sound(type) {
+        if (!audioContext) {
+          return;
+        }
+        var now = audioContext.currentTime;
+        if ((type === "wall" || type === "hit") && now - lastSoundAt < 0.045) {
+          return;
+        }
+        lastSoundAt = now;
+
+        var oscillator = audioContext.createOscillator();
+        var gain = audioContext.createGain();
+        oscillator.connect(gain);
+        gain.connect(audioContext.destination);
+
+        if (type === "hit") {
+          oscillator.type = "square";
+          oscillator.frequency.setValueAtTime(125, now);
+          oscillator.frequency.exponentialRampToValueAtTime(75, now + 0.055);
+          gain.gain.setValueAtTime(0.055, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.065);
+          oscillator.start(now);
+          oscillator.stop(now + 0.07);
+        } else if (type === "wall") {
+          oscillator.type = "triangle";
+          oscillator.frequency.setValueAtTime(170, now);
+          gain.gain.setValueAtTime(0.025, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.035);
+          oscillator.start(now);
+          oscillator.stop(now + 0.04);
+        } else if (type === "goal") {
+          oscillator.type = "sawtooth";
+          oscillator.frequency.setValueAtTime(240, now);
+          oscillator.frequency.exponentialRampToValueAtTime(680, now + 0.22);
+          gain.gain.setValueAtTime(0.07, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+          oscillator.start(now);
+          oscillator.stop(now + 0.31);
+        } else if (type === "start") {
+          oscillator.type = "sine";
+          oscillator.frequency.setValueAtTime(520, now);
+          gain.gain.setValueAtTime(0.04, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+          oscillator.start(now);
+          oscillator.stop(now + 0.13);
+        } else if (type === "win") {
+          oscillator.type = "triangle";
+          oscillator.frequency.setValueAtTime(392, now);
+          oscillator.frequency.setValueAtTime(523, now + 0.13);
+          oscillator.frequency.setValueAtTime(659, now + 0.26);
+          gain.gain.setValueAtTime(0.065, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+          oscillator.start(now);
+          oscillator.stop(now + 0.56);
+        }
+      }
+
+      function vibrate(pattern) {
+        if (navigator.vibrate) {
+          navigator.vibrate(pattern);
+        }
+      }
+
+      function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+      }
+
+      lengthButtons.forEach(function (button) {
+        button.addEventListener("click", function () {
+          targetScore = Number(button.getAttribute("data-target"));
+          lengthButtons.forEach(function (item) {
+            item.classList.toggle("selected", item === button);
+          });
+          updateScore();
+          unlockAudio();
+        });
+      });
+
+      startButton.addEventListener("click", startMatch);
+      rematchButton.addEventListener("click", startMatch);
+      changeLengthButton.addEventListener("click", function () {
+        winnerOverlay.hidden = true;
+        startOverlay.hidden = false;
+        phase = "menu";
+      });
+      menuButton.addEventListener("click", openMenu);
+
+      canvas.addEventListener("touchstart", handleTouches, { passive: false });
+      canvas.addEventListener("touchmove", handleTouches, { passive: false });
+      canvas.addEventListener("touchend", endTouches, { passive: false });
+      canvas.addEventListener("touchcancel", endTouches, { passive: false });
+      canvas.addEventListener("mousedown", handleMouseDown);
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mouseup", function () {
+        mouseDown = false;
+        mousePlayer = null;
+      });
+      window.addEventListener("resize", resize);
+      window.addEventListener("orientationchange", function () {
+        window.setTimeout(resize, 180);
+      });
+      document.addEventListener("visibilitychange", function () {
+        lastTime = 0;
+      });
+      document.addEventListener("contextmenu", function (event) {
+        event.preventDefault();
+      });
+
+      updateScore();
+      resize();
+      window.requestAnimationFrame(loop);
+    }());
+  </script>
+</body>
+</html>
