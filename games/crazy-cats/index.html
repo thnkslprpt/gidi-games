@@ -117,7 +117,7 @@
   <header>
     <div class="shell">
       <a class="back" href="../../">← All games</a>
-      <h1>Crazy Cats <span class="version">v1.0.0</span></h1>
+      <h1>Crazy Cats <span class="version">v1.1.0</span></h1>
       <p>Pull the slingshot back, let go, and smash the block towers.</p>
     </div>
   </header>
@@ -155,8 +155,9 @@
       var W = 900;
       var H = 520;
       var groundY = 445;
-      var sling = { x: 145, y: 335, maxPull: 112 };
-      var gravity = 790;
+      var sling = { x: 145, y: 335, maxPull: 128 };
+      var launchPower = 10.2;
+      var gravity = 900;
       var level = 1;
       var angryParents = 0;
       var catsLeft = 5;
@@ -208,9 +209,10 @@
         blocks = layout.map(function (b, i) {
           return {
             x: b[0], y: b[1], w: b[2], h: b[3],
+            x0: b[0], y0: b[1],
             vx: 0, vy: 0, angle: 0, spin: 0,
-            falling: false, scored: false, gone: false,
-            shade: i % 3
+            scored: false, gone: false, sleeping: true,
+            hitAt: 0, shade: i % 3
           };
         });
       }
@@ -288,8 +290,8 @@
           setMessage("Pull the cat back before letting go.");
           return;
         }
-        cat.vx = dx * 6.2;
-        cat.vy = dy * 6.2;
+        cat.vx = dx * launchPower;
+        cat.vy = dy * launchPower;
         cat.launched = true;
         catsLeft -= 1;
         updateHud();
@@ -316,17 +318,138 @@
         return dx * dx + dy * dy < c.r * c.r;
       }
 
-      function scoreBlock(block, impactX, impactY) {
-        if (!block.scored) {
-          block.scored = true;
-          angryParents += 1;
-          updateHud();
-          setMessage("+1 angry parent!");
+      function markBlockScored(block) {
+        if (block.scored) return;
+        block.scored = true;
+        angryParents += 1;
+        updateHud();
+        setMessage("+1 angry parent!");
+      }
+
+      function hitBlock(block, impactX, impactY, now) {
+        if (now - block.hitAt < 120) return;
+        block.hitAt = now;
+        markBlockScored(block);
+        block.sleeping = false;
+        block.vx += impactX * 0.42;
+        block.vy += impactY * 0.22 - 75;
+        block.spin += impactX * 0.002 + (Math.random() - 0.5) * 1.6;
+      }
+
+      function horizontalOverlap(a, b) {
+        return Math.min(a.x + a.w / 2, b.x + b.w / 2) -
+               Math.max(a.x - a.w / 2, b.x - b.w / 2);
+      }
+
+      function resolveBlockPhysics(dt) {
+        var previousY = [];
+
+        blocks.forEach(function (block, index) {
+          if (block.gone) return;
+          previousY[index] = block.y;
+          block.vy += gravity * dt;
+          block.x += block.vx * dt;
+          block.y += block.vy * dt;
+          block.angle += block.spin * dt;
+          block.vx *= Math.pow(0.987, dt * 60);
+          block.spin *= Math.pow(0.982, dt * 60);
+          block.sleeping = false;
+        });
+
+        for (var pass = 0; pass < 4; pass += 1) {
+          blocks.forEach(function (block, index) {
+            if (block.gone) return;
+            var supported = false;
+            var bottom = block.y + block.h / 2;
+
+            if (bottom >= groundY) {
+              block.y = groundY - block.h / 2;
+              if (block.vy > 45) block.vy *= -0.12;
+              else block.vy = 0;
+              block.vx *= 0.82;
+              block.spin *= 0.75;
+              supported = true;
+            } else {
+              var contacts = [];
+              var newBottom = block.y + block.h / 2;
+              var oldBottom = previousY[index] + block.h / 2;
+
+              blocks.forEach(function (support, supportIndex) {
+                if (supportIndex === index || support.gone || block.y >= support.y) return;
+                var overlap = horizontalOverlap(block, support);
+                if (overlap < Math.min(12, block.w * 0.24)) return;
+
+                var supportTop = support.y - support.h / 2;
+                var crossingTop = block.vy >= -20 &&
+                  oldBottom <= supportTop + 14 &&
+                  newBottom >= supportTop - 4 &&
+                  newBottom <= supportTop + 20;
+                if (!crossingTop) return;
+
+                contacts.push({
+                  block: support,
+                  top: supportTop,
+                  left: Math.max(block.x - block.w / 2, support.x - support.w / 2),
+                  right: Math.min(block.x + block.w / 2, support.x + support.w / 2)
+                });
+              });
+
+              if (contacts.length) {
+                var highestTop = contacts.reduce(function (top, contact) {
+                  return Math.min(top, contact.top);
+                }, contacts[0].top);
+                var levelContacts = contacts.filter(function (contact) {
+                  return Math.abs(contact.top - highestTop) <= 8;
+                });
+                var supportLeft = levelContacts.reduce(function (left, contact) {
+                  return Math.min(left, contact.left);
+                }, levelContacts[0].left);
+                var supportRight = levelContacts.reduce(function (right, contact) {
+                  return Math.max(right, contact.right);
+                }, levelContacts[0].right);
+                var balanceMargin = Math.min(6, block.w * 0.08);
+                var balanced = block.x >= supportLeft + balanceMargin &&
+                  block.x <= supportRight - balanceMargin;
+
+                if (balanced) {
+                  var landingSpeed = block.vy;
+                  block.y = highestTop - block.h / 2;
+                  block.vy = 0;
+                  block.vx *= 0.88;
+                  block.spin *= 0.84;
+                  supported = true;
+
+                  if (landingSpeed > 180) {
+                    levelContacts.forEach(function (contact) {
+                      contact.block.sleeping = false;
+                      contact.block.vx += block.vx * 0.06;
+                      contact.block.vy += Math.min(75, landingSpeed * 0.05);
+                    });
+                  }
+                } else {
+                  var tipDirection = block.x > (supportLeft + supportRight) / 2 ? 1 : -1;
+                  block.spin += tipDirection * 1.8 * dt;
+                  block.vx += tipDirection * 42 * dt;
+                }
+              }
+            }
+
+            if (supported && Math.abs(block.vx) < 4 && Math.abs(block.spin) < 0.08) {
+              block.vx = 0;
+              block.spin = 0;
+              block.sleeping = true;
+            }
+
+            if (Math.abs(block.x - block.x0) > 12 ||
+                block.y > block.y0 + 10 || Math.abs(block.angle) > 0.11) {
+              markBlockScored(block);
+            }
+
+            if (block.x > W + 120 || block.x < -120 || block.y > H + 140) {
+              block.gone = true;
+            }
+          });
         }
-        block.falling = true;
-        block.vx += impactX * 0.55;
-        block.vy += impactY * 0.28 - 90;
-        block.spin += impactX * 0.0025 + (Math.random() - 0.5) * 2;
       }
 
       function update(dt, now) {
@@ -334,22 +457,22 @@
           cat.vy += gravity * dt;
           cat.x += cat.vx * dt;
           cat.y += cat.vy * dt;
-          cat.vx *= Math.pow(0.996, dt * 60);
+          cat.vx *= Math.pow(0.997, dt * 60);
 
           if (cat.y + cat.r > groundY) {
             cat.y = groundY - cat.r;
-            cat.vy *= -0.28;
-            cat.vx *= 0.78;
-            if (Math.abs(cat.vy) < 35) cat.vy = 0;
+            cat.vy *= -0.3;
+            cat.vx *= 0.8;
+            if (Math.abs(cat.vy) < 38) cat.vy = 0;
           }
 
           blocks.forEach(function (block) {
             if (circleRectHit(cat, block)) {
               var speed = Math.sqrt(cat.vx * cat.vx + cat.vy * cat.vy);
               if (speed > 70) {
-                scoreBlock(block, cat.vx, cat.vy);
-                cat.vx *= 0.62;
-                cat.vy *= 0.72;
+                hitBlock(block, cat.vx, cat.vy, now);
+                cat.vx *= 0.66;
+                cat.vy *= 0.74;
               }
             }
           });
@@ -361,22 +484,7 @@
           }
         }
 
-        blocks.forEach(function (block) {
-          if (!block.falling || block.gone) return;
-          block.vy += gravity * dt;
-          block.x += block.vx * dt;
-          block.y += block.vy * dt;
-          block.angle += block.spin * dt;
-          block.vx *= Math.pow(0.985, dt * 60);
-          block.spin *= Math.pow(0.98, dt * 60);
-          if (block.y + block.h / 2 > groundY) {
-            block.y = groundY - block.h / 2;
-            block.vy *= -0.18;
-            block.vx *= 0.78;
-            block.spin *= 0.72;
-          }
-          if (block.x > W + 100 || block.x < -100 || block.y > H + 100) block.gone = true;
-        });
+        resolveBlockPhysics(dt);
 
         var remaining = blocks.some(function (block) { return !block.scored; });
         if (!remaining) {
