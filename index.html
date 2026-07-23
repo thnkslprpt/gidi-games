@@ -2,203 +2,440 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, viewport-fit=cover"
-  >
-  <meta name="theme-color" content="#172554">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#080b22">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Gidi's Game Room</title>
-
   <style>
-    * {
-      box-sizing: border-box;
+    :root {
+      color-scheme: dark;
+      --bg: #07091a;
+      --panel: #101633;
+      --ink: #f7f8ff;
+      --muted: #abb8df;
+      --line: rgba(172, 194, 255, .18);
     }
 
-    html {
-      min-width: 320px;
-      -webkit-text-size-adjust: 100%;
-    }
+    * { box-sizing: border-box; }
+
+    html { min-width: 320px; background: var(--bg); }
 
     body {
       min-width: 320px;
       min-height: 100vh;
       margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-      background: #f4f7ff;
-      color: #172033;
+      overflow-x: hidden;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 18%, rgba(83, 96, 255, .16), transparent 28rem),
+        radial-gradient(circle at 88% 55%, rgba(255, 67, 190, .11), transparent 30rem),
+        #07091a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
     }
 
-    .shell {
-      width: 100%;
-      max-width: 800px;
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .55;
+      background-image:
+        radial-gradient(circle, rgba(255,255,255,.9) 0 1px, transparent 1.5px),
+        radial-gradient(circle, rgba(96,221,255,.8) 0 1px, transparent 1.5px);
+      background-position: 0 0, 23px 31px;
+      background-size: 67px 67px, 97px 97px;
+      mask-image: linear-gradient(to bottom, black, transparent 82%);
+      -webkit-mask-image: linear-gradient(to bottom, black, transparent 82%);
+    }
+
+    .hero {
+      position: relative;
+      isolation: isolate;
+      min-height: 240px;
+      overflow: hidden;
+      border-bottom: 1px solid rgba(113, 225, 255, .28);
+      background:
+        radial-gradient(circle at 78% 40%, rgba(85, 222, 255, .28), transparent 18rem),
+        radial-gradient(circle at 18% 0%, rgba(166, 88, 255, .36), transparent 25rem),
+        linear-gradient(135deg, #101947 0%, #10102f 48%, #260d3b 100%);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, .35);
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      width: 330px;
+      height: 330px;
+      right: -72px;
+      top: -126px;
+      border: 1px solid rgba(110, 231, 255, .28);
+      border-radius: 50%;
+      box-shadow: 0 0 0 35px rgba(110, 231, 255, .035), 0 0 0 74px rgba(255, 93, 203, .025);
+      z-index: -1;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      left: -8%;
+      right: -8%;
+      bottom: -54px;
+      height: 92px;
+      border-radius: 50% 50% 0 0;
+      background: var(--bg);
+      z-index: -1;
+    }
+
+    .hero-inner {
+      width: min(100% - 32px, 920px);
+      min-height: 205px;
       margin: 0 auto;
-      padding-left: max(16px, env(safe-area-inset-left));
-      padding-right: max(16px, env(safe-area-inset-right));
+      padding: max(26px, env(safe-area-inset-top)) 0 28px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 180px;
+      gap: 24px;
+      align-items: center;
     }
 
-    header {
-      padding-top: calc(30px + env(safe-area-inset-top));
-      padding-bottom: 30px;
-      background: #172554;
-      color: white;
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: max-content;
+      max-width: 100%;
+      padding: 7px 11px;
+      border: 1px solid rgba(132, 231, 255, .32);
+      border-radius: 999px;
+      color: #c9f6ff;
+      background: rgba(36, 71, 121, .34);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
+
+    .eyebrow::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #6cf4ae; box-shadow: 0 0 12px #6cf4ae; }
 
     h1 {
-      margin: 0 0 8px;
-      font-size: clamp(2rem, 9vw, 3.5rem);
-      line-height: 1.05;
+      max-width: 640px;
+      margin: 13px 0 8px;
+      font-size: clamp(37px, 8vw, 68px);
+      line-height: .9;
+      letter-spacing: -.055em;
     }
 
-    header p {
-      margin: 0;
+    h1 span {
+      display: block;
+      color: transparent;
+      background: linear-gradient(90deg, #75eeff, #a88cff 48%, #ff70ca);
+      -webkit-background-clip: text;
+      background-clip: text;
+      text-shadow: 0 0 34px rgba(112, 218, 255, .16);
     }
+
+    .subtitle { margin: 0; color: #ced8f6; font-size: 16px; line-height: 1.4; }
+
+    .hero-art {
+      position: relative;
+      width: 170px;
+      height: 150px;
+      justify-self: end;
+      filter: drop-shadow(0 20px 24px rgba(0, 0, 0, .32));
+      animation: hover 4.3s ease-in-out infinite;
+    }
+
+    .hero-art svg { width: 100%; height: 100%; overflow: visible; }
 
     main {
-      padding-top: 26px;
-      padding-bottom: 40px;
+      position: relative;
+      width: min(100% - 24px, 920px);
+      margin: -18px auto 0;
+      padding: 0 0 max(34px, env(safe-area-inset-bottom));
+      z-index: 2;
     }
 
-    .games {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-      gap: 16px;
-    }
-
-    .game-card {
+    .grid-label {
       display: flex;
-      min-height: 180px;
-      flex-direction: column;
-      padding: 20px;
-      border: 1px solid #cbd5e1;
-      border-radius: 18px;
-      background: white;
-      color: inherit;
-      text-decoration: none;
-      box-shadow: 0 6px 18px rgba(23, 32, 51, 0.08);
-      touch-action: manipulation;
-    }
-
-    .game-card:focus {
-      outline: 3px solid #f59e0b;
-      outline-offset: 3px;
-    }
-
-    .icon {
-      font-size: 2.5rem;
-    }
-
-    .game-card h2 {
-      margin: 12px 0 6px;
-    }
-
-    .game-card p {
-      margin: 0 0 18px;
-      color: #566176;
-    }
-
-    .play {
-      margin-top: auto;
-      color: #1d4ed8;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 0 2px 13px;
+      color: var(--muted);
+      font-size: 12px;
       font-weight: 800;
+      letter-spacing: .12em;
+      text-transform: uppercase;
     }
 
-    footer {
-      padding-bottom: calc(24px + env(safe-area-inset-bottom));
-      color: #566176;
+    .grid-label span:last-child { color: #73e6ff; }
+
+    .game-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(142px, 1fr));
+      gap: 14px;
+    }
+
+    .game-tile {
+      --accent: #70e8ff;
+      --accent-2: #a56cff;
+      position: relative;
+      aspect-ratio: 1 / 1;
+      min-width: 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 11px;
+      padding: 15px 11px 13px;
+      border: 1px solid rgba(var(--accent-rgb), .38);
+      border-radius: 24px;
+      color: white;
       text-align: center;
+      text-decoration: none;
+      background:
+        radial-gradient(circle at 50% 24%, rgba(var(--accent-rgb), .20), transparent 45%),
+        linear-gradient(155deg, rgba(24, 33, 75, .98), rgba(10, 13, 36, .98));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 14px 28px rgba(0,0,0,.23);
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      animation: tileIn .5s both;
+      animation-delay: var(--delay);
+      transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
     }
 
-    @media (max-width: 520px) {
-      .games {
-        grid-template-columns: 1fr;
-      }
+    .game-tile::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(135deg, rgba(255,255,255,.1), transparent 28%, transparent 72%, rgba(var(--accent-2-rgb), .12));
+    }
 
-      .game-card {
-        min-height: 165px;
-      }
+    .game-tile::after {
+      content: "";
+      position: absolute;
+      width: 82px;
+      height: 82px;
+      right: -42px;
+      bottom: -42px;
+      border: 1px solid rgba(var(--accent-2-rgb), .36);
+      border-radius: 50%;
+      box-shadow: 0 0 0 15px rgba(var(--accent-2-rgb), .04);
+    }
+
+    .tile-glow {
+      position: absolute;
+      width: 95px;
+      height: 95px;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-radius: 50%;
+      background: var(--accent);
+      opacity: .13;
+      filter: blur(22px);
+      pointer-events: none;
+    }
+
+    .icon-stage {
+      position: relative;
+      width: clamp(70px, 48%, 94px);
+      aspect-ratio: 1;
+      display: grid;
+      place-items: center;
+      transform-origin: 50% 70%;
+      transition: transform .18s ease;
+      z-index: 1;
+    }
+
+    .icon-stage svg { width: 100%; height: 100%; overflow: visible; }
+
+    .game-name {
+      position: relative;
+      z-index: 1;
+      max-width: 100%;
+      font-size: clamp(15px, 3.2vw, 18px);
+      line-height: 1.08;
+      font-weight: 900;
+      letter-spacing: -.025em;
+      text-wrap: balance;
+      text-shadow: 0 2px 10px rgba(0,0,0,.4);
+    }
+
+    .game-tile:focus-visible { outline: 3px solid white; outline-offset: 3px; }
+    .game-tile:active { transform: scale(.965); }
+
+    @media (hover: hover) {
+      .game-tile:hover { transform: translateY(-5px); border-color: var(--accent); box-shadow: inset 0 1px 0 rgba(255,255,255,.1), 0 18px 38px rgba(var(--accent-rgb), .18); }
+      .game-tile:hover .icon-stage { transform: translateY(-3px) scale(1.07) rotate(-2deg); }
+    }
+
+    @media (max-width: 620px) {
+      .hero { min-height: 223px; }
+      .hero-inner { min-height: 195px; grid-template-columns: minmax(0, 1fr) 105px; gap: 8px; }
+      .hero-art { width: 112px; height: 108px; }
+      .subtitle { font-size: 14px; }
+      main { margin-top: -11px; }
+      .game-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    }
+
+    @media (max-width: 370px) {
+      .hero-inner { width: min(100% - 24px, 920px); grid-template-columns: 1fr 82px; }
+      .hero-art { width: 86px; height: 92px; }
+      .eyebrow { font-size: 10px; padding: 6px 9px; }
+      h1 { font-size: 39px; }
+      .subtitle { max-width: 220px; font-size: 13px; }
+      main { width: calc(100% - 20px); }
+      .game-grid { gap: 10px; }
+      .game-tile { border-radius: 20px; padding: 11px 8px 10px; gap: 7px; }
+      .icon-stage { width: 68px; }
+      .game-name { font-size: 15px; }
+    }
+
+    @keyframes hover { 0%,100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-9px) rotate(1deg); } }
+    @keyframes tileIn { from { opacity: 0; transform: translateY(12px) scale(.97); } to { opacity: 1; transform: none; } }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
     }
   </style>
 </head>
-
 <body>
-  <header>
-    <div class="shell">
-      <h1>Gidi's Game Room</h1>
-      <p>Choose a game and start playing.</p>
+  <header class="hero">
+    <div class="hero-inner">
+      <div>
+        <div class="eyebrow">Arcade online · 9 games</div>
+        <h1>Gidi's <span>Game Room</span></h1>
+        <p class="subtitle">Choose a game portal and jump straight in.</p>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <svg viewBox="0 0 180 150">
+          <defs>
+            <linearGradient id="ship" x1="0" x2="1"><stop stop-color="#70efff"/><stop offset="1" stop-color="#a56fff"/></linearGradient>
+            <linearGradient id="screen" x1="0" x2="1"><stop stop-color="#18265b"/><stop offset="1" stop-color="#301752"/></linearGradient>
+          </defs>
+          <circle cx="92" cy="76" r="58" fill="none" stroke="#7ae9ff" stroke-opacity=".22" stroke-width="2"/>
+          <circle cx="92" cy="76" r="43" fill="none" stroke="#ff73cc" stroke-opacity=".17" stroke-width="2" stroke-dasharray="5 8"/>
+          <path d="M37 62h106l13 50c2 9-5 17-14 17h-18l-17-20H73l-17 20H38c-9 0-16-8-14-17z" fill="url(#screen)" stroke="url(#ship)" stroke-width="4"/>
+          <path d="M53 84h27M66.5 70v28" stroke="#77f3a9" stroke-width="8" stroke-linecap="round"/>
+          <circle cx="119" cy="80" r="8" fill="#ff5477"/><circle cx="137" cy="96" r="8" fill="#ffd74c"/>
+          <path d="M82 112h16" stroke="#76e9ff" stroke-width="4" stroke-linecap="round"/>
+          <path d="m88 14 5 12 13 1-10 8 3 13-11-7-11 7 3-13-10-8 13-1z" fill="#ffe060"/>
+          <circle cx="154" cy="36" r="5" fill="#ff70ca"/><circle cx="27" cy="30" r="4" fill="#71ecff"/>
+        </svg>
+      </div>
     </div>
   </header>
 
-  <main class="shell">
-    <section class="games" aria-label="Available games">
-      <a class="game-card" href="./games/tap-target/">
-        <span class="icon" aria-hidden="true">🎯</span>
-        <h2>Tap the Target</h2>
-        <p>Tap the moving target as many times as possible in 20 seconds.</p>
-        <span class="play">Play now →</span>
+  <main>
+    <div class="grid-label"><span>Select a game</span><span>Tap to launch</span></div>
+    <nav class="game-grid" aria-label="Games">
+      <a class="game-tile" href="games/tap-target/" aria-label="Play Tap Target" style="--accent:#70e8ff;--accent-2:#a56cff;--accent-rgb:112,232,255;--accent-2-rgb:165,108,255;--delay:0ms">
+        <span class="tile-glow" aria-hidden="true"></span>
+        <span class="icon-stage"><svg viewBox="0 0 100 100" role="img" aria-label="Tap Target game logo"><path d="M50 5 61 33l30 2-23 19 8 30-26-16-26 16 8-30L9 35l30-2z" fill="#70e8ff"/><text x="50" y="62" text-anchor="middle" font-size="38" font-weight="900" fill="#101837">T</text></svg></span>
+        <span class="game-name">Tap Target</span>
       </a>
-  
-    <a class="game-card" href="./games/crazy-cats/">
-      <span class="icon" aria-hidden="true">🐱🧱</span>
-      <h2>Crazy Cats</h2>
-      <p>Pull back the slingshot and launch crazy cats at block towers.</p>
-      <span class="play">Play now →</span>
-    </a>
-  <a class="game-card" href="./games/memory-match/">
-   <span class="icon" aria-hidden="true">A A</span>
-   <h2>Memory Match</h2>
-   <p>Match coloured numbers and letters, with bonus points for streaks.</p>
-   <span class="play">Play now &rarr;</span>
-  </a>
-
-  
-  <a class="game-card" href="./games/rush-hour/">
-   <span class="icon" aria-hidden="true">🚗</span>
-   <h2>Rush Hour</h2>
-   <p>Slide colourful cars around a 6 × 6 grid and free the red car.</p>
-   <span class="play">Play now →</span>
-  </a>
-
-  <a class="game-card" href="./games/tiny-submarine/">
-    <span class="icon" aria-hidden="true">🌊</span>
-    <h2>Tiny Submarine</h2>
-    <p>Hold to rise and release to sink through underwater caves. Collect treasure, rescue divers, avoid mines, and manage your oxygen.</p>
-    <span class="play">Play now →</span>
-  </a>
-
-    <a class="game-card" href="./games/connect-4/">
-   <span class="icon" aria-hidden="true">🔴🟡</span>
-   <h2>Connect 4</h2>
-   <p>Take turns dropping discs and be the first to connect four in a row.</p>
-   <span class="play">Play now →</span>
-  </a>
-
-       <a class="game-card" href="./games/reaction-duel/">
-        <span class="icon" aria-hidden="true">⚡</span>
-        <h2>Reaction Duel</h2>
-        <p>Wait for green, then beat the player across from you to the tap.</p>
-        <span class="play">Play now →</span>
+      <a class="game-tile" href="games/crazy-cats/" aria-label="Play Crazy Cats" style="--accent:#ff9f2e;--accent-2:#ff4b57;--accent-rgb:255,159,46;--accent-2-rgb:255,75,87;--delay:45ms">
+        <span class="tile-glow" aria-hidden="true"></span>
+        <span class="icon-stage">
+<svg viewBox="0 0 100 100" role="img" aria-label="Cat crashing through bricks">
+  <path d="M25 45 19 21l20 12c8-4 20-4 28 0l18-12-4 26c5 7 7 15 4 23-5 14-21 20-39 17-17-2-29-13-28-27 0-6 2-11 7-15z" fill="#ffbd2e"/>
+  <path d="m27 33-5-7 10 6zM72 32l9-7-3 11z" fill="#ff7b20"/>
+  <ellipse cx="42" cy="54" rx="4" ry="6" fill="#151b3e"/><ellipse cx="66" cy="54" rx="4" ry="6" fill="#151b3e"/>
+  <path d="m51 62 5 0-2.5 4zM54 67c-5 6-12 4-14 0M54 67c5 6 12 4 14 0" fill="none" stroke="#151b3e" stroke-width="3" stroke-linecap="round"/>
+  <path d="M14 70h18v12H14zm20 0h19v12H34zm21 0h18v12H55zm20 0h12v12H75zM5 84h20v11H5zm22 0h18v11H27zm20 0h21v11H47zm23 0h25v11H70z" fill="#ff5b45" stroke="#ffd0a9" stroke-width="2"/>
+</svg></span>
+        <span class="game-name">Crazy Cats</span>
       </a>
-
-
-  <a class="game-card" href="./games/air-hockey/">
-    <span class="icon" aria-hidden="true">🏒</span>
-    <h2>Air Hockey</h2>
-    <p>Two players battle on one phone. Drag your paddle and be first to 3 or 5 goals.</p>
-    <span class="play">Play now →</span>
-  </a>
-
-  </section>
-
-      <a class="game-card" href="games/space-invaders/" aria-label="Play Space Invaders" style="text-decoration:none;color:inherit;">
-        <div class="game-icon" aria-hidden="true">🚀</div>
-        <h2>Space Invaders</h2>
-        <p>Blast alien waves, grab power-ups, defend your shields, and battle giant bosses.</p>
+      <a class="game-tile" href="games/memory-match/" aria-label="Play Memory Match" style="--accent:#7967ff;--accent-2:#ff4eb9;--accent-rgb:121,103,255;--accent-2-rgb:255,78,185;--delay:90ms">
+        <span class="tile-glow" aria-hidden="true"></span>
+        <span class="icon-stage">
+<svg viewBox="0 0 100 100" role="img" aria-label="Matching game cards">
+  <g transform="rotate(-9 36 51)"><rect x="13" y="17" width="42" height="66" rx="10" fill="#5c7cff" stroke="#b8c6ff" stroke-width="3"/><path d="M21 26h26v48H21z" fill="#18285f" opacity=".42"/><text x="34" y="61" text-anchor="middle" font-size="30" font-weight="900" fill="white">A</text></g>
+  <g transform="rotate(9 65 51)"><rect x="45" y="17" width="42" height="66" rx="10" fill="#ff4fb8" stroke="#ffc1e5" stroke-width="3"/><path d="M53 26h26v48H53z" fill="#6c1749" opacity=".35"/><text x="66" y="61" text-anchor="middle" font-size="30" font-weight="900" fill="white">A</text></g>
+  <path d="M42 91h17" stroke="#8ef6ff" stroke-width="5" stroke-linecap="round"/>
+</svg></span>
+        <span class="game-name">Memory Match</span>
       </a>
-
+      <a class="game-tile" href="games/rush-hour/" aria-label="Play Rush Hour" style="--accent:#ff3f55;--accent-2:#ffcc45;--accent-rgb:255,63,85;--accent-2-rgb:255,204,69;--delay:135ms">
+        <span class="tile-glow" aria-hidden="true"></span>
+        <span class="icon-stage">
+<svg viewBox="0 0 100 100" role="img" aria-label="Red car on a road">
+  <path d="M11 75h78" stroke="#303b62" stroke-width="31" stroke-linecap="round"/>
+  <path d="M14 75h15m12 0h18m12 0h15" stroke="#ffd64a" stroke-width="4" stroke-linecap="round"/>
+  <path d="M24 62h9l8-12h27l10 12h5c5 0 8 4 8 9v7H18v-8c0-4 2-7 6-8z" fill="#ff3e55" stroke="#ffd1d7" stroke-width="2"/>
+  <path d="m44 53-6 9h31l-7-9z" fill="#8de8ff"/>
+  <circle cx="34" cy="79" r="9" fill="#161c37"/><circle cx="76" cy="79" r="9" fill="#161c37"/>
+  <circle cx="34" cy="79" r="4" fill="#9da8c8"/><circle cx="76" cy="79" r="4" fill="#9da8c8"/>
+</svg></span>
+        <span class="game-name">Rush Hour</span>
+      </a>
+      <a class="game-tile" href="games/tiny-submarine/" aria-label="Play Tiny Submarine" style="--accent:#28c8ef;--accent-2:#485dff;--accent-rgb:40,200,239;--accent-2-rgb:72,93,255;--delay:180ms">
+        <span class="tile-glow" aria-hidden="true"></span>
+        <span class="icon-stage">
+<svg viewBox="0 0 100 100" role="img" aria-label="Submarine under waves">
+  <path d="M5 30c9 0 9-8 18-8s9 8 18 8 9-8 18-8 9 8 18 8 9-8 18-8" fill="none" stroke="#73dcff" stroke-width="6" stroke-linecap="round"/>
+  <path d="M13 60c0-14 15-24 37-24h12c16 0 28 10 29 24-2 15-17 24-39 24H39C23 84 13 75 13 60z" fill="#29b8df" stroke="#b9f1ff" stroke-width="3"/>
+  <path d="M42 37V27h18v10M49 27v-8h13" fill="none" stroke="#b9f1ff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="43" cy="58" r="8" fill="#10234d" stroke="#ffe36b" stroke-width="4"/><circle cx="67" cy="58" r="8" fill="#10234d" stroke="#ffe36b" stroke-width="4"/>
+  <path d="M13 55 3 45v31l12-9" fill="#ff557c"/>
+  <circle cx="84" cy="35" r="4" fill="#8de8ff"/><circle cx="92" cy="22" r="3" fill="#8de8ff"/>
+</svg></span>
+        <span class="game-name">Tiny Submarine</span>
+      </a>
+      <a class="game-tile" href="games/connect-4/" aria-label="Play Connect 4" style="--accent:#4671ff;--accent-2:#ffcb3f;--accent-rgb:70,113,255;--accent-2-rgb:255,203,63;--delay:225ms">
+        <span class="tile-glow" aria-hidden="true"></span>
+        <span class="icon-stage">
+<svg viewBox="0 0 100 100" role="img" aria-label="Connect four board">
+  <path d="M14 24h72v58H14z" fill="#396aff" stroke="#b8c8ff" stroke-width="3"/>
+  <g fill="#111b45"><circle cx="26" cy="38" r="7"/><circle cx="42" cy="38" r="7"/><circle cx="58" cy="38" r="7"/><circle cx="74" cy="38" r="7"/><circle cx="26" cy="55" r="7"/><circle cx="42" cy="55" r="7"/><circle cx="58" cy="55" r="7"/><circle cx="74" cy="55" r="7"/><circle cx="26" cy="72" r="7"/><circle cx="42" cy="72" r="7"/><circle cx="58" cy="72" r="7"/><circle cx="74" cy="72" r="7"/></g>
+  <circle cx="26" cy="72" r="7" fill="#ff4057"/><circle cx="42" cy="55" r="7" fill="#ff4057"/><circle cx="58" cy="38" r="7" fill="#ff4057"/><circle cx="42" cy="72" r="7" fill="#ffd23f"/><circle cx="58" cy="72" r="7" fill="#ffd23f"/>
+</svg></span>
+        <span class="game-name">Connect 4</span>
+      </a>
+      <a class="game-tile" href="games/reaction-duel/" aria-label="Play Reaction Duel" style="--accent:#ffe24c;--accent-2:#ff5269;--accent-rgb:255,226,76;--accent-2-rgb:255,82,105;--delay:270ms">
+        <span class="tile-glow" aria-hidden="true"></span>
+        <span class="icon-stage">
+<svg viewBox="0 0 100 100" role="img" aria-label="Reaction duel lightning bolt">
+  <circle cx="27" cy="68" r="18" fill="#ff4a62" stroke="#ffc3cc" stroke-width="3"/><circle cx="73" cy="68" r="18" fill="#45d8ff" stroke="#bdefff" stroke-width="3"/>
+  <path d="M57 5 28 51h20l-7 37 32-49H53z" fill="#ffe14f" stroke="#fff3ab" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M18 20h14M12 32h10m56-12h14m-4 12h8" stroke="#c8d3ff" stroke-width="4" stroke-linecap="round" opacity=".9"/>
+</svg></span>
+        <span class="game-name">Reaction Duel</span>
+      </a>
+      <a class="game-tile" href="games/air-hockey/" aria-label="Play Air Hockey" style="--accent:#56ddff;--accent-2:#ff4967;--accent-rgb:86,221,255;--accent-2-rgb:255,73,103;--delay:315ms">
+        <span class="tile-glow" aria-hidden="true"></span>
+        <span class="icon-stage">
+<svg viewBox="0 0 100 100" role="img" aria-label="Air hockey table and paddles">
+  <rect x="10" y="12" width="80" height="76" rx="14" fill="#dff9ff" stroke="#72ddff" stroke-width="4"/>
+  <path d="M50 14v72M12 50h76" stroke="#47b9e4" stroke-width="3" opacity=".75"/>
+  <circle cx="50" cy="50" r="13" fill="none" stroke="#47b9e4" stroke-width="3"/>
+  <circle cx="31" cy="34" r="14" fill="#ff425d" stroke="#8b1732" stroke-width="4"/><circle cx="69" cy="68" r="14" fill="#ffd13b" stroke="#9e6b00" stroke-width="4"/>
+  <circle cx="48" cy="61" r="7" fill="#27314e" stroke="#fff" stroke-width="2"/>
+</svg></span>
+        <span class="game-name">Air Hockey</span>
+      </a>
+      <a class="game-tile" href="games/space-invaders/" aria-label="Play Space Invaders" style="--accent:#70f895;--accent-2:#54d9ff;--accent-rgb:112,248,149;--accent-2-rgb:84,217,255;--delay:360ms">
+        <span class="tile-glow" aria-hidden="true"></span>
+        <span class="icon-stage">
+<svg viewBox="0 0 100 100" role="img" aria-label="Pixel alien and spaceship">
+  <g fill="#74f59a">
+    <path d="M25 17h10v8h8v-8h14v8h8v-8h10v8h8v34H73v10H61V58H39v11H27V59H17V25h8zm8 18v10h10V35zm24 0v10h10V35z"/>
+  </g>
+  <path d="M47 58h6v19h-6z" fill="#ffe45d"/><path d="m50 75-6 11h12z" fill="#ff6a4d"/>
+  <path d="M23 91h54l-7-13H59l-6-8h-6l-6 8H30z" fill="#55d7ff" stroke="#d1f7ff" stroke-width="2"/>
+  <path d="M12 13h6m65 5h6M9 59h6m70 9h6" stroke="#e6eaff" stroke-width="4" stroke-linecap="round"/>
+</svg></span>
+        <span class="game-name">Space Invaders</span>
+      </a>
+    </nav>
   </main>
 
-  <footer class="shell">
-    More games coming soon.
-  </footer>
+  <!-- Gidi's Game Room hub revision 2.0.0 -->
 </body>
 </html>

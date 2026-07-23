@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  >
+  <meta name="theme-color" content="#172554">
+  <title>Gidi's Game Room</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-width: 320px;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      min-width: 320px;
+      min-height: 100vh;
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      background: #f4f7ff;
+      color: #172033;
+    }
+
+    .shell {
+      width: 100%;
+      max-width: 800px;
+      margin: 0 auto;
+      padding-left: max(16px, env(safe-area-inset-left));
+      padding-right: max(16px, env(safe-area-inset-right));
+    }
+
+    header {
+      padding-top: calc(30px + env(safe-area-inset-top));
+      padding-bottom: 30px;
+      background: #172554;
+      color: white;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(2rem, 9vw, 3.5rem);
+      line-height: 1.05;
+    }
+
+    header p {
+      margin: 0;
+    }
+
+    main {
+      padding-top: 26px;
+      padding-bottom: 40px;
+    }
+
+    .games {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 16px;
+    }
+
+    .game-card {
+      display: flex;
+      min-height: 180px;
+      flex-direction: column;
+      padding: 20px;
+      border: 1px solid #cbd5e1;
+      border-radius: 18px;
+      background: white;
+      color: inherit;
+      text-decoration: none;
+      box-shadow: 0 6px 18px rgba(23, 32, 51, 0.08);
+      touch-action: manipulation;
+    }
+
+    .game-card:focus {
+      outline: 3px solid #f59e0b;
+      outline-offset: 3px;
+    }
+
+    .icon {
+      font-size: 2.5rem;
+    }
+
+    .game-card h2 {
+      margin: 12px 0 6px;
+    }
+
+    .game-card p {
+      margin: 0 0 18px;
+      color: #566176;
+    }
+
+    .play {
+      margin-top: auto;
+      color: #1d4ed8;
+      font-weight: 800;
+    }
+
+    footer {
+      padding-bottom: calc(24px + env(safe-area-inset-bottom));
+      color: #566176;
+      text-align: center;
+    }
+
+    @media (max-width: 520px) {
+      .games {
+        grid-template-columns: 1fr;
+      }
+
+      .game-card {
+        min-height: 165px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="shell">
+      <h1>Gidi's Game Room</h1>
+      <p>Choose a game and start playing.</p>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="games" aria-label="Available games">
+      <a class="game-card" href="./games/tap-target/">
+        <span class="icon" aria-hidden="true">🎯</span>
+        <h2>Tap the Target</h2>
+        <p>Tap the moving target as many times as possible in 20 seconds.</p>
+        <span class="play">Play now →</span>
+      </a>
+  
+    <a class="game-card" href="./games/crazy-cats/">
+      <span class="icon" aria-hidden="true">🐱🧱</span>
+      <h2>Crazy Cats</h2>
+      <p>Pull back the slingshot and launch crazy cats at block towers.</p>
+      <span class="play">Play now →</span>
+    </a>
+  <a class="game-card" href="./games/memory-match/">
+   <span class="icon" aria-hidden="true">A A</span>
+   <h2>Memory Match</h2>
+   <p>Match coloured numbers and letters, with bonus points for streaks.</p>
+   <span class="play">Play now &rarr;</span>
+  </a>
+
+  
+  <a class="game-card" href="./games/rush-hour/">
+   <span class="icon" aria-hidden="true">🚗</span>
+   <h2>Rush Hour</h2>
+   <p>Slide colourful cars around a 6 × 6 grid and free the red car.</p>
+   <span class="play">Play now →</span>
+  </a>
+
+  <a class="game-card" href="./games/tiny-submarine/">
+    <span class="icon" aria-hidden="true">🌊</span>
+    <h2>Tiny Submarine</h2>
+    <p>Hold to rise and release to sink through underwater caves. Collect treasure, rescue divers, avoid mines, and manage your oxygen.</p>
+    <span class="play">Play now →</span>
+  </a>
+
+    <a class="game-card" href="./games/connect-4/">
+   <span class="icon" aria-hidden="true">🔴🟡</span>
+   <h2>Connect 4</h2>
+   <p>Take turns dropping discs and be the first to connect four in a row.</p>
+   <span class="play">Play now →</span>
+  </a>
+
+       <a class="game-card" href="./games/reaction-duel/">
+        <span class="icon" aria-hidden="true">⚡</span>
+        <h2>Reaction Duel</h2>
+        <p>Wait for green, then beat the player across from you to the tap.</p>
+        <span class="play">Play now →</span>
+      </a>
+
+
+  <a class="game-card" href="./games/air-hockey/">
+    <span class="icon" aria-hidden="true">🏒</span>
+    <h2>Air Hockey</h2>
+    <p>Two players battle on one phone. Drag your paddle and be first to 3 or 5 goals.</p>
+    <span class="play">Play now →</span>
+  </a>
+
+  </section>
+
+      <a class="game-card" href="games/space-invaders/" aria-label="Play Space Invaders" style="text-decoration:none;color:inherit;">
+        <div class="game-icon" aria-hidden="true">🚀</div>
+        <h2>Space Invaders</h2>
+        <p>Blast alien waves, grab power-ups, defend your shields, and battle giant bosses.</p>
+      </a>
+
+  </main>
+
+  <footer class="shell">
+    More games coming soon.
+  </footer>
+</body>
+</html>
