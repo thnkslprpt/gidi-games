@@ -117,7 +117,7 @@
   <header>
     <div class="shell">
       <a class="back" href="../../">← All games</a>
-      <h1>Crazy Cats <span class="version">v1.3.1</span></h1>
+      <h1>Crazy Cats <span class="version">v1.3.0</span></h1>
       <p>Smash bigger towers, collect cat-only diamonds, and master all 20 levels.</p>
     </div>
   </header>
@@ -2952,12 +2952,6 @@
           r: 23,
           launched: false,
           resting: false,
-          launchedAt: 0,
-          lowSpeedSince: 0,
-          stuckSince: 0,
-          motionCheckAt: 0,
-          motionCheckX: sling.x,
-          motionCheckY: sling.y,
           face: Math.random() > 0.5 ? 1 : -1
         };
         dragging = false;
@@ -3068,12 +3062,6 @@
         cat.vx = dx * launchPower;
         cat.vy = dy * launchPower;
         cat.launched = true;
-        cat.launchedAt = performance.now();
-        cat.lowSpeedSince = 0;
-        cat.stuckSince = 0;
-        cat.motionCheckAt = cat.launchedAt;
-        cat.motionCheckX = cat.x;
-        cat.motionCheckY = cat.y;
         catsLeft -= 1;
         updateHud();
         setMessage("Fly, crazy cat!");
@@ -3481,40 +3469,8 @@
             }
           });
 
-          var catSpeed = Math.sqrt(cat.vx * cat.vx + cat.vy * cat.vy);
-          if (catSpeed < 30) {
-            if (!cat.lowSpeedSince) cat.lowSpeedSince = now;
-          } else {
-            cat.lowSpeedSince = 0;
-          }
-
-          if (!cat.motionCheckAt) {
-            cat.motionCheckAt = now;
-            cat.motionCheckX = cat.x;
-            cat.motionCheckY = cat.y;
-          } else if (now - cat.motionCheckAt >= 450) {
-            var movedX = cat.x - cat.motionCheckX;
-            var movedY = cat.y - cat.motionCheckY;
-            var movedDistance = Math.sqrt(movedX * movedX + movedY * movedY);
-            if (movedDistance < 5) {
-              if (!cat.stuckSince) cat.stuckSince = cat.motionCheckAt;
-            } else {
-              cat.stuckSince = 0;
-            }
-            cat.motionCheckAt = now;
-            cat.motionCheckX = cat.x;
-            cat.motionCheckY = cat.y;
-          }
-
-          var outsideWorld = cat.x > W + 80 || cat.x < -80 || cat.y > H + 100;
-          var stoppedOnGround = catSpeed < 18 && cat.y + cat.r >= groundY - 1;
-          var stoppedAnywhere = cat.lowSpeedSince && now - cat.lowSpeedSince > 1050;
-          var stuckInPlace = cat.stuckSince && now - cat.stuckSince > 1100;
-          var flightTimedOut = cat.launchedAt && now - cat.launchedAt > 12000;
-
-          if (outsideWorld || stoppedOnGround || stoppedAnywhere || stuckInPlace || flightTimedOut) {
-            cat.vx = 0;
-            cat.vy = 0;
+          if (cat.x > W + 80 || cat.x < -80 || cat.y > H + 100 ||
+              (Math.abs(cat.vx) < 15 && Math.abs(cat.vy) < 15 && cat.y + cat.r >= groundY - 1)) {
             cat.resting = true;
             shotSettledAt = now;
           }
