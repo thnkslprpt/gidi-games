@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  >
+  <meta name="theme-color" content="#172554">
+  <title>Tap the Target</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-width: 320px;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      min-width: 320px;
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      background: #f4f7ff;
+      color: #172033;
+    }
+
+    .shell {
+      width: 100%;
+      max-width: 680px;
+      margin: auto;
+      padding-left: max(14px, env(safe-area-inset-left));
+      padding-right: max(14px, env(safe-area-inset-right));
+    }
+
+    header {
+      padding-top: calc(16px + env(safe-area-inset-top));
+      padding-bottom: 18px;
+      background: #172554;
+      color: white;
+    }
+
+    header a {
+      display: inline-flex;
+      min-height: 44px;
+      align-items: center;
+      color: white;
+      font-weight: 700;
+      text-decoration: none;
+      touch-action: manipulation;
+    }
+
+    h1 {
+      margin: 4px 0;
+      font-size: clamp(1.9rem, 9vw, 3rem);
+    }
+
+    header p {
+      margin: 0;
+    }
+
+    main {
+      padding-top: 14px;
+      padding-bottom: calc(24px + env(safe-area-inset-bottom));
+    }
+
+    .scores {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .score-box {
+      padding: 10px 6px;
+      border: 1px solid #cbd5e1;
+      border-radius: 13px;
+      background: white;
+      text-align: center;
+    }
+
+    .score-box span {
+      display: block;
+      color: #566176;
+      font-size: 0.75rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .score-box strong {
+      font-size: 1.5rem;
+    }
+
+    button {
+      font: inherit;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button:focus,
+    a:focus {
+      outline: 3px solid #f59e0b;
+      outline-offset: 3px;
+    }
+
+    #start {
+      width: 100%;
+      min-height: 52px;
+      margin-top: 12px;
+      border: 0;
+      border-radius: 13px;
+      background: #1d4ed8;
+      color: white;
+      font-weight: 800;
+    }
+
+    #start:disabled {
+      opacity: 0.55;
+    }
+
+    #message {
+      min-height: 24px;
+      margin: 10px 0;
+      color: #566176;
+      text-align: center;
+    }
+
+    #field {
+      position: relative;
+      height: 360px;
+      overflow: hidden;
+      border: 2px solid #cbd5e1;
+      border-radius: 18px;
+      background: white;
+    }
+
+    #target {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 72px;
+      height: 72px;
+      padding: 0;
+      transform: translate(-50%, -50%);
+      border: 0;
+      border-radius: 50%;
+      background: #fee2e2;
+      font-size: 2.4rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+    }
+
+    #target:disabled {
+      filter: grayscale(1);
+      opacity: 0.5;
+    }
+
+    @media (max-height: 620px) {
+      #field {
+        height: 280px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="shell">
+      <a href="../../">← All games</a>
+      <h1>Tap the Target</h1>
+      <p>Score as many taps as possible in 20 seconds.</p>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="scores" aria-label="Score board">
+      <div class="score-box">
+        <span>Score</span>
+        <strong id="score">0</strong>
+      </div>
+
+      <div class="score-box">
+        <span>Time</span>
+        <strong><b id="time">20</b>s</strong>
+      </div>
+
+      <div class="score-box">
+        <span>Best</span>
+        <strong id="best">0</strong>
+      </div>
+    </section>
+
+    <button id="start" type="button">Start game</button>
+
+    <p id="message" aria-live="polite">
+      Press Start game when ready.
+    </p>
+
+    <section id="field" aria-label="Game area">
+      <button
+        id="target"
+        type="button"
+        aria-label="Tap the target"
+        disabled
+      >🎯</button>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var duration = 20;
+      var storageKey = "gidi-tap-target-best";
+
+      var field = document.getElementById("field");
+      var target = document.getElementById("target");
+      var start = document.getElementById("start");
+      var scoreNode = document.getElementById("score");
+      var timeNode = document.getElementById("time");
+      var bestNode = document.getElementById("best");
+      var message = document.getElementById("message");
+
+      var score = 0;
+      var running = false;
+      var finishAt = 0;
+      var timer = 0;
+
+      function getBest() {
+        try {
+          return Number(localStorage.getItem(storageKey)) || 0;
+        } catch (error) {
+          return 0;
+        }
+      }
+
+      function saveBest(value) {
+        try {
+          localStorage.setItem(storageKey, String(value));
+        } catch (error) {
+          return;
+        }
+      }
+
+      function moveTarget() {
+        var availableX =
+          Math.max(0, field.clientWidth - target.offsetWidth - 16);
+
+        var availableY =
+          Math.max(0, field.clientHeight - target.offsetHeight - 16);
+
+        target.style.transform = "none";
+        target.style.left =
+          8 + Math.floor(Math.random() * (availableX + 1)) + "px";
+        target.style.top =
+          8 + Math.floor(Math.random() * (availableY + 1)) + "px";
+      }
+
+      function finishGame() {
+        var best = getBest();
+
+        running = false;
+        clearTimeout(timer);
+
+        target.disabled = true;
+        start.disabled = false;
+        start.textContent = "Play again";
+        timeNode.textContent = "0";
+
+        if (score > best) {
+          saveBest(score);
+          bestNode.textContent = String(score);
+          message.textContent = "New best score: " + score + "!";
+        } else {
+          message.textContent = "Finished with " + score + " taps.";
+        }
+      }
+
+      function updateTimer() {
+        var millisecondsLeft;
+        var secondsLeft;
+
+        if (!running) {
+          return;
+        }
+
+        millisecondsLeft = finishAt - Date.now();
+        secondsLeft = Math.max(
+          0,
+          Math.ceil(millisecondsLeft / 1000)
+        );
+
+        timeNode.textContent = String(secondsLeft);
+
+        if (millisecondsLeft <= 0) {
+          finishGame();
+          return;
+        }
+
+        timer = setTimeout(updateTimer, 100);
+      }
+
+      start.addEventListener("click", function () {
+        score = 0;
+        running = true;
+        finishAt = Date.now() + duration * 1000;
+
+        scoreNode.textContent = "0";
+        timeNode.textContent = String(duration);
+        message.textContent = "Go!";
+
+        start.disabled = true;
+        target.disabled = false;
+
+        moveTarget();
+        updateTimer();
+      });
+
+      target.addEventListener("click", function () {
+        if (!running) {
+          return;
+        }
+
+        score += 1;
+        scoreNode.textContent = String(score);
+        moveTarget();
+      });
+
+      window.addEventListener("resize", function () {
+        if (running) {
+          moveTarget();
+        }
+      });
+
+      bestNode.textContent = String(getBest());
+    }());
+  </script>
+</body>
+</html>
