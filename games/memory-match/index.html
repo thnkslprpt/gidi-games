@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#172554">
-  <title>Memory Match v1.0.1</title>
+  <title>Memory Match v1.0.2</title>
   <style>
     * { box-sizing: border-box; }
 
@@ -163,7 +163,7 @@
 
     .board {
       --columns: 4;
-      --card-size: clamp(38px, 11vw, 48px);
+      --card-size: clamp(41px, 13vw, 52px);
       display: grid;
       grid-template-columns: repeat(var(--columns), var(--card-size));
       justify-content: center;
@@ -338,7 +338,7 @@
       }
 
       .board {
-        --card-size: clamp(36px, 11vw, 40px);
+        --card-size: clamp(39px, 12.5vw, 44px);
         gap: 4px;
       }
       .card { border-radius: 8px; }
@@ -387,12 +387,12 @@
 
     <div class="title-row">
       <h1>Memory Match</h1>
-      <span class="version">v1.0.1</span>
+      <span class="version">v1.0.2</span>
     </div>
 
     <p class="instructions">
-      Find matching coloured letters. A match earns one point and another turn.
-      After a miss, the cards hide after one second and the turn switches automatically.
+      Match coloured numbers in the first two levels, then coloured letters. Consecutive matches
+      score 1, then 2, then 3 points and more. A miss resets the streak and switches turns after one second.
     </p>
 
     <section class="scoreboard" aria-label="Scores">
@@ -431,19 +431,31 @@
     (function () {
       "use strict";
 
-      var VERSION = "1.0.1";
+      var VERSION = "1.0.2";
       var LEVELS = [
-        { pairs: 4, columns: 4 },
-        { pairs: 6, columns: 4 },
-        { pairs: 8, columns: 4 },
-        { pairs: 10, columns: 4 },
-        { pairs: 12, columns: 4 },
-        { pairs: 15, columns: 5 },
-        { pairs: 18, columns: 6 },
-        { pairs: 21, columns: 6 }
+        { pairs: 2, columns: 2, symbols: "numbers" },
+        { pairs: 4, columns: 4, symbols: "numbers" },
+        { pairs: 6, columns: 4, symbols: "letters" },
+        { pairs: 9, columns: 6, symbols: "letters" },
+        { pairs: 12, columns: 6, symbols: "letters" },
+        { pairs: 15, columns: 6, symbols: "letters" },
+        { pairs: 18, columns: 6, symbols: "letters" },
+        { pairs: 21, columns: 6, symbols: "letters" }
       ];
 
-      var SYMBOLS = [
+      var NUMBER_SYMBOLS = [
+        { letter: "1", color: "#ef4444" },
+        { letter: "2", color: "#2563eb" },
+        { letter: "3", color: "#16a34a" },
+        { letter: "4", color: "#9333ea" },
+        { letter: "5", color: "#ea580c" },
+        { letter: "6", color: "#db2777" },
+        { letter: "7", color: "#0891b2" },
+        { letter: "8", color: "#4f46e5" },
+        { letter: "9", color: "#ca8a04" }
+      ];
+
+      var LETTER_SYMBOLS = [
         { letter: "A", color: "#ef4444" },
         { letter: "B", color: "#2563eb" },
         { letter: "C", color: "#16a34a" },
@@ -497,6 +509,7 @@
       var secondCard = null;
       var locked = true;
       var matchesRemaining = 0;
+      var streak = 0;
       var modalAction = null;
 
       function shuffle(items) {
@@ -542,8 +555,9 @@
         modalAction = null;
       }
 
-      function buildDeck(pairCount) {
-        var selected = shuffle(SYMBOLS).slice(0, pairCount);
+      function buildDeck(pairCount, symbolType) {
+        var symbolPool = symbolType === "numbers" ? NUMBER_SYMBOLS : LETTER_SYMBOLS;
+        var selected = shuffle(symbolPool).slice(0, pairCount);
         var cards = [];
         selected.forEach(function (symbol, pairId) {
           cards.push({
@@ -564,11 +578,12 @@
 
       function renderLevel() {
         var level = LEVELS[levelIndex];
-        var deck = buildDeck(level.pairs);
+        var deck = buildDeck(level.pairs, level.symbols);
 
         firstCard = null;
         secondCard = null;
         matchesRemaining = level.pairs;
+        streak = 0;
         currentPlayer = levelIndex % 2;
         locked = false;
 
@@ -648,7 +663,9 @@
         var matchedFirst = firstCard;
         var matchedSecond = secondCard;
 
-        status.textContent = "Match! " + playerName(currentPlayer) + " gets another turn.";
+        streak += 1;
+        var pointsEarned = streak;
+        status.textContent = "Match! +" + pointsEarned + (pointsEarned === 1 ? " point. " : " points. ") + playerName(currentPlayer) + " goes again.";
 
         window.setTimeout(function () {
           matchedFirst.classList.remove("flipped");
@@ -660,7 +677,7 @@
           matchedFirst.setAttribute("aria-label", "Matched card");
           matchedSecond.setAttribute("aria-label", "Matched card");
 
-          scores[currentPlayer] += 1;
+          scores[currentPlayer] += pointsEarned;
           matchesRemaining -= 1;
           clearSelection();
           updateScoreboard();
@@ -684,12 +701,13 @@
         var missedSecond = secondCard;
         var nextPlayer = currentPlayer === 0 ? 1 : 0;
 
-        status.textContent = "No match. Remember those cards.";
+        status.textContent = "No match. Streak reset - remember those cards.";
 
         window.setTimeout(function () {
           hideCard(missedFirst);
           hideCard(missedSecond);
           clearSelection();
+          streak = 0;
           currentPlayer = nextPlayer;
           updateScoreboard();
           status.textContent = playerName(currentPlayer) + ": pick two cards.";
@@ -698,7 +716,7 @@
       }
 
       function scoreSummary() {
-        return "Player 1: " + scores[0] + " matches. Player 2: " + scores[1] + " matches.";
+        return "Player 1: " + scores[0] + " points. Player 2: " + scores[1] + " points.";
       }
 
       function finishLevel() {
@@ -724,13 +742,13 @@
 
         if (scores[0] > scores[1]) {
           title = "Player 1 wins!";
-          result = "Player 1 found the most matches. " + scoreSummary();
+          result = "Player 1 scored the most points. " + scoreSummary();
         } else if (scores[1] > scores[0]) {
           title = "Player 2 wins!";
-          result = "Player 2 found the most matches. " + scoreSummary();
+          result = "Player 2 scored the most points. " + scoreSummary();
         } else {
           title = "It is a tie!";
-          result = "Both players found the same number of matches. " + scoreSummary();
+          result = "Both players scored the same number of points. " + scoreSummary();
         }
 
         showModal(
@@ -749,6 +767,7 @@
         levelIndex = 0;
         currentPlayer = 0;
         scores = [0, 0];
+        streak = 0;
         updateScoreboard();
         renderLevel();
       }
