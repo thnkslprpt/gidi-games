@@ -1,0 +1,734 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#172554">
+  <title>Memory Match v1.0.0</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    html {
+      min-width: 320px;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      min-width: 320px;
+      min-height: 100vh;
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      background: #eef2ff;
+      color: #172033;
+      overscroll-behavior: none;
+    }
+
+    button, a { font: inherit; }
+
+    button {
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 620px;
+      margin: 0 auto;
+      padding:
+        calc(12px + env(safe-area-inset-top))
+        max(10px, env(safe-area-inset-right))
+        calc(22px + env(safe-area-inset-bottom))
+        max(10px, env(safe-area-inset-left));
+    }
+
+    .back-link {
+      display: inline-block;
+      min-height: 44px;
+      padding: 11px 6px;
+      color: #1d4ed8;
+      font-weight: 800;
+      text-decoration: none;
+      touch-action: manipulation;
+    }
+
+    .title-row {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 4px 0 4px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 10vw, 3.35rem);
+      line-height: 1;
+      letter-spacing: -0.04em;
+    }
+
+    .version {
+      color: #64748b;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+
+    .instructions {
+      margin: 0 0 14px;
+      color: #475569;
+      font-size: 0.95rem;
+      line-height: 1.35;
+    }
+
+    .scoreboard {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .player {
+      min-width: 0;
+      padding: 10px 8px;
+      border: 2px solid transparent;
+      border-radius: 14px;
+      background: white;
+      box-shadow: 0 4px 12px rgba(23, 32, 51, 0.08);
+      text-align: center;
+      transition: border-color 150ms ease, transform 150ms ease;
+    }
+
+    .player.active {
+      border-color: #f59e0b;
+      transform: translateY(-1px);
+    }
+
+    .player-name {
+      display: block;
+      color: #475569;
+      font-size: 0.8rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .player-score {
+      display: block;
+      margin-top: 2px;
+      font-size: 1.7rem;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .game-info {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .level-label {
+      font-size: 0.9rem;
+      font-weight: 900;
+    }
+
+    .new-game-button {
+      min-height: 40px;
+      padding: 8px 12px;
+      border: 0;
+      border-radius: 11px;
+      background: #dbeafe;
+      color: #1e3a8a;
+      font-weight: 900;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .status {
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 8px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      background: #172554;
+      color: white;
+      font-size: 0.95rem;
+      font-weight: 800;
+      line-height: 1.25;
+      text-align: center;
+    }
+
+    .board {
+      --columns: 4;
+      display: grid;
+      grid-template-columns: repeat(var(--columns), minmax(0, 1fr));
+      gap: 6px;
+      width: 100%;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .card {
+      position: relative;
+      min-width: 0;
+      min-height: 44px;
+      aspect-ratio: 1 / 1;
+      padding: 0;
+      border: 2px solid #1e3a8a;
+      border-radius: 10px;
+      background: linear-gradient(145deg, #2563eb, #1e40af);
+      box-shadow: 0 3px 0 #172554;
+      cursor: pointer;
+      overflow: hidden;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .card:focus-visible {
+      outline: 3px solid #f59e0b;
+      outline-offset: 2px;
+    }
+
+    .card::before,
+    .card::after {
+      content: "";
+      position: absolute;
+      inset: 18%;
+      border: 2px solid rgba(255, 255, 255, 0.25);
+      border-radius: 50%;
+    }
+
+    .card::after {
+      inset: 35%;
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .letter {
+      position: absolute;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: white;
+      color: var(--letter-color, #ef4444);
+      font-size: clamp(1.45rem, 9vw, 3.3rem);
+      font-weight: 1000;
+      line-height: 1;
+      text-shadow: 0 1px 0 rgba(0, 0, 0, 0.05);
+    }
+
+    .card.flipped,
+    .card.matched {
+      border-color: #cbd5e1;
+      background: white;
+      box-shadow: 0 2px 0 #94a3b8;
+    }
+
+    .card.flipped::before,
+    .card.flipped::after,
+    .card.matched::before,
+    .card.matched::after {
+      display: none;
+    }
+
+    .card.flipped .letter,
+    .card.matched .letter {
+      display: flex;
+    }
+
+    .card.matched {
+      border-color: #22c55e;
+      box-shadow: 0 2px 0 #15803d;
+      cursor: default;
+    }
+
+    .card.matched .letter {
+      background: #f0fdf4;
+    }
+
+    .modal-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding:
+        calc(18px + env(safe-area-inset-top))
+        max(18px, env(safe-area-inset-right))
+        calc(18px + env(safe-area-inset-bottom))
+        max(18px, env(safe-area-inset-left));
+      background: #172554;
+    }
+
+    .modal-layer.show { display: flex; }
+
+    .modal {
+      width: min(100%, 420px);
+      padding: 24px 18px;
+      border-radius: 22px;
+      background: white;
+      box-shadow: 0 22px 50px rgba(0, 0, 0, 0.3);
+      text-align: center;
+    }
+
+    .modal h2 {
+      margin: 0 0 8px;
+      font-size: clamp(1.7rem, 8vw, 2.5rem);
+      line-height: 1.05;
+    }
+
+    .modal p {
+      margin: 0 0 18px;
+      color: #475569;
+      line-height: 1.4;
+    }
+
+    .primary-button {
+      width: 100%;
+      min-height: 52px;
+      padding: 12px 16px;
+      border: 0;
+      border-radius: 14px;
+      background: #f59e0b;
+      color: #172033;
+      font-size: 1.05rem;
+      font-weight: 1000;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .small-note {
+      margin-top: 12px !important;
+      margin-bottom: 0 !important;
+      font-size: 0.8rem;
+    }
+
+    @media (max-width: 360px) {
+      .app {
+        padding-left: 8px;
+        padding-right: 8px;
+      }
+
+      .board { gap: 5px; }
+      .card { border-radius: 8px; }
+      .status { font-size: 0.88rem; }
+      .instructions { font-size: 0.88rem; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        transition: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <a class="back-link" href="../../">&larr; All games</a>
+
+    <div class="title-row">
+      <h1>Memory Match</h1>
+      <span class="version">v1.0.0</span>
+    </div>
+
+    <p class="instructions">
+      Find matching coloured letters. A match earns one point and another turn.
+      A miss passes the phone to the other player.
+    </p>
+
+    <section class="scoreboard" aria-label="Scores">
+      <div class="player active" id="playerOnePanel">
+        <span class="player-name">Player 1</span>
+        <span class="player-score" id="playerOneScore">0</span>
+      </div>
+      <div class="player" id="playerTwoPanel">
+        <span class="player-name">Player 2</span>
+        <span class="player-score" id="playerTwoScore">0</span>
+      </div>
+    </section>
+
+    <div class="game-info">
+      <div class="level-label" id="levelLabel">Level 1 of 8</div>
+      <button class="new-game-button" id="newGameButton" type="button">New game</button>
+    </div>
+
+    <div class="status" id="status" role="status" aria-live="polite">
+      Player 1 starts. Pick two cards.
+    </div>
+
+    <section class="board" id="board" aria-label="Memory cards"></section>
+  </main>
+
+  <div class="modal-layer show" id="modalLayer" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <h2 id="modalTitle">Memory Match</h2>
+      <p id="modalText">Two players share one phone. The player with the most matches after all eight levels wins.</p>
+      <button class="primary-button" id="modalButton" type="button">Start game</button>
+      <p class="small-note" id="modalNote">Player 1 starts Level 1.</p>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var VERSION = "1.0.0";
+      var LEVELS = [
+        { pairs: 4, columns: 4 },
+        { pairs: 6, columns: 4 },
+        { pairs: 8, columns: 4 },
+        { pairs: 10, columns: 4 },
+        { pairs: 12, columns: 4 },
+        { pairs: 15, columns: 5 },
+        { pairs: 18, columns: 6 },
+        { pairs: 21, columns: 6 }
+      ];
+
+      var SYMBOLS = [
+        { letter: "A", color: "#ef4444" },
+        { letter: "B", color: "#2563eb" },
+        { letter: "C", color: "#16a34a" },
+        { letter: "D", color: "#9333ea" },
+        { letter: "E", color: "#ea580c" },
+        { letter: "F", color: "#db2777" },
+        { letter: "G", color: "#0891b2" },
+        { letter: "H", color: "#4f46e5" },
+        { letter: "I", color: "#ca8a04" },
+        { letter: "J", color: "#059669" },
+        { letter: "K", color: "#dc2626" },
+        { letter: "L", color: "#7c3aed" },
+        { letter: "M", color: "#0284c7" },
+        { letter: "N", color: "#c026d3" },
+        { letter: "O", color: "#65a30d" },
+        { letter: "P", color: "#e11d48" },
+        { letter: "Q", color: "#0f766e" },
+        { letter: "R", color: "#f43f5e" },
+        { letter: "S", color: "#1d4ed8" },
+        { letter: "T", color: "#15803d" },
+        { letter: "U", color: "#a21caf" },
+        { letter: "V", color: "#c2410c" },
+        { letter: "W", color: "#0369a1" },
+        { letter: "X", color: "#be123c" },
+        { letter: "Y", color: "#854d0e" },
+        { letter: "Z", color: "#4338ca" }
+      ];
+
+      var board = document.getElementById("board");
+      var status = document.getElementById("status");
+      var levelLabel = document.getElementById("levelLabel");
+      var playerPanels = [
+        document.getElementById("playerOnePanel"),
+        document.getElementById("playerTwoPanel")
+      ];
+      var scoreEls = [
+        document.getElementById("playerOneScore"),
+        document.getElementById("playerTwoScore")
+      ];
+      var modalLayer = document.getElementById("modalLayer");
+      var modalTitle = document.getElementById("modalTitle");
+      var modalText = document.getElementById("modalText");
+      var modalButton = document.getElementById("modalButton");
+      var modalNote = document.getElementById("modalNote");
+      var newGameButton = document.getElementById("newGameButton");
+
+      var levelIndex = 0;
+      var currentPlayer = 0;
+      var scores = [0, 0];
+      var firstCard = null;
+      var secondCard = null;
+      var locked = true;
+      var matchesRemaining = 0;
+      var modalAction = null;
+
+      function shuffle(items) {
+        var copy = items.slice();
+        var i;
+        for (i = copy.length - 1; i > 0; i -= 1) {
+          var j = Math.floor(Math.random() * (i + 1));
+          var temp = copy[i];
+          copy[i] = copy[j];
+          copy[j] = temp;
+        }
+        return copy;
+      }
+
+      function playerName(index) {
+        return "Player " + (index + 1);
+      }
+
+      function updateScoreboard() {
+        scoreEls[0].textContent = String(scores[0]);
+        scoreEls[1].textContent = String(scores[1]);
+        playerPanels[0].classList.toggle("active", currentPlayer === 0);
+        playerPanels[1].classList.toggle("active", currentPlayer === 1);
+      }
+
+      function showModal(title, text, buttonText, note, action) {
+        modalTitle.textContent = title;
+        modalText.textContent = text;
+        modalButton.textContent = buttonText;
+        modalNote.textContent = note || "";
+        modalNote.style.display = note ? "block" : "none";
+        modalAction = action;
+        modalLayer.classList.add("show");
+        locked = true;
+        window.setTimeout(function () {
+          modalButton.focus();
+        }, 50);
+      }
+
+      function hideModal() {
+        modalLayer.classList.remove("show");
+        locked = false;
+        modalAction = null;
+      }
+
+      function buildDeck(pairCount) {
+        var selected = shuffle(SYMBOLS).slice(0, pairCount);
+        var cards = [];
+        selected.forEach(function (symbol, pairId) {
+          cards.push({
+            pairId: pairId,
+            letter: symbol.letter,
+            color: symbol.color,
+            copy: 1
+          });
+          cards.push({
+            pairId: pairId,
+            letter: symbol.letter,
+            color: symbol.color,
+            copy: 2
+          });
+        });
+        return shuffle(cards);
+      }
+
+      function renderLevel() {
+        var level = LEVELS[levelIndex];
+        var deck = buildDeck(level.pairs);
+
+        firstCard = null;
+        secondCard = null;
+        matchesRemaining = level.pairs;
+        currentPlayer = levelIndex % 2;
+        locked = false;
+
+        board.innerHTML = "";
+        board.style.setProperty("--columns", String(level.columns));
+        levelLabel.textContent = "Level " + (levelIndex + 1) + " of " + LEVELS.length + " - " + level.pairs + " pairs";
+
+        deck.forEach(function (cardData, index) {
+          var card = document.createElement("button");
+          var letter = document.createElement("span");
+
+          card.type = "button";
+          card.className = "card";
+          card.setAttribute("data-pair-id", String(cardData.pairId));
+          card.setAttribute("data-card-index", String(index));
+          card.setAttribute("aria-label", "Hidden card");
+          card.setAttribute("aria-pressed", "false");
+
+          letter.className = "letter";
+          letter.textContent = cardData.letter;
+          letter.style.setProperty("--letter-color", cardData.color);
+          card.style.setProperty("--letter-color", cardData.color);
+          card.appendChild(letter);
+
+          card.addEventListener("click", function () {
+            chooseCard(card, cardData);
+          });
+
+          board.appendChild(card);
+        });
+
+        updateScoreboard();
+        status.textContent = playerName(currentPlayer) + " starts. Pick two cards.";
+      }
+
+      function revealCard(card, cardData) {
+        card.classList.add("flipped");
+        card.setAttribute("aria-pressed", "true");
+        card.setAttribute("aria-label", cardData.color + " letter " + cardData.letter);
+      }
+
+      function hideCard(card) {
+        card.classList.remove("flipped");
+        card.setAttribute("aria-pressed", "false");
+        card.setAttribute("aria-label", "Hidden card");
+      }
+
+      function chooseCard(card, cardData) {
+        if (locked || card.classList.contains("matched") || card === firstCard) {
+          return;
+        }
+
+        revealCard(card, cardData);
+
+        if (!firstCard) {
+          firstCard = card;
+          status.textContent = playerName(currentPlayer) + ": pick one more card.";
+          return;
+        }
+
+        secondCard = card;
+        locked = true;
+
+        if (firstCard.getAttribute("data-pair-id") === secondCard.getAttribute("data-pair-id")) {
+          handleMatch();
+        } else {
+          handleMiss();
+        }
+      }
+
+      function clearSelection() {
+        firstCard = null;
+        secondCard = null;
+      }
+
+      function handleMatch() {
+        var matchedFirst = firstCard;
+        var matchedSecond = secondCard;
+
+        status.textContent = "Match! " + playerName(currentPlayer) + " gets another turn.";
+
+        window.setTimeout(function () {
+          matchedFirst.classList.remove("flipped");
+          matchedSecond.classList.remove("flipped");
+          matchedFirst.classList.add("matched");
+          matchedSecond.classList.add("matched");
+          matchedFirst.disabled = true;
+          matchedSecond.disabled = true;
+          matchedFirst.setAttribute("aria-label", "Matched card");
+          matchedSecond.setAttribute("aria-label", "Matched card");
+
+          scores[currentPlayer] += 1;
+          matchesRemaining -= 1;
+          clearSelection();
+          updateScoreboard();
+
+          if (matchesRemaining === 0) {
+            finishLevel();
+          } else {
+            locked = false;
+          }
+        }, 450);
+      }
+
+      function handleMiss() {
+        var missedFirst = firstCard;
+        var missedSecond = secondCard;
+        var nextPlayer = currentPlayer === 0 ? 1 : 0;
+
+        status.textContent = "No match. Remember those cards.";
+
+        window.setTimeout(function () {
+          hideCard(missedFirst);
+          hideCard(missedSecond);
+          clearSelection();
+          currentPlayer = nextPlayer;
+          updateScoreboard();
+          status.textContent = playerName(currentPlayer) + "'s turn.";
+
+          showModal(
+            "Pass the phone",
+            "Give the phone to " + playerName(currentPlayer) + ". The cards are hidden and ready.",
+            playerName(currentPlayer) + " is ready",
+            "Do not press until the next player has the phone.",
+            function () {
+              hideModal();
+              status.textContent = playerName(currentPlayer) + ": pick two cards.";
+            }
+          );
+        }, 950);
+      }
+
+      function scoreSummary() {
+        return "Player 1: " + scores[0] + " matches. Player 2: " + scores[1] + " matches.";
+      }
+
+      function finishLevel() {
+        locked = true;
+
+        if (levelIndex < LEVELS.length - 1) {
+          showModal(
+            "Level " + (levelIndex + 1) + " complete!",
+            scoreSummary(),
+            "Start Level " + (levelIndex + 2),
+            playerName((levelIndex + 1) % 2) + " will start the next level.",
+            function () {
+              levelIndex += 1;
+              renderLevel();
+              hideModal();
+            }
+          );
+          return;
+        }
+
+        var title;
+        var result;
+
+        if (scores[0] > scores[1]) {
+          title = "Player 1 wins!";
+          result = "Player 1 found the most matches. " + scoreSummary();
+        } else if (scores[1] > scores[0]) {
+          title = "Player 2 wins!";
+          result = "Player 2 found the most matches. " + scoreSummary();
+        } else {
+          title = "It is a tie!";
+          result = "Both players found the same number of matches. " + scoreSummary();
+        }
+
+        showModal(
+          title,
+          result,
+          "Play again",
+          "Memory Match v" + VERSION,
+          function () {
+            startNewGame();
+            hideModal();
+          }
+        );
+      }
+
+      function startNewGame() {
+        levelIndex = 0;
+        currentPlayer = 0;
+        scores = [0, 0];
+        updateScoreboard();
+        renderLevel();
+      }
+
+      modalButton.addEventListener("click", function () {
+        if (typeof modalAction === "function") {
+          var action = modalAction;
+          modalAction = null;
+          action();
+        } else {
+          startNewGame();
+          hideModal();
+        }
+      });
+
+      newGameButton.addEventListener("click", function () {
+        showModal(
+          "Start a new game?",
+          "This will reset both scores and return to Level 1.",
+          "Reset and start",
+          "Player 1 will start.",
+          function () {
+            startNewGame();
+            hideModal();
+          }
+        );
+      });
+
+      renderLevel();
+    }());
+  </script>
+</body>
+</html>
