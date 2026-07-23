@@ -1,0 +1,5 @@
+Gidi's Game Room word dictionary
+Installed by word-games-pack v1.0.0.
+
+Primary dictionary: first20hours/google-10000-english, google-10000-english-usa-no-swears.txt. Downloaded during installation.
+The games use only local static files at runtime.

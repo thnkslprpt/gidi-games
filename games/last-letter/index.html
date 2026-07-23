@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#07091a">
+  <title>Last Letter</title>
+  <link rel="stylesheet" href="../shared/gidi-word-theme.css">
+  <style>
+    .chain-word { font-size: clamp(38px, 13vw, 68px); font-weight: 950; letter-spacing: -.055em; text-align:center; text-transform:uppercase; }
+    .needed { display:grid; place-items:center; width:58px; height:58px; margin:auto; border-radius:18px; color:#13203d; background:linear-gradient(135deg,var(--gold),#fff0a0); font-size:34px; font-weight:950; box-shadow:0 10px 25px rgba(255,216,90,.18); }
+    .arrow { color:var(--muted); text-align:center; font-weight:900; }
+  </style>
+</head>
+<body>
+<div class="app stack">
+  <header class="topbar">
+    <a class="back" href="../../" aria-label="Back to game room">←</a>
+    <div class="top-title"><strong>Last Letter</strong><small>revision 1.0.0</small></div>
+    <button class="icon-button" id="rulesBtn" type="button">?</button>
+  </header>
+  <section class="scorebar">
+    <div class="score" id="p1Box"><small>Player 1</small><strong id="p1Score">0</strong></div>
+    <div class="timer" id="timer">10</div>
+    <div class="score" id="p2Box"><small>Player 2</small><strong id="p2Score">0</strong></div>
+  </section>
+  <section class="panel stack">
+    <div class="chain-word" id="currentWord">READY</div>
+    <div class="arrow">Next word must begin with</div>
+    <div class="needed" id="needed">?</div>
+    <label><span class="label">Enter a new word</span><input class="input" id="wordInput" autocomplete="off" autocapitalize="characters" maxlength="12"></label>
+    <button class="btn good" id="submitBtn" type="button">Play word</button>
+    <div class="status" id="status" aria-live="polite">Read the rules, then start.</div>
+    <div class="history" id="history"></div>
+  </section>
+</div>
+<div class="overlay" id="intro">
+  <section class="dialog">
+    <h2><span class="gradient-text">Last Letter</span></h2>
+    <p>Keep the word chain alive before the clock runs out.</p>
+    <ul class="rules-list">
+      <li><b>1</b><span>Your word must begin with the final letter of the previous word.</span></li>
+      <li><b>2</b><span>Words must be at least 3 letters and cannot be repeated.</span></li>
+      <li><b>3</b><span>Each turn lasts 10 seconds. Invalid words do not stop the timer.</span></li>
+      <li><b>4</b><span>A timeout gives the other player a point. First to 5 points wins.</span></li>
+    </ul>
+    <button class="btn good" id="startBtn" type="button" style="width:100%">Start match</button>
+  </section>
+</div>
+<script src="../shared/words.js"></script>
+<script src="../shared/gidi-word-core.js"></script>
+<script>
+(function(){
+  'use strict';
+  var C=window.GidiWordCore, current=1, scores=[0,0], word='', used=new Set(), time=10, ticker=null, running=false;
+  var input=document.getElementById('wordInput'), status=document.getElementById('status'), timer=document.getElementById('timer');
+  function starter(){ var pool=[]; [4,5,6].forEach(function(n){pool=pool.concat(C.byLength[n]||[]);}); return C.random(pool.filter(function(w){return !/[qzx]$/.test(w);} ))||'game'; }
+  function render(){
+    document.getElementById('currentWord').textContent=word.toUpperCase(); document.getElementById('needed').textContent=word?word.slice(-1).toUpperCase():'?';
+    document.getElementById('p1Score').textContent=scores[0]; document.getElementById('p2Score').textContent=scores[1];
+    document.getElementById('p1Box').classList.toggle('active',current===1); document.getElementById('p2Box').classList.toggle('active',current===2);
+    timer.textContent=time; timer.classList.toggle('urgent',time<=3);
+  }
+  function resetTurn(){ clearInterval(ticker); time=10; render(); ticker=setInterval(function(){ if(!running)return; time--; render(); if(time<=0){clearInterval(ticker); timeout();}},1000); setTimeout(function(){input.focus();},80); }
+  function nextPlayer(){ current=current===1?2:1; input.value=''; resetTurn(); C.setStatus(status,'Player '+current+': start with '+word.slice(-1).toUpperCase()+'.'); }
+  function timeout(){ running=false; var winner=current===1?2:1; scores[winner-1]++; C.setStatus(status,'Time! Player '+winner+' scores.','bad'); C.vibrate([80,60,80]); render();
+    if(scores[winner-1]>=5){ C.setStatus(status,'Player '+winner+' wins the match!','good'); C.confetti(document.body,28); document.getElementById('submitBtn').disabled=true; return; }
+    setTimeout(newRound,1200);
+  }
+  function newRound(){ word=starter(); used=new Set([word]); current=Math.random()<.5?1:2; running=true; document.getElementById('history').innerHTML=''; addHistory(word); document.getElementById('submitBtn').disabled=false; C.setStatus(status,'Player '+current+' begins.'); resetTurn(); }
+  function addHistory(w){ var s=document.createElement('span'); s.className='pill'; s.textContent=w; document.getElementById('history').prepend(s); }
+  function submit(){ if(!running)return; var next=C.clean(input.value); if(next.length<3){C.setStatus(status,'Use at least 3 letters.','bad');return;} if(next[0]!==word.slice(-1)){C.setStatus(status,'It must start with '+word.slice(-1).toUpperCase()+'.','bad');return;} if(!C.isWord(next,3)){C.setStatus(status,'That word is not in the game dictionary.','bad');return;} if(used.has(next)){C.setStatus(status,'That word was already used.','bad');return;}
+    word=next; used.add(next); addHistory(next); C.vibrate(25); nextPlayer();
+  }
+  document.getElementById('submitBtn').addEventListener('click',submit); input.addEventListener('keydown',function(e){if(e.key==='Enter')submit();});
+  document.getElementById('startBtn').addEventListener('click',function(){scores=[0,0];document.getElementById('intro').hidden=true;newRound();});
+  document.getElementById('rulesBtn').addEventListener('click',function(){running=false;clearInterval(ticker);document.getElementById('intro').hidden=false;});
+  render();
+}());
+</script>
+</body>
+</html>

@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#07091a">
+  <title>Word Builder Duel</title>
+  <link rel="stylesheet" href="../shared/gidi-word-theme.css">
+  <style>
+    .builder { min-height:76px; display:flex; align-items:center; justify-content:center; gap:5px; flex-wrap:wrap; }
+    .builder .letter-chip { animation:pop .22s ease; }
+    .side-choice { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .alpha { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:6px; }
+    .alpha .key { min-height:40px; }
+    .bank-ready { border-color:rgba(99,239,157,.5)!important; box-shadow:0 0 0 2px rgba(99,239,157,.12)!important; }
+  </style>
+</head>
+<body>
+<div class="app stack">
+  <header class="topbar">
+    <a class="back" href="../../" aria-label="Back to game room">←</a>
+    <div class="top-title"><strong>Word Builder Duel</strong><small>revision 1.0.0</small></div>
+    <button class="icon-button" id="rulesBtn" type="button">?</button>
+  </header>
+  <section class="scorebar">
+    <div class="score" id="p1Box"><small>Player 1</small><strong id="p1Score">0</strong></div>
+    <div class="timer" id="timer">15</div>
+    <div class="score" id="p2Box"><small>Player 2</small><strong id="p2Score">0</strong></div>
+  </section>
+  <section class="panel stack">
+    <div class="builder" id="builder"></div>
+    <div class="side-choice">
+      <button class="btn secondary" id="leftBtn" type="button">Add to left</button>
+      <button class="btn secondary" id="rightBtn" type="button">Add to right</button>
+    </div>
+    <div class="alpha" id="alpha"></div>
+    <button class="btn good" id="bankBtn" type="button" disabled>Bank this word</button>
+    <div class="status" id="status" aria-live="polite">Read the rules, then start.</div>
+    <div class="history" id="history"></div>
+  </section>
+</div>
+<div class="overlay" id="intro">
+  <section class="dialog">
+    <h2><span class="gradient-text">Word Builder Duel</span></h2>
+    <p>Grow one shared word by adding letters to either end.</p>
+    <ul class="rules-list">
+      <li><b>1</b><span>On your turn, choose left or right and add exactly one letter.</span></li>
+      <li><b>2</b><span>The growing letters must still appear together inside at least one legal word.</span></li>
+      <li><b>3</b><span>When the letters form a legal word of 3 or more letters, you may bank it for points equal to its length.</span></li>
+      <li><b>4</b><span>An impossible move gives the opponent 2 points. First to 20 wins.</span></li>
+    </ul>
+    <button class="btn good" id="startBtn" type="button" style="width:100%">Start duel</button>
+  </section>
+</div>
+<script src="../shared/words.js"></script>
+<script src="../shared/gidi-word-core.js"></script>
+<script>
+(function(){
+  'use strict';
+  var C=window.GidiWordCore, fragment='', current=1, scores=[0,0], side='right', time=15, ticker=null, running=false;
+  var builder=document.getElementById('builder'), bank=document.getElementById('bankBtn'), status=document.getElementById('status'), timer=document.getElementById('timer');
+  var playable=C.list.filter(function(w){return w.length>=3&&w.length<=10;});
+  function possible(f){ if(!f)return true; for(var i=0;i<playable.length;i++){ if(playable[i].indexOf(f)!==-1)return true; } return false; }
+  function render(){
+    builder.innerHTML=''; if(!fragment){var e=document.createElement('span');e.className='pill';e.textContent='Choose the first letter';builder.appendChild(e);} else fragment.split('').forEach(function(ch){var s=document.createElement('span');s.className='letter-chip';s.textContent=ch.toUpperCase();builder.appendChild(s);});
+    document.getElementById('p1Score').textContent=scores[0];document.getElementById('p2Score').textContent=scores[1];
+    document.getElementById('p1Box').classList.toggle('active',current===1);document.getElementById('p2Box').classList.toggle('active',current===2);
+    timer.textContent=time;timer.classList.toggle('urgent',time<=4);
+    var legal=C.isWord(fragment,3); bank.disabled=!legal||!running; bank.classList.toggle('bank-ready',legal&&running);
+    document.getElementById('leftBtn').classList.toggle('good',side==='left');document.getElementById('rightBtn').classList.toggle('good',side==='right');
+  }
+  function resetTimer(){clearInterval(ticker);time=15;render();ticker=setInterval(function(){if(!running)return;time--;render();if(time<=0){clearInterval(ticker);fault('Time ran out.');}},1000);}
+  function switchTurn(){current=current===1?2:1;resetTimer();C.setStatus(status,'Player '+current+': add a letter or bank the word.');}
+  function fault(message){running=false;var other=current===1?2:1;scores[other-1]+=2;C.setStatus(status,message+' Player '+other+' gets 2 points.','bad');C.vibrate([70,50,70]);render();if(scores[other-1]>=20){win(other);return;}setTimeout(newRound,1300);}
+  function win(player){running=false;clearInterval(ticker);C.setStatus(status,'Player '+player+' wins the duel!','good');C.confetti(document.body,30);}
+  function newRound(){fragment='';current=Math.random()<.5?1:2;running=true;C.setStatus(status,'Player '+current+' starts a new word.');resetTimer();render();}
+  function addLetter(ch){if(!running)return;var next=side==='left'?ch+fragment:fragment+ch;if(next.length>10){fault('The word grew too long.');return;}fragment=next;C.vibrate(20);if(!possible(fragment)){render();fault('No legal word can contain '+fragment.toUpperCase()+'.');return;}switchTurn();render();}
+  function addHistory(word,points,player){var s=document.createElement('span');s.className='pill';s.textContent='P'+player+' '+word.toUpperCase()+' +'+points;document.getElementById('history').prepend(s);}
+  bank.addEventListener('click',function(){if(!running||!C.isWord(fragment,3))return;var points=fragment.length;scores[current-1]+=points;addHistory(fragment,points,current);C.setStatus(status,'Player '+current+' banks '+fragment.toUpperCase()+' for '+points+' points!','good');C.confetti(document.body,14);render();if(scores[current-1]>=20){win(current);return;}running=false;clearInterval(ticker);setTimeout(newRound,1100);});
+  document.getElementById('leftBtn').addEventListener('click',function(){side='left';render();});document.getElementById('rightBtn').addEventListener('click',function(){side='right';render();});
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(function(ch){var b=document.createElement('button');b.className='key';b.type='button';b.textContent=ch;b.addEventListener('click',function(){addLetter(ch.toLowerCase());});document.getElementById('alpha').appendChild(b);});
+  document.getElementById('startBtn').addEventListener('click',function(){scores=[0,0];document.getElementById('history').innerHTML='';document.getElementById('intro').hidden=true;newRound();});
+  document.getElementById('rulesBtn').addEventListener('click',function(){running=false;clearInterval(ticker);document.getElementById('intro').hidden=false;});
+  render();
+}());
+</script>
+</body>
+</html>

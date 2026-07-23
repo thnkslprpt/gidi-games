@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#07091a">
+  <title>One-Letter Race</title>
+  <link rel="stylesheet" href="../shared/gidi-word-theme.css">
+  <style>
+    .targets { display:grid; grid-template-columns:1fr auto 1fr; gap:8px; align-items:center; }
+    .target { padding:12px 8px; border:1px solid var(--line); border-radius:17px; background:rgba(20,29,69,.9); text-align:center; }
+    .target small { display:block; color:var(--muted); font-size:10px; font-weight:900; text-transform:uppercase; }
+    .target strong { display:block; margin-top:4px; font-size:25px; letter-spacing:.08em; }
+    .ladder { display:flex; flex-wrap:wrap; gap:7px; justify-content:center; }
+    .ladder .pill { font-size:14px; }
+  </style>
+</head>
+<body>
+<div class="app stack">
+  <header class="topbar">
+    <a class="back" href="../../" aria-label="Back to game room">←</a>
+    <div class="top-title"><strong>One-Letter Race</strong><small>revision 1.0.0</small></div>
+    <button class="icon-button" id="rulesBtn" type="button">?</button>
+  </header>
+  <section class="scorebar">
+    <div class="score active" id="p1Box"><small id="p1Name">Moves</small><strong id="p1Score">0</strong></div>
+    <div class="timer" id="timer">--</div>
+    <div class="score" id="p2Box"><small id="p2Name">Best</small><strong id="p2Score">--</strong></div>
+  </section>
+  <section class="panel stack">
+    <div class="targets"><div class="target"><small>Start</small><strong id="startWord">----</strong></div><div>→</div><div class="target"><small>Goal</small><strong id="goalWord">----</strong></div></div>
+    <div class="ladder" id="ladder"></div>
+    <label><span class="label">Change exactly one letter</span><input class="input" id="wordInput" autocomplete="off" autocapitalize="characters" maxlength="5"></label>
+    <button class="btn good" id="submitBtn" type="button">Add step</button>
+    <div class="status" id="status" aria-live="polite">Read the rules, then start.</div>
+    <button class="btn secondary" id="newPuzzle" type="button">New puzzle</button>
+  </section>
+</div>
+<div class="overlay" id="intro">
+  <section class="dialog">
+    <h2><span class="gradient-text">One-Letter Race</span></h2>
+    <p>Turn the start word into the goal word by changing one letter at a time.</p>
+    <ul class="rules-list">
+      <li><b>1</b><span>Every step must be a legal word of the same length.</span></li>
+      <li><b>2</b><span>Each new word must differ from the previous word by exactly one letter.</span></li>
+      <li><b>3</b><span>Solo mode records your move count.</span></li>
+      <li><b>4</b><span>In 2-player mode, each player gets the same puzzle and 45 seconds. Fewer moves wins; time breaks ties.</span></li>
+    </ul>
+    <div class="grid-2">
+      <button class="choice selected" data-mode="solo" type="button"><strong>Solo</strong><small>Solve at your pace</small></button>
+      <button class="choice" data-mode="duel" type="button"><strong>2 Players</strong><small>Pass-and-play race</small></button>
+    </div>
+    <button class="btn good" id="startBtn" type="button" style="width:100%;margin-top:12px">Start race</button>
+  </section>
+</div>
+<div class="overlay" id="handoff" hidden><section class="dialog" style="text-align:center"><h2 id="handoffTitle">Player 2</h2><p>The same puzzle is ready. The first player's path is hidden.</p><button class="btn good" id="handoffBtn" type="button" style="width:100%">Start Player 2</button></section></div>
+<script src="../shared/words.js"></script>
+<script src="../shared/gidi-word-core.js"></script>
+<script>
+(function(){
+  'use strict';
+  var C=window.GidiWordCore, mode='solo', length=4, start='', goal='', path=[], currentPlayer=1, results=[], time=45, ticker=null, running=false, startedAt=0;
+  var input=document.getElementById('wordInput'), status=document.getElementById('status'), timer=document.getElementById('timer'), ladder=document.getElementById('ladder');
+  function buckets(n){ var words=(C.byLength[n]||[]).filter(function(w){return !/[qxz]/.test(w);}), map={}; words.forEach(function(w){for(var i=0;i<n;i++){var k=w.slice(0,i)+'*'+w.slice(i+1);(map[k]||(map[k]=[])).push(w);}}); return {words:words,map:map}; }
+  function neighbors(word,data){var out=new Set();for(var i=0;i<word.length;i++){var k=word.slice(0,i)+'*'+word.slice(i+1);(data.map[k]||[]).forEach(function(w){if(w!==word)out.add(w);});}return Array.from(out);}
+  function makePuzzle(){ length=Math.random()<.35?3:(Math.random()<.75?4:5); var data=buckets(length), cur=C.random(data.words), chain=[cur]; for(var i=0;i<5;i++){var ns=neighbors(cur,data).filter(function(w){return chain.indexOf(w)===-1;}); if(!ns.length)break;cur=C.random(ns);chain.push(cur);} if(chain.length<4)return makePuzzle(); start=chain[0];goal=chain[chain.length-1]; }
+  function render(){document.getElementById('startWord').textContent=start.toUpperCase();document.getElementById('goalWord').textContent=goal.toUpperCase();ladder.innerHTML='';path.forEach(function(w,i){var s=document.createElement('span');s.className='pill';s.textContent=(i? '→ ':'')+w.toUpperCase();ladder.appendChild(s);});document.getElementById('p1Score').textContent=Math.max(0,path.length-1);timer.textContent=mode==='duel'?time:'∞';timer.classList.toggle('urgent',mode==='duel'&&time<=8);input.maxLength=length;}
+  function resetAttempt(){path=[start];input.value='';running=true;startedAt=Date.now();time=45;clearInterval(ticker);if(mode==='duel')ticker=setInterval(function(){if(!running)return;time--;render();if(time<=0)finish(false);},1000);C.setStatus(status,'Player '+currentPlayer+': reach '+goal.toUpperCase()+'.');render();setTimeout(function(){input.focus();},80);}
+  function submit(){if(!running)return;var w=C.clean(input.value), prev=path[path.length-1];if(w.length!==length){C.setStatus(status,'Use a '+length+'-letter word.','bad');return;}if(!C.isWord(w,3)){C.setStatus(status,'That word is not in the dictionary.','bad');return;}if(path.indexOf(w)!==-1){C.setStatus(status,'That word is already in your path.','bad');return;}if(!C.oneLetterApart(prev,w)){C.setStatus(status,'Change exactly one letter.','bad');return;}path.push(w);input.value='';C.vibrate(20);render();if(w===goal)finish(true);else C.setStatus(status,'Good step. Keep going!','good');}
+  function finish(success){if(!running)return;running=false;clearInterval(ticker);var elapsed=Math.round((Date.now()-startedAt)/100)/10;var result={success:success,moves:success?path.length-1:999,time:success?elapsed:999};
+    if(mode==='solo'){C.setStatus(status,success?'Solved in '+result.moves+' moves!':'Time is up.','good');if(success)C.confetti(document.body,24);return;}
+    results.push(result);if(currentPlayer===1){currentPlayer=2;document.getElementById('handoff').hidden=false;}else{var a=results[0],b=results[1],winner=0;if(a.moves<b.moves||(a.moves===b.moves&&a.time<b.time))winner=1;else if(b.moves<a.moves||(a.moves===b.moves&&b.time<a.time))winner=2;C.setStatus(status,winner?'Player '+winner+' wins!':'It is a tie!','good');document.getElementById('p1Name').textContent='P1';document.getElementById('p2Name').textContent='P2';document.getElementById('p1Score').textContent=a.success?a.moves:'X';document.getElementById('p2Score').textContent=b.success?b.moves:'X';C.confetti(document.body,28);}}
+  function newGame(){makePuzzle();results=[];currentPlayer=1;document.getElementById('p1Name').textContent=mode==='solo'?'Moves':'P1 moves';document.getElementById('p2Name').textContent=mode==='solo'?'Goal':'P2 moves';document.getElementById('p2Score').textContent=mode==='solo'?'✓':'--';resetAttempt();}
+  document.querySelectorAll('[data-mode]').forEach(function(b){b.addEventListener('click',function(){document.querySelectorAll('[data-mode]').forEach(function(x){x.classList.remove('selected');});b.classList.add('selected');mode=b.dataset.mode;});});
+  document.getElementById('submitBtn').addEventListener('click',submit);input.addEventListener('keydown',function(e){if(e.key==='Enter')submit();});document.getElementById('newPuzzle').addEventListener('click',newGame);
+  document.getElementById('handoffBtn').addEventListener('click',function(){document.getElementById('handoff').hidden=true;resetAttempt();});
+  document.getElementById('startBtn').addEventListener('click',function(){document.getElementById('intro').hidden=true;newGame();});document.getElementById('rulesBtn').addEventListener('click',function(){running=false;clearInterval(ticker);document.getElementById('intro').hidden=false;});render();
+}());
+</script>
+</body>
+</html>
