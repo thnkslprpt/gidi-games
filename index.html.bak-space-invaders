@@ -188,13 +188,6 @@
   </a>
 
   </section>
-
-      <a class="game-card" href="games/space-invaders/" aria-label="Play Space Invaders" style="text-decoration:none;color:inherit;">
-        <div class="game-icon" aria-hidden="true">🚀</div>
-        <h2>Space Invaders</h2>
-        <p>Blast alien waves, grab power-ups, defend your shields, and battle giant bosses.</p>
-      </a>
-
   </main>
 
   <footer class="shell">
