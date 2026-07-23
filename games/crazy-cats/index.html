@@ -1,0 +1,555 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#172554">
+  <title>Crazy Cats</title>
+  <style>
+    * { box-sizing: border-box; }
+    html { min-width: 320px; -webkit-text-size-adjust: 100%; }
+    body {
+      min-width: 320px;
+      min-height: 100vh;
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      background: #eef6ff;
+      color: #172033;
+      overscroll-behavior: none;
+    }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    .shell {
+      width: 100%;
+      max-width: 940px;
+      margin: 0 auto;
+      padding-left: max(12px, env(safe-area-inset-left));
+      padding-right: max(12px, env(safe-area-inset-right));
+    }
+    header {
+      padding-top: calc(12px + env(safe-area-inset-top));
+      padding-bottom: 12px;
+      background: #172554;
+      color: white;
+    }
+    .back {
+      display: inline-block;
+      margin-bottom: 8px;
+      color: white;
+      font-weight: 800;
+      text-decoration: none;
+    }
+    h1 { margin: 0; font-size: clamp(1.8rem, 8vw, 3rem); line-height: 1; }
+    .version { font-size: .38em; font-weight: 700; opacity: .72; vertical-align: middle; }
+    header p { margin: 8px 0 0; font-size: .95rem; }
+    main { padding-top: 12px; padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
+    .hud {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .stat {
+      min-width: 0;
+      padding: 9px 7px;
+      border: 1px solid #cbd5e1;
+      border-radius: 14px;
+      background: white;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(23, 32, 51, .06);
+    }
+    .stat span { display: block; color: #566176; font-size: .72rem; font-weight: 800; }
+    .stat strong { display: block; margin-top: 3px; font-size: clamp(1rem, 5vw, 1.35rem); }
+    .game-wrap {
+      overflow: hidden;
+      border: 2px solid #172554;
+      border-radius: 18px;
+      background: #9ddcff;
+      box-shadow: 0 8px 22px rgba(23, 32, 51, .13);
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 900 / 520;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 9px;
+      align-items: center;
+      margin-top: 10px;
+    }
+    .message {
+      min-height: 46px;
+      margin: 0;
+      padding: 10px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 13px;
+      background: white;
+      font-weight: 700;
+    }
+    button {
+      min-height: 46px;
+      padding: 10px 16px;
+      border: 0;
+      border-radius: 13px;
+      background: #f59e0b;
+      color: #172033;
+      font: inherit;
+      font-weight: 900;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    button:focus, .back:focus { outline: 3px solid #f59e0b; outline-offset: 3px; }
+    .help { margin: 10px 2px 0; color: #566176; font-size: .88rem; }
+    @media (max-width: 520px) {
+      .controls { grid-template-columns: 1fr; }
+      button { width: 100%; }
+      .stat { padding: 7px 4px; }
+      .stat span { font-size: .65rem; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="shell">
+      <a class="back" href="../../">← All games</a>
+      <h1>Crazy Cats <span class="version">v1.0.0</span></h1>
+      <p>Pull the slingshot back, let go, and smash the block towers.</p>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="hud" aria-label="Game status">
+      <div class="stat"><span>ANGRY PARENTS</span><strong id="parents">0</strong></div>
+      <div class="stat"><span>CATS LEFT</span><strong id="catsLeft">5</strong></div>
+      <div class="stat"><span>LEVEL</span><strong id="level">1</strong></div>
+    </section>
+
+    <div class="game-wrap">
+      <canvas id="game" width="900" height="520" aria-label="Crazy Cats game area"></canvas>
+    </div>
+
+    <div class="controls">
+      <p class="message" id="message" aria-live="polite">Grab the cat, pull back, and let go!</p>
+      <button id="restart" type="button">Restart level</button>
+    </div>
+    <p class="help">Every block you knock down equals <strong>1 angry parent</strong>.</p>
+  </main>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var canvas = document.getElementById("game");
+      var ctx = canvas.getContext("2d");
+      var parentsEl = document.getElementById("parents");
+      var catsLeftEl = document.getElementById("catsLeft");
+      var levelEl = document.getElementById("level");
+      var messageEl = document.getElementById("message");
+      var restartButton = document.getElementById("restart");
+
+      var W = 900;
+      var H = 520;
+      var groundY = 445;
+      var sling = { x: 145, y: 335, maxPull: 112 };
+      var gravity = 790;
+      var level = 1;
+      var angryParents = 0;
+      var catsLeft = 5;
+      var cat;
+      var blocks = [];
+      var dragging = false;
+      var pointerId = null;
+      var shotSettledAt = 0;
+      var lastTime = performance.now();
+
+      var layouts = [
+        [
+          [650, 405, 34, 80], [735, 405, 34, 80],
+          [692, 348, 145, 28], [675, 302, 34, 64], [712, 302, 34, 64],
+          [692, 259, 118, 25]
+        ],
+        [
+          [610, 405, 32, 80], [690, 405, 32, 80], [770, 405, 32, 80],
+          [650, 350, 110, 28], [730, 350, 110, 28],
+          [650, 300, 30, 72], [730, 300, 30, 72],
+          [690, 250, 180, 27]
+        ],
+        [
+          [625, 407, 32, 76], [690, 407, 32, 76], [755, 407, 32, 76],
+          [657, 357, 96, 26], [723, 357, 96, 26],
+          [657, 311, 30, 66], [723, 311, 30, 66],
+          [690, 268, 152, 26], [690, 225, 34, 62]
+        ]
+      ];
+
+      function newCat() {
+        cat = {
+          x: sling.x,
+          y: sling.y,
+          vx: 0,
+          vy: 0,
+          r: 23,
+          launched: false,
+          resting: false,
+          face: Math.random() > 0.5 ? 1 : -1
+        };
+        dragging = false;
+        pointerId = null;
+        shotSettledAt = 0;
+      }
+
+      function makeBlocks() {
+        var layout = layouts[(level - 1) % layouts.length];
+        blocks = layout.map(function (b, i) {
+          return {
+            x: b[0], y: b[1], w: b[2], h: b[3],
+            vx: 0, vy: 0, angle: 0, spin: 0,
+            falling: false, scored: false, gone: false,
+            shade: i % 3
+          };
+        });
+      }
+
+      function resetLevel(keepScore) {
+        if (!keepScore) angryParents = 0;
+        catsLeft = 5;
+        makeBlocks();
+        newCat();
+        setMessage("Grab the cat, pull back, and let go!");
+        updateHud();
+      }
+
+      function updateHud() {
+        parentsEl.textContent = angryParents;
+        catsLeftEl.textContent = catsLeft;
+        levelEl.textContent = level;
+      }
+
+      function setMessage(text) {
+        messageEl.textContent = text;
+      }
+
+      function getPoint(event) {
+        var rect = canvas.getBoundingClientRect();
+        return {
+          x: (event.clientX - rect.left) * W / rect.width,
+          y: (event.clientY - rect.top) * H / rect.height
+        };
+      }
+
+      function clampPull(point) {
+        var dx = point.x - sling.x;
+        var dy = point.y - sling.y;
+        var distance = Math.sqrt(dx * dx + dy * dy) || 1;
+        if (distance > sling.maxPull) {
+          dx = dx / distance * sling.maxPull;
+          dy = dy / distance * sling.maxPull;
+        }
+        cat.x = sling.x + dx;
+        cat.y = sling.y + dy;
+      }
+
+      function onPointerDown(event) {
+        if (cat.launched) return;
+        var p = getPoint(event);
+        var dx = p.x - cat.x;
+        var dy = p.y - cat.y;
+        if (dx * dx + dy * dy <= (cat.r + 24) * (cat.r + 24)) {
+          dragging = true;
+          pointerId = event.pointerId;
+          try { canvas.setPointerCapture(pointerId); } catch (ignore) {}
+          clampPull(p);
+          setMessage("Pull back farther for a stronger shot.");
+          event.preventDefault();
+        }
+      }
+
+      function onPointerMove(event) {
+        if (!dragging || event.pointerId !== pointerId) return;
+        clampPull(getPoint(event));
+        event.preventDefault();
+      }
+
+      function releaseCat(event) {
+        if (!dragging || event.pointerId !== pointerId) return;
+        dragging = false;
+        try { canvas.releasePointerCapture(pointerId); } catch (ignore) {}
+        pointerId = null;
+        var dx = sling.x - cat.x;
+        var dy = sling.y - cat.y;
+        var pull = Math.sqrt(dx * dx + dy * dy);
+        if (pull < 12) {
+          newCat();
+          setMessage("Pull the cat back before letting go.");
+          return;
+        }
+        cat.vx = dx * 6.2;
+        cat.vy = dy * 6.2;
+        cat.launched = true;
+        catsLeft -= 1;
+        updateHud();
+        setMessage("Fly, crazy cat!");
+        event.preventDefault();
+      }
+
+      canvas.addEventListener("pointerdown", onPointerDown, { passive: false });
+      canvas.addEventListener("pointermove", onPointerMove, { passive: false });
+      canvas.addEventListener("pointerup", releaseCat, { passive: false });
+      canvas.addEventListener("pointercancel", releaseCat, { passive: false });
+      restartButton.addEventListener("click", function () { resetLevel(false); });
+
+      function circleRectHit(c, b) {
+        if (b.gone) return false;
+        var left = b.x - b.w / 2;
+        var right = b.x + b.w / 2;
+        var top = b.y - b.h / 2;
+        var bottom = b.y + b.h / 2;
+        var nearestX = Math.max(left, Math.min(c.x, right));
+        var nearestY = Math.max(top, Math.min(c.y, bottom));
+        var dx = c.x - nearestX;
+        var dy = c.y - nearestY;
+        return dx * dx + dy * dy < c.r * c.r;
+      }
+
+      function scoreBlock(block, impactX, impactY) {
+        if (!block.scored) {
+          block.scored = true;
+          angryParents += 1;
+          updateHud();
+          setMessage("+1 angry parent!");
+        }
+        block.falling = true;
+        block.vx += impactX * 0.55;
+        block.vy += impactY * 0.28 - 90;
+        block.spin += impactX * 0.0025 + (Math.random() - 0.5) * 2;
+      }
+
+      function update(dt, now) {
+        if (cat.launched && !cat.resting) {
+          cat.vy += gravity * dt;
+          cat.x += cat.vx * dt;
+          cat.y += cat.vy * dt;
+          cat.vx *= Math.pow(0.996, dt * 60);
+
+          if (cat.y + cat.r > groundY) {
+            cat.y = groundY - cat.r;
+            cat.vy *= -0.28;
+            cat.vx *= 0.78;
+            if (Math.abs(cat.vy) < 35) cat.vy = 0;
+          }
+
+          blocks.forEach(function (block) {
+            if (circleRectHit(cat, block)) {
+              var speed = Math.sqrt(cat.vx * cat.vx + cat.vy * cat.vy);
+              if (speed > 70) {
+                scoreBlock(block, cat.vx, cat.vy);
+                cat.vx *= 0.62;
+                cat.vy *= 0.72;
+              }
+            }
+          });
+
+          if (cat.x > W + 80 || cat.x < -80 || cat.y > H + 100 ||
+              (Math.abs(cat.vx) < 15 && Math.abs(cat.vy) < 15 && cat.y + cat.r >= groundY - 1)) {
+            cat.resting = true;
+            shotSettledAt = now;
+          }
+        }
+
+        blocks.forEach(function (block) {
+          if (!block.falling || block.gone) return;
+          block.vy += gravity * dt;
+          block.x += block.vx * dt;
+          block.y += block.vy * dt;
+          block.angle += block.spin * dt;
+          block.vx *= Math.pow(0.985, dt * 60);
+          block.spin *= Math.pow(0.98, dt * 60);
+          if (block.y + block.h / 2 > groundY) {
+            block.y = groundY - block.h / 2;
+            block.vy *= -0.18;
+            block.vx *= 0.78;
+            block.spin *= 0.72;
+          }
+          if (block.x > W + 100 || block.x < -100 || block.y > H + 100) block.gone = true;
+        });
+
+        var remaining = blocks.some(function (block) { return !block.scored; });
+        if (!remaining) {
+          level += 1;
+          setMessage("Tower smashed! Next level!");
+          makeBlocks();
+          catsLeft = 5;
+          newCat();
+          updateHud();
+        } else if (cat.resting && now - shotSettledAt > 850) {
+          if (catsLeft > 0) {
+            newCat();
+            setMessage("Next cat ready. Pull back and fire!");
+          } else {
+            setMessage("Out of cats! Restart the level and try again.");
+          }
+        }
+      }
+
+      function drawSky() {
+        var gradient = ctx.createLinearGradient(0, 0, 0, groundY);
+        gradient.addColorStop(0, "#76c9ff");
+        gradient.addColorStop(1, "#dff6ff");
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, W, H);
+
+        ctx.fillStyle = "rgba(255,255,255,.85)";
+        [[160,90,62],[510,80,48],[760,135,55]].forEach(function (c) {
+          ctx.beginPath();
+          ctx.arc(c[0], c[1], c[2] * .55, 0, Math.PI * 2);
+          ctx.arc(c[0] + c[2] * .55, c[1] + 5, c[2] * .42, 0, Math.PI * 2);
+          ctx.arc(c[0] - c[2] * .52, c[1] + 10, c[2] * .35, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        ctx.fillStyle = "#5dad45";
+        ctx.fillRect(0, groundY, W, H - groundY);
+        ctx.fillStyle = "#3d7f31";
+        ctx.fillRect(0, groundY, W, 8);
+      }
+
+      function drawSling() {
+        ctx.lineCap = "round";
+        ctx.strokeStyle = "#5b2d18";
+        ctx.lineWidth = 16;
+        ctx.beginPath();
+        ctx.moveTo(sling.x - 30, groundY);
+        ctx.lineTo(sling.x - 18, sling.y - 32);
+        ctx.moveTo(sling.x + 30, groundY);
+        ctx.lineTo(sling.x + 18, sling.y - 32);
+        ctx.stroke();
+
+        var bandX = cat.launched ? sling.x : cat.x;
+        var bandY = cat.launched ? sling.y : cat.y;
+        ctx.strokeStyle = "#3a2318";
+        ctx.lineWidth = 7;
+        ctx.beginPath();
+        ctx.moveTo(sling.x - 19, sling.y - 31);
+        ctx.lineTo(bandX, bandY);
+        ctx.lineTo(sling.x + 19, sling.y - 31);
+        ctx.stroke();
+      }
+
+      function drawBlock(block) {
+        if (block.gone) return;
+        var colors = ["#c97b32", "#de9a4b", "#b96528"];
+        ctx.save();
+        ctx.translate(block.x, block.y);
+        ctx.rotate(block.angle);
+        ctx.fillStyle = colors[block.shade];
+        ctx.strokeStyle = "#7a3f18";
+        ctx.lineWidth = 3;
+        ctx.fillRect(-block.w / 2, -block.h / 2, block.w, block.h);
+        ctx.strokeRect(-block.w / 2, -block.h / 2, block.w, block.h);
+        ctx.strokeStyle = "rgba(255,255,255,.35)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(-block.w / 2 + 6, -block.h / 2 + 7);
+        ctx.lineTo(block.w / 2 - 6, -block.h / 2 + 7);
+        ctx.stroke();
+        if (block.scored) {
+          ctx.fillStyle = "rgba(255,255,255,.78)";
+          ctx.font = "bold 18px -apple-system, sans-serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText("😡", 0, 0);
+        }
+        ctx.restore();
+      }
+
+      function drawCat() {
+        ctx.save();
+        ctx.translate(cat.x, cat.y);
+        if (cat.launched && Math.abs(cat.vx) + Math.abs(cat.vy) > 40) {
+          ctx.rotate(Math.atan2(cat.vy, cat.vx) * .18);
+        }
+
+        ctx.fillStyle = "#ff8a3d";
+        ctx.strokeStyle = "#7a321e";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(-16, -13);
+        ctx.lineTo(-10, -31);
+        ctx.lineTo(0, -17);
+        ctx.lineTo(11, -31);
+        ctx.lineTo(17, -12);
+        ctx.arc(0, 0, cat.r, -.7, Math.PI * 1.7);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = "white";
+        ctx.beginPath();
+        ctx.arc(-8, -3, 6, 0, Math.PI * 2);
+        ctx.arc(8, -3, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#172033";
+        ctx.beginPath();
+        ctx.arc(-7 + cat.face, -3, 2.5, 0, Math.PI * 2);
+        ctx.arc(9 + cat.face, -3, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#7a321e";
+        ctx.beginPath();
+        ctx.moveTo(0, 3);
+        ctx.lineTo(-4, 8);
+        ctx.lineTo(4, 8);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = "#7a321e";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(-3, 11); ctx.lineTo(-11, 14);
+        ctx.moveTo(3, 11); ctx.lineTo(11, 14);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function drawPowerGuide() {
+        if (!dragging) return;
+        var dx = sling.x - cat.x;
+        var dy = sling.y - cat.y;
+        var power = Math.min(1, Math.sqrt(dx * dx + dy * dy) / sling.maxPull);
+        ctx.fillStyle = "rgba(23,37,84,.22)";
+        ctx.fillRect(24, 24, 180, 18);
+        ctx.fillStyle = power > .75 ? "#ef4444" : "#f59e0b";
+        ctx.fillRect(24, 24, 180 * power, 18);
+        ctx.strokeStyle = "#172554";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(24, 24, 180, 18);
+        ctx.fillStyle = "#172554";
+        ctx.font = "bold 16px -apple-system, sans-serif";
+        ctx.fillText("POWER", 24, 19);
+      }
+
+      function draw() {
+        drawSky();
+        drawSling();
+        blocks.forEach(drawBlock);
+        drawCat();
+        drawPowerGuide();
+      }
+
+      function frame(now) {
+        var dt = Math.min(0.032, (now - lastTime) / 1000);
+        lastTime = now;
+        update(dt, now);
+        draw();
+        requestAnimationFrame(frame);
+      }
+
+      resetLevel(false);
+      requestAnimationFrame(frame);
+    }());
+  </script>
+</body>
+</html>
