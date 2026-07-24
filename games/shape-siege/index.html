@@ -599,15 +599,15 @@
       left: 50%;
       top: 50%;
       display: none;
-      padding: 4px;
-      border: 1px solid rgba(224,233,247,0.28);
+      padding: 2px;
+      border: 0;
       border-radius: 13px;
-      background: rgba(58, 65, 79, 0.93);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 12px 28px rgba(0,0,0,0.48);
+      background: transparent;
+      box-shadow: none;
       transform: translate(-50%, -50%);
       transform-origin: 50% 50%;
-      backdrop-filter: blur(7px);
-      -webkit-backdrop-filter: blur(7px);
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
       touch-action: manipulation;
     }
 
@@ -623,22 +623,24 @@
     .direction-grid {
       display: grid;
       grid-template-columns: repeat(3, var(--choice-size));
-      gap: 3px;
+      gap: clamp(7px, 2.3vw, 10px);
     }
 
     .direction-choice {
       width: var(--choice-size);
       height: var(--choice-size);
       padding: 2px;
-      border: 1px solid rgba(239,245,255,0.2);
+      border: 1px solid rgba(239,245,255,0.42);
       border-radius: 9px;
       display: grid;
       place-items: center;
       align-content: center;
       gap: 0;
       color: #f0f4fb;
-      background: linear-gradient(145deg, rgba(215,221,232,0.2), rgba(112,121,139,0.18));
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.12);
+      background: rgba(13, 22, 39, 0.34);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.16), 0 4px 12px rgba(0,0,0,0.18);
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
       cursor: pointer;
       transition: transform 100ms ease, filter 100ms ease, border-color 100ms ease;
     }
@@ -649,7 +651,7 @@
     .direction-choice .choice-label { color: #cbd3df; font-size: 6px; font-weight: 900; letter-spacing: 0.04em; text-transform: uppercase; }
     .direction-choice.capture-action {
       border-color: rgba(255,95,109,0.5);
-      background: linear-gradient(145deg, rgba(255,95,109,0.3), rgba(103,35,46,0.32));
+      background: rgba(255,95,109,0.18);
     }
     .direction-choice.capture-action .arrow,
     .direction-choice.capture-action .choice-label { color: #ffd5da; }
@@ -792,7 +794,7 @@
       <a class="icon-button" href="../../" aria-label="Back to games">←</a>
       <div class="title-block">
         <p class="eyebrow">Two-player strategy</p>
-        <h1>Shape Siege <span class="version">v1.0.8</span></h1>
+        <h1>Shape Siege <span class="version">v1.0.9</span></h1>
       </div>
       <div class="top-actions">
         <button class="icon-button" id="soundButton" type="button" aria-label="Turn sound off" title="Sound">♪</button>
