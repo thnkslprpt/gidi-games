@@ -1,0 +1,1669 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#070b18">
+  <title>Shape Siege · Gidi's Game Room</title>
+  <style>
+    :root {
+      --bg: #070b18;
+      --panel: rgba(14, 21, 39, 0.92);
+      --panel-2: rgba(19, 28, 50, 0.96);
+      --line: rgba(151, 174, 219, 0.15);
+      --ink: #eef5ff;
+      --muted: #9ba9c2;
+      --p1: #ff6f9f;
+      --p1-soft: #ffc1d6;
+      --p1-rgb: 255, 111, 159;
+      --p2: #55d7e8;
+      --p2-soft: #baf7ff;
+      --p2-rgb: 85, 215, 232;
+      --gold: #ffd166;
+      --danger: #ff5f6d;
+      --cell-a: #18233c;
+      --cell-b: #111a2e;
+      --board-size: min(calc(100vw - 20px), 560px, calc(100vh - 258px));
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      min-width: 320px;
+      min-height: 100%;
+      background: var(--bg);
+      -webkit-text-size-adjust: 100%;
+      touch-action: manipulation;
+    }
+
+    body {
+      min-width: 320px;
+      min-height: 100vh;
+      margin: 0;
+      overflow-x: hidden;
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      background:
+        radial-gradient(circle at 10% 4%, rgba(124, 92, 255, 0.19), transparent 34%),
+        radial-gradient(circle at 92% 24%, rgba(85, 215, 232, 0.13), transparent 31%),
+        radial-gradient(circle at 50% 100%, rgba(255, 111, 159, 0.11), transparent 38%),
+        linear-gradient(155deg, #070b18 0%, #0a1020 47%, #080b16 100%);
+      -webkit-tap-highlight-color: transparent;
+      overscroll-behavior: none;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    button, a { font: inherit; }
+    button { color: inherit; }
+
+    .app {
+      width: min(100%, 760px);
+      min-height: 100vh;
+      margin: 0 auto;
+      padding:
+        max(7px, env(safe-area-inset-top))
+        max(10px, env(safe-area-inset-right))
+        max(10px, env(safe-area-inset-bottom))
+        max(10px, env(safe-area-inset-left));
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .topbar {
+      width: 100%;
+      min-height: 44px;
+      display: grid;
+      grid-template-columns: 44px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .icon-button {
+      width: 42px;
+      height: 42px;
+      padding: 0;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      display: inline-grid;
+      place-items: center;
+      text-decoration: none;
+      color: #dce8fa;
+      background: linear-gradient(145deg, rgba(27, 39, 67, 0.94), rgba(12, 19, 35, 0.94));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 20px rgba(0,0,0,0.2);
+      cursor: pointer;
+      transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+    }
+
+    .icon-button:active { transform: translateY(1px) scale(0.97); }
+    .icon-button:focus-visible { outline: 2px solid var(--p2); outline-offset: 2px; }
+
+    .title-block { min-width: 0; }
+    .eyebrow {
+      margin: 0 0 1px;
+      color: #8190aa;
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(21px, 6vw, 31px);
+      line-height: 1;
+      letter-spacing: -0.045em;
+      white-space: nowrap;
+    }
+
+    .version {
+      margin-left: 5px;
+      color: #73829c;
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      vertical-align: middle;
+    }
+
+    .top-actions { display: flex; gap: 5px; }
+    .top-actions .icon-button { width: 38px; height: 38px; border-radius: 13px; }
+
+    .player-card {
+      width: min(100%, 590px);
+      min-height: 47px;
+      padding: 7px 10px;
+      border: 1px solid var(--line);
+      border-radius: 17px;
+      display: grid;
+      grid-template-columns: auto minmax(0,1fr) auto;
+      align-items: center;
+      gap: 9px;
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(145deg, rgba(22, 31, 53, 0.94), rgba(11, 18, 33, 0.94));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 10px 24px rgba(0,0,0,0.17);
+      transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+    }
+
+    .player-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity 180ms ease;
+      pointer-events: none;
+    }
+
+    .player-card.p1::before { background: linear-gradient(90deg, rgba(var(--p1-rgb),0.12), transparent 70%); }
+    .player-card.p2::before { background: linear-gradient(90deg, rgba(var(--p2-rgb),0.12), transparent 70%); }
+    .player-card.active::before { opacity: 1; }
+    .player-card.p1.active { border-color: rgba(var(--p1-rgb),0.52); box-shadow: 0 0 0 1px rgba(var(--p1-rgb),0.08), 0 10px 28px rgba(var(--p1-rgb),0.12); }
+    .player-card.p2.active { border-color: rgba(var(--p2-rgb),0.52); box-shadow: 0 0 0 1px rgba(var(--p2-rgb),0.08), 0 10px 28px rgba(var(--p2-rgb),0.12); }
+    .player-card.check { animation: checkPulse 720ms ease-in-out infinite alternate; }
+
+    .player-token {
+      width: 31px;
+      height: 31px;
+      border-radius: 11px;
+      display: grid;
+      place-items: center;
+      position: relative;
+      z-index: 1;
+      font-weight: 950;
+      color: #07101d;
+      box-shadow: inset 0 2px 0 rgba(255,255,255,0.38), 0 5px 14px rgba(0,0,0,0.24);
+    }
+
+    .p1 .player-token { background: linear-gradient(145deg, var(--p1-soft), var(--p1)); }
+    .p2 .player-token { background: linear-gradient(145deg, var(--p2-soft), var(--p2)); }
+
+    .player-copy { min-width: 0; position: relative; z-index: 1; }
+    .player-name { font-size: 13px; font-weight: 850; letter-spacing: -0.01em; }
+    .player-detail { margin-top: 1px; color: var(--muted); font-size: 10px; }
+
+    .turn-chip {
+      min-width: 53px;
+      padding: 5px 7px;
+      border-radius: 999px;
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      color: #8897b0;
+      background: rgba(255,255,255,0.04);
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .active.p1 .turn-chip { color: var(--p1-soft); background: rgba(var(--p1-rgb),0.13); }
+    .active.p2 .turn-chip { color: var(--p2-soft); background: rgba(var(--p2-rgb),0.13); }
+    .check .turn-chip { color: #fff; background: rgba(255,95,109,0.23); }
+
+    .status {
+      width: min(100%, 590px);
+      min-height: 31px;
+      padding: 5px 11px;
+      border: 1px solid rgba(151,174,219,0.11);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      text-align: center;
+      background: rgba(8, 14, 28, 0.7);
+      color: #cbd8ec;
+      font-size: 11px;
+      font-weight: 750;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex: 0 0 auto;
+      box-shadow: 0 0 12px currentColor;
+    }
+
+    .status.p1 .status-dot { color: var(--p1); background: var(--p1); }
+    .status.p2 .status-dot { color: var(--p2); background: var(--p2); }
+    .status.danger { color: #ffd5da; border-color: rgba(255,95,109,0.3); background: rgba(91, 19, 31, 0.34); }
+    .status.danger .status-dot { color: var(--danger); background: var(--danger); }
+
+    .board-shell {
+      width: var(--board-size);
+      min-width: 296px;
+      max-width: 560px;
+      padding: clamp(5px, 1.6vw, 9px);
+      border: 1px solid rgba(151,174,219,0.18);
+      border-radius: clamp(17px, 5vw, 26px);
+      position: relative;
+      background:
+        linear-gradient(145deg, rgba(35, 48, 80, 0.96), rgba(10, 17, 31, 0.98));
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.08),
+        inset 0 -7px 18px rgba(0,0,0,0.25),
+        0 22px 48px rgba(0,0,0,0.32);
+    }
+
+    .board-shell::before {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      border-radius: inherit;
+      padding: 1px;
+      background: linear-gradient(135deg, rgba(var(--p2-rgb),0.32), transparent 35%, transparent 65%, rgba(var(--p1-rgb),0.28));
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+
+    .board {
+      width: 100%;
+      aspect-ratio: 1;
+      display: grid;
+      grid-template-columns: repeat(9, minmax(0,1fr));
+      grid-template-rows: repeat(9, minmax(0,1fr));
+      gap: clamp(1px, 0.48vw, 3px);
+      position: relative;
+      overflow: hidden;
+      border-radius: clamp(13px, 4vw, 19px);
+      background: #080e1b;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
+    }
+
+    .cell {
+      min-width: 0;
+      min-height: 0;
+      padding: 0;
+      border: 0;
+      border-radius: clamp(4px, 1.4vw, 8px);
+      position: relative;
+      display: grid;
+      place-items: center;
+      overflow: visible;
+      background: var(--cell-a);
+      cursor: pointer;
+      isolation: isolate;
+      transition: transform 110ms ease, filter 130ms ease, box-shadow 130ms ease;
+    }
+
+    .cell.alt { background: var(--cell-b); }
+    .cell::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      opacity: 0.22;
+      background: linear-gradient(145deg, rgba(255,255,255,0.08), transparent 42%);
+      pointer-events: none;
+    }
+
+    .cell:active { transform: scale(0.96); }
+    .cell.selected { z-index: 3; box-shadow: inset 0 0 0 2px var(--gold), 0 0 18px rgba(255,209,102,0.34); }
+    .cell.legal::after {
+      content: "";
+      width: 24%;
+      height: 24%;
+      border-radius: 50%;
+      position: absolute;
+      z-index: 4;
+      background: rgba(238,245,255,0.7);
+      box-shadow: 0 0 0 4px rgba(238,245,255,0.08), 0 0 13px rgba(238,245,255,0.35);
+      animation: hintPulse 850ms ease-in-out infinite alternate;
+      pointer-events: none;
+    }
+
+    .cell.capture::after {
+      width: 72%;
+      height: 72%;
+      border: 2px solid var(--danger);
+      background: rgba(255,95,109,0.08);
+      box-shadow: 0 0 0 2px rgba(255,95,109,0.09), 0 0 16px rgba(255,95,109,0.32);
+    }
+
+    .cell.triangle-target::after {
+      content: "";
+      width: 34%;
+      height: 34%;
+      border: 2px solid var(--gold);
+      border-radius: 8px;
+      position: absolute;
+      z-index: 4;
+      transform: rotate(45deg);
+      background: rgba(255,209,102,0.08);
+      box-shadow: 0 0 13px rgba(255,209,102,0.28);
+      animation: hintPulse 850ms ease-in-out infinite alternate;
+      pointer-events: none;
+    }
+
+    .cell.in-check { box-shadow: inset 0 0 0 2px var(--danger), 0 0 19px rgba(255,95,109,0.48); z-index: 2; }
+
+    .piece {
+      width: 82%;
+      height: 82%;
+      border-radius: 30%;
+      position: relative;
+      z-index: 2;
+      display: grid;
+      place-items: center;
+      color: var(--piece);
+      background:
+        radial-gradient(circle at 35% 25%, rgba(255,255,255,0.2), transparent 30%),
+        linear-gradient(145deg, rgba(var(--piece-rgb),0.22), rgba(var(--piece-rgb),0.07));
+      border: 1px solid rgba(var(--piece-rgb),0.4);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.18),
+        inset 0 -3px 6px rgba(0,0,0,0.2),
+        0 4px 8px rgba(0,0,0,0.32),
+        0 0 9px rgba(var(--piece-rgb),0.16);
+      transition: transform 150ms ease, filter 150ms ease;
+      pointer-events: none;
+    }
+
+    .piece.p1 { --piece: var(--p1); --piece-rgb: var(--p1-rgb); }
+    .piece.p2 { --piece: var(--p2); --piece-rgb: var(--p2-rgb); }
+    .selected .piece { transform: translateY(-2px) scale(1.06); filter: brightness(1.17); }
+    .piece.last-moved { animation: arrive 340ms cubic-bezier(.2,.8,.25,1.25); }
+    .piece.cross-in-check { animation: crossDanger 560ms ease-in-out infinite alternate; }
+
+    .glyph { width: 59%; height: 59%; display: block; position: relative; color: currentColor; }
+    .glyph.circle { border: max(3px, 0.11em) solid currentColor; border-radius: 50%; box-shadow: inset 0 0 0 2px rgba(255,255,255,0.1); }
+    .glyph.square { border: max(3px, 0.11em) solid currentColor; border-radius: 20%; box-shadow: inset 0 0 0 2px rgba(255,255,255,0.08); }
+    .glyph.triangle {
+      width: 62%;
+      height: 65%;
+      background: currentColor;
+      clip-path: polygon(50% 3%, 96% 92%, 50% 73%, 4% 92%);
+      filter: drop-shadow(0 2px 1px rgba(0,0,0,0.28));
+      transform-origin: 50% 50%;
+      transition: transform 180ms ease;
+    }
+    .glyph.cross::before, .glyph.cross::after {
+      content: "";
+      position: absolute;
+      left: 44%;
+      top: -3%;
+      width: 17%;
+      height: 106%;
+      border-radius: 999px;
+      background: currentColor;
+      box-shadow: 0 0 5px rgba(var(--piece-rgb),0.34);
+    }
+    .glyph.cross::before { transform: rotate(45deg); }
+    .glyph.cross::after { transform: rotate(-45deg); }
+
+    .facing-0 .glyph.triangle { transform: rotate(0deg); }
+    .facing-1 .glyph.triangle { transform: rotate(90deg); }
+    .facing-2 .glyph.triangle { transform: rotate(180deg); }
+    .facing-3 .glyph.triangle { transform: rotate(270deg); }
+
+    .action-bar {
+      width: min(100%, 590px);
+      min-height: 47px;
+      padding: 6px 7px 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: linear-gradient(145deg, rgba(20, 29, 50, 0.94), rgba(10, 17, 31, 0.96));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 8px 20px rgba(0,0,0,0.18);
+    }
+
+    .action-copy { min-width: 0; flex: 1; }
+    .action-title { font-size: 11px; font-weight: 850; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .action-sub { margin-top: 1px; color: var(--muted); font-size: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .action-buttons { display: flex; gap: 5px; flex: 0 0 auto; }
+
+    .small-button, .primary-button, .sheet-button {
+      min-height: 34px;
+      border: 1px solid rgba(151,174,219,0.17);
+      border-radius: 11px;
+      cursor: pointer;
+      font-weight: 850;
+      transition: transform 110ms ease, filter 110ms ease, border-color 110ms ease;
+    }
+    .small-button {
+      min-width: 43px;
+      padding: 0 9px;
+      color: #d7e3f5;
+      background: rgba(255,255,255,0.055);
+      font-size: 10px;
+    }
+    .small-button:active, .primary-button:active, .sheet-button:active { transform: translateY(1px) scale(0.98); }
+    .small-button.capture-action { color: #ffd8dc; border-color: rgba(255,95,109,0.36); background: rgba(255,95,109,0.12); }
+
+    .primary-button {
+      min-height: 42px;
+      padding: 0 17px;
+      border-color: rgba(var(--p2-rgb),0.34);
+      color: #06131d;
+      background: linear-gradient(145deg, var(--p2-soft), var(--p2));
+      box-shadow: inset 0 2px 0 rgba(255,255,255,0.3), 0 8px 18px rgba(var(--p2-rgb),0.16);
+      font-size: 12px;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: max(14px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+      background: rgba(3, 7, 16, 0.76);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .overlay.open { display: flex; animation: fadeIn 160ms ease both; }
+
+    .modal {
+      width: min(100%, 510px);
+      max-height: min(88vh, 680px);
+      overflow: auto;
+      padding: clamp(17px, 5vw, 25px);
+      border: 1px solid rgba(151,174,219,0.2);
+      border-radius: 25px;
+      position: relative;
+      background:
+        radial-gradient(circle at 85% 5%, rgba(var(--p2-rgb),0.12), transparent 33%),
+        radial-gradient(circle at 8% 100%, rgba(var(--p1-rgb),0.11), transparent 35%),
+        linear-gradient(150deg, rgba(24, 34, 58, 0.99), rgba(8, 14, 27, 0.99));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.07), 0 30px 70px rgba(0,0,0,0.46);
+    }
+
+    .modal-kicker { color: var(--p2); font-size: 9px; font-weight: 900; letter-spacing: 0.16em; text-transform: uppercase; }
+    .modal h2 { margin: 5px 0 7px; font-size: clamp(28px, 8vw, 43px); line-height: 0.98; letter-spacing: -0.055em; }
+    .modal-lead { margin: 0 0 14px; color: #b3c0d5; font-size: 12px; line-height: 1.45; }
+
+    .rules-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; }
+    .rule-card {
+      min-height: 105px;
+      padding: 11px;
+      border: 1px solid rgba(151,174,219,0.13);
+      border-radius: 16px;
+      background: rgba(255,255,255,0.035);
+    }
+    .rule-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .rule-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 9px;
+      display: grid;
+      place-items: center;
+      color: var(--p2);
+      background: rgba(var(--p2-rgb),0.1);
+      font-size: 17px;
+      font-weight: 950;
+    }
+    .rule-card:nth-child(even) .rule-icon { color: var(--p1); background: rgba(var(--p1-rgb),0.1); }
+    .rule-card strong { font-size: 12px; }
+    .rule-card p { margin: 0; color: #9eacc2; font-size: 10px; line-height: 1.38; }
+
+    .rule-note {
+      margin: 10px 0 14px;
+      padding: 10px 11px;
+      border: 1px solid rgba(255,209,102,0.16);
+      border-radius: 14px;
+      color: #c8d3e4;
+      background: rgba(255,209,102,0.055);
+      font-size: 10px;
+      line-height: 1.4;
+    }
+
+    .modal-actions { display: flex; justify-content: flex-end; gap: 7px; }
+
+    .direction-modal { width: min(100%, 430px); }
+    .direction-title { margin-bottom: 13px; }
+    .direction-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 7px; }
+    .sheet-button {
+      min-height: 82px;
+      padding: 8px 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      color: #dce8f8;
+      background: rgba(255,255,255,0.045);
+      font-size: 10px;
+    }
+    .sheet-button .arrow { font-size: 28px; line-height: 1; color: var(--gold); }
+    .sheet-button.capture-action { border-color: rgba(255,95,109,0.36); background: rgba(255,95,109,0.1); }
+    .sheet-button.capture-action .arrow { color: #ff9aa4; }
+
+    .end-emblem {
+      width: 72px;
+      height: 72px;
+      margin: 0 auto 13px;
+      border-radius: 23px;
+      display: grid;
+      place-items: center;
+      color: #08101d;
+      font-size: 35px;
+      font-weight: 950;
+      background: linear-gradient(145deg, #fff2ae, var(--gold));
+      box-shadow: inset 0 3px 0 rgba(255,255,255,0.36), 0 14px 32px rgba(255,209,102,0.2);
+    }
+    .end-modal { text-align: center; }
+    .end-modal .modal-lead { max-width: 360px; margin-left: auto; margin-right: auto; }
+    .end-modal .modal-actions { justify-content: center; }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: max(14px, env(safe-area-inset-bottom));
+      z-index: 50;
+      max-width: calc(100% - 24px);
+      padding: 9px 13px;
+      border: 1px solid rgba(151,174,219,0.2);
+      border-radius: 999px;
+      color: #e7effb;
+      background: rgba(13, 21, 38, 0.96);
+      box-shadow: 0 12px 35px rgba(0,0,0,0.35);
+      font-size: 11px;
+      font-weight: 780;
+      transform: translate(-50%, 20px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 160ms ease, transform 160ms ease;
+    }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+    .burst {
+      position: absolute;
+      z-index: 9;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--burst-color, #fff);
+      box-shadow: 0 0 8px var(--burst-color, #fff);
+      pointer-events: none;
+      animation: burst 520ms ease-out both;
+    }
+
+    .rotate-notice {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: none;
+      place-items: center;
+      padding: 24px;
+      text-align: center;
+      background: #070b18;
+    }
+    .rotate-notice strong { display: block; margin-bottom: 7px; font-size: 25px; }
+    .rotate-notice span { color: var(--muted); font-size: 13px; }
+
+    @keyframes hintPulse { from { transform: scale(0.85); opacity: 0.65; } to { transform: scale(1.08); opacity: 1; } }
+    @keyframes arrive { 0% { transform: scale(0.62); opacity: 0.3; } 70% { transform: scale(1.12); } 100% { transform: scale(1); opacity: 1; } }
+    @keyframes crossDanger { from { filter: brightness(1); } to { filter: brightness(1.45) drop-shadow(0 0 6px var(--danger)); } }
+    @keyframes checkPulse { from { box-shadow: 0 0 0 1px rgba(255,95,109,0.1), 0 10px 24px rgba(0,0,0,0.17); } to { box-shadow: 0 0 0 2px rgba(255,95,109,0.42), 0 0 28px rgba(255,95,109,0.2); } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes burst { from { transform: translate(0,0) scale(1); opacity: 1; } to { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; } }
+
+    @media (max-width: 390px) {
+      .app { gap: 5px; }
+      .topbar { min-height: 40px; }
+      .icon-button { width: 39px; height: 39px; border-radius: 13px; }
+      .top-actions .icon-button { width: 35px; height: 35px; }
+      .player-card { min-height: 43px; padding: 5px 8px; border-radius: 15px; }
+      .player-token { width: 29px; height: 29px; }
+      .status { min-height: 28px; padding-block: 4px; }
+      .action-bar { min-height: 43px; }
+      .small-button { min-height: 31px; padding-inline: 7px; }
+    }
+
+    @media (max-width: 350px) {
+      :root { --board-size: min(calc(100vw - 16px), calc(100vh - 246px)); }
+      .app { padding-left: 8px; padding-right: 8px; }
+      .version { display: none; }
+      .top-actions { gap: 3px; }
+      .top-actions .icon-button { width: 33px; height: 33px; }
+      .player-detail { font-size: 9px; }
+      .turn-chip { min-width: 45px; padding-inline: 5px; }
+      .rules-grid { grid-template-columns: 1fr; }
+      .rule-card { min-height: 0; }
+    }
+
+    @media (orientation: landscape) and (max-height: 480px) {
+      .rotate-notice { display: grid; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app" aria-label="Shape Siege game">
+    <header class="topbar">
+      <a class="icon-button" href="../../" aria-label="Back to games">←</a>
+      <div class="title-block">
+        <p class="eyebrow">Two-player strategy</p>
+        <h1>Shape Siege <span class="version">v1.0.0</span></h1>
+      </div>
+      <div class="top-actions">
+        <button class="icon-button" id="soundButton" type="button" aria-label="Turn sound off" title="Sound">♪</button>
+        <button class="icon-button" id="helpButton" type="button" aria-label="How to play" title="How to play">?</button>
+        <button class="icon-button" id="resetButton" type="button" aria-label="Start a new match" title="New match">↻</button>
+      </div>
+    </header>
+
+    <section class="player-card p2" id="player2Card" aria-label="Player 2">
+      <div class="player-token">2</div>
+      <div class="player-copy">
+        <div class="player-name">Player 2 · Cyan</div>
+        <div class="player-detail" id="player2Detail">18 pieces · Cross safe</div>
+      </div>
+      <div class="turn-chip" id="player2Chip">Waiting</div>
+    </section>
+
+    <div class="status p1" id="status" aria-live="polite">
+      <span class="status-dot"></span>
+      <span id="statusText">Preparing the board…</span>
+    </div>
+
+    <section class="board-shell" aria-label="9 by 9 Shape Siege board">
+      <div class="board" id="board" role="grid" aria-label="Shape Siege board"></div>
+    </section>
+
+    <section class="player-card p1" id="player1Card" aria-label="Player 1">
+      <div class="player-token">1</div>
+      <div class="player-copy">
+        <div class="player-name">Player 1 · Rose</div>
+        <div class="player-detail" id="player1Detail">18 pieces · Cross safe</div>
+      </div>
+      <div class="turn-chip" id="player1Chip">Waiting</div>
+    </section>
+
+    <section class="action-bar" aria-label="Move controls">
+      <div class="action-copy">
+        <div class="action-title" id="actionTitle">Select one of your pieces</div>
+        <div class="action-sub" id="actionSub">Captures are optional. Keep your cross out of danger.</div>
+      </div>
+      <div class="action-buttons" id="actionButtons">
+        <button class="small-button" id="clearButton" type="button" hidden>Cancel</button>
+        <button class="small-button" id="newMatchButton" type="button">New match</button>
+      </div>
+    </section>
+  </main>
+
+  <div class="overlay" id="helpOverlay" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <section class="modal">
+      <div class="modal-kicker">How to play</div>
+      <h2 id="helpTitle">Protect your cross.<br>Break theirs.</h2>
+      <p class="modal-lead">Shape Siege is a tactical duel on a 9×9 board. Player 2 begins at the top; Player 1 begins at the bottom. The starting player is chosen at random.</p>
+      <div class="rules-grid">
+        <article class="rule-card">
+          <div class="rule-head"><span class="rule-icon">○</span><strong>Circle</strong></div>
+          <p>Move 1 or 2 squares straight forward or backward. Capture exactly 1 square diagonally forward. Circles never jump.</p>
+        </article>
+        <article class="rule-card">
+          <div class="rule-head"><span class="rule-icon">△</span><strong>Triangle</strong></div>
+          <p>Move 1 or 2 squares in the direction it points, then keep facing or turn 90° left or right. It may also turn in place. An adjacent enemy in its final direction is captured automatically.</p>
+        </article>
+        <article class="rule-card">
+          <div class="rule-head"><span class="rule-icon">□</span><strong>Square</strong></div>
+          <p>Move any distance horizontally or vertically. It may jump over one enemy, which survives, then land on an empty square or capture the next enemy. Friendly pieces and a second obstacle block it.</p>
+        </article>
+        <article class="rule-card">
+          <div class="rule-head"><span class="rule-icon">×</span><strong>Cross</strong></div>
+          <p>Move up to 3 squares in any straight or diagonal direction. It captures every enemy crossed along the route. Friendly pieces stop it.</p>
+        </article>
+      </div>
+      <div class="rule-note"><strong>Check rules:</strong> you may not finish a move with your own cross threatened. Checkmate wins. Stalemate, a threefold repetition, or 60 consecutive player moves without a capture ends the game in a draw.</div>
+      <div class="modal-actions">
+        <button class="primary-button" id="closeHelpButton" type="button">Start match</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="overlay" id="directionOverlay" role="dialog" aria-modal="true" aria-labelledby="directionTitle">
+    <section class="modal direction-modal">
+      <div class="modal-kicker">Triangle move</div>
+      <h2 class="direction-title" id="directionTitle">Choose its final direction</h2>
+      <p class="modal-lead">If the triangle points at an adjacent enemy after turning, that capture happens automatically.</p>
+      <div class="direction-grid" id="directionGrid"></div>
+      <div class="modal-actions" style="margin-top:11px">
+        <button class="small-button" id="cancelDirectionButton" type="button">Cancel</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="overlay" id="endOverlay" role="dialog" aria-modal="true" aria-labelledby="endTitle">
+    <section class="modal end-modal">
+      <div class="end-emblem" id="endEmblem">×</div>
+      <div class="modal-kicker" id="endKicker">Match complete</div>
+      <h2 id="endTitle">Player 1 wins!</h2>
+      <p class="modal-lead" id="endReason">The opposing cross has been trapped.</p>
+      <div class="modal-actions">
+        <a class="small-button" href="../../" style="display:inline-grid;place-items:center;text-decoration:none;padding:0 13px">Games</a>
+        <button class="primary-button" id="playAgainButton" type="button">Play again</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div class="rotate-notice"><div><strong>Turn the phone upright</strong><span>Shape Siege is designed for portrait play.</span></div></div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var SIZE = 9;
+      var NO_CAPTURE_LIMIT = 60;
+      var DIRS = [
+        { dr: -1, dc: 0, name: "up" },
+        { dr: 0, dc: 1, name: "right" },
+        { dr: 1, dc: 0, name: "down" },
+        { dr: 0, dc: -1, name: "left" }
+      ];
+      var ALL_DIRS = [
+        { dr: -1, dc: 0 }, { dr: 1, dc: 0 }, { dr: 0, dc: -1 }, { dr: 0, dc: 1 },
+        { dr: -1, dc: -1 }, { dr: -1, dc: 1 }, { dr: 1, dc: -1 }, { dr: 1, dc: 1 }
+      ];
+      var TYPE_NAMES = { circle: "Circle", square: "Square", triangle: "Triangle", cross: "Cross" };
+      var BACK_ROW = ["square", "circle", "triangle", "circle", "cross", "circle", "triangle", "circle", "square"];
+
+      var boardEl = document.getElementById("board");
+      var statusEl = document.getElementById("status");
+      var statusText = document.getElementById("statusText");
+      var player1Card = document.getElementById("player1Card");
+      var player2Card = document.getElementById("player2Card");
+      var player1Detail = document.getElementById("player1Detail");
+      var player2Detail = document.getElementById("player2Detail");
+      var player1Chip = document.getElementById("player1Chip");
+      var player2Chip = document.getElementById("player2Chip");
+      var actionTitle = document.getElementById("actionTitle");
+      var actionSub = document.getElementById("actionSub");
+      var actionButtons = document.getElementById("actionButtons");
+      var clearButton = document.getElementById("clearButton");
+      var newMatchButton = document.getElementById("newMatchButton");
+      var resetButton = document.getElementById("resetButton");
+      var helpButton = document.getElementById("helpButton");
+      var soundButton = document.getElementById("soundButton");
+      var helpOverlay = document.getElementById("helpOverlay");
+      var closeHelpButton = document.getElementById("closeHelpButton");
+      var directionOverlay = document.getElementById("directionOverlay");
+      var directionGrid = document.getElementById("directionGrid");
+      var cancelDirectionButton = document.getElementById("cancelDirectionButton");
+      var endOverlay = document.getElementById("endOverlay");
+      var endTitle = document.getElementById("endTitle");
+      var endReason = document.getElementById("endReason");
+      var endKicker = document.getElementById("endKicker");
+      var endEmblem = document.getElementById("endEmblem");
+      var playAgainButton = document.getElementById("playAgainButton");
+      var toastEl = document.getElementById("toast");
+
+      var state = null;
+      var selectedId = null;
+      var selectedMoves = [];
+      var cellEls = [];
+      var lastMovePieceId = null;
+      var lastCapturedSquares = [];
+      var toastTimer = 0;
+      var audioContext = null;
+      var soundOn = safeGet("shape-siege-sound") !== "off";
+
+      function safeGet(key) {
+        try { return window.localStorage.getItem(key) || ""; }
+        catch (error) { return ""; }
+      }
+
+      function safeSet(key, value) {
+        try { window.localStorage.setItem(key, value); }
+        catch (error) { return; }
+      }
+
+      function inBounds(r, c) { return r >= 0 && r < SIZE && c >= 0 && c < SIZE; }
+      function otherPlayer(player) { return player === 1 ? 2 : 1; }
+      function mod4(value) { return (value % 4 + 4) % 4; }
+
+      function clonePieces(pieces) {
+        return pieces.map(function (piece) {
+          return {
+            id: piece.id,
+            type: piece.type,
+            player: piece.player,
+            r: piece.r,
+            c: piece.c,
+            facing: piece.facing,
+            alive: piece.alive
+          };
+        });
+      }
+
+      function pieceAt(gameState, r, c) {
+        var i;
+        for (i = 0; i < gameState.pieces.length; i += 1) {
+          if (gameState.pieces[i].alive && gameState.pieces[i].r === r && gameState.pieces[i].c === c) {
+            return gameState.pieces[i];
+          }
+        }
+        return null;
+      }
+
+      function pieceById(gameState, id) {
+        var i;
+        for (i = 0; i < gameState.pieces.length; i += 1) {
+          if (gameState.pieces[i].id === id) { return gameState.pieces[i]; }
+        }
+        return null;
+      }
+
+      function crossFor(gameState, player) {
+        var i;
+        for (i = 0; i < gameState.pieces.length; i += 1) {
+          if (gameState.pieces[i].alive && gameState.pieces[i].player === player && gameState.pieces[i].type === "cross") {
+            return gameState.pieces[i];
+          }
+        }
+        return null;
+      }
+
+      function addPiece(pieces, type, player, r, c, facing, idCounter) {
+        pieces.push({
+          id: "p" + idCounter.value,
+          type: type,
+          player: player,
+          r: r,
+          c: c,
+          facing: typeof facing === "number" ? facing : 0,
+          alive: true
+        });
+        idCounter.value += 1;
+      }
+
+      function createInitialState() {
+        var pieces = [];
+        var idCounter = { value: 1 };
+        var c;
+        for (c = 0; c < SIZE; c += 1) {
+          addPiece(pieces, BACK_ROW[c], 2, 0, c, BACK_ROW[c] === "triangle" ? 2 : 0, idCounter);
+          addPiece(pieces, "circle", 2, 1, c, 2, idCounter);
+          addPiece(pieces, "circle", 1, 7, c, 0, idCounter);
+          addPiece(pieces, BACK_ROW[c], 1, 8, c, BACK_ROW[c] === "triangle" ? 0 : 0, idCounter);
+        }
+        return {
+          pieces: pieces,
+          currentPlayer: Math.random() < 0.5 ? 1 : 2,
+          halfmoveClock: 0,
+          positionCounts: {},
+          gameOver: false,
+          result: null,
+          moveNumber: 0
+        };
+      }
+
+      function moveObject(piece, toR, toC, captures, extra) {
+        var move = {
+          pieceId: piece.id,
+          player: piece.player,
+          type: piece.type,
+          fromR: piece.r,
+          fromC: piece.c,
+          toR: toR,
+          toC: toC,
+          captures: captures || [],
+          newFacing: piece.facing,
+          kind: piece.type,
+          landingR: toR,
+          landingC: toC,
+          distance: 0,
+          turn: 0
+        };
+        var key;
+        if (extra) {
+          for (key in extra) {
+            if (Object.prototype.hasOwnProperty.call(extra, key)) { move[key] = extra[key]; }
+          }
+        }
+        return move;
+      }
+
+      function generateCircleMoves(gameState, piece) {
+        var moves = [];
+        var steps = [-1, 1];
+        var s;
+        var distance;
+        var r;
+        var occupant;
+        var forward = piece.player === 1 ? -1 : 1;
+        var dc;
+
+        for (s = 0; s < steps.length; s += 1) {
+          for (distance = 1; distance <= 2; distance += 1) {
+            r = piece.r + steps[s] * distance;
+            if (!inBounds(r, piece.c)) { break; }
+            occupant = pieceAt(gameState, r, piece.c);
+            if (occupant) { break; }
+            moves.push(moveObject(piece, r, piece.c, [], { distance: distance }));
+          }
+        }
+
+        for (dc = -1; dc <= 1; dc += 2) {
+          r = piece.r + forward;
+          if (inBounds(r, piece.c + dc)) {
+            occupant = pieceAt(gameState, r, piece.c + dc);
+            if (occupant && occupant.player !== piece.player) {
+              moves.push(moveObject(piece, r, piece.c + dc, [occupant.id], { distance: 1 }));
+            }
+          }
+        }
+        return moves;
+      }
+
+      function addTriangleOption(gameState, piece, moves, landingR, landingC, distance, turn) {
+        var newFacing = mod4(piece.facing + turn);
+        var dir = DIRS[newFacing];
+        var targetR = landingR + dir.dr;
+        var targetC = landingC + dir.dc;
+        var occupant = inBounds(targetR, targetC) ? pieceAt(gameState, targetR, targetC) : null;
+        var finalR = landingR;
+        var finalC = landingC;
+        var captures = [];
+
+        if (occupant && occupant.player !== piece.player) {
+          finalR = targetR;
+          finalC = targetC;
+          captures.push(occupant.id);
+        }
+
+        moves.push(moveObject(piece, finalR, finalC, captures, {
+          newFacing: newFacing,
+          kind: "triangle",
+          landingR: landingR,
+          landingC: landingC,
+          distance: distance,
+          turn: turn
+        }));
+      }
+
+      function generateTriangleMoves(gameState, piece) {
+        var moves = [];
+        var dir = DIRS[piece.facing];
+        var distance;
+        var r;
+        var c;
+        var turns = [0, -1, 1];
+        var t;
+
+        addTriangleOption(gameState, piece, moves, piece.r, piece.c, 0, -1);
+        addTriangleOption(gameState, piece, moves, piece.r, piece.c, 0, 1);
+
+        for (distance = 1; distance <= 2; distance += 1) {
+          r = piece.r + dir.dr * distance;
+          c = piece.c + dir.dc * distance;
+          if (!inBounds(r, c) || pieceAt(gameState, r, c)) { break; }
+          for (t = 0; t < turns.length; t += 1) {
+            addTriangleOption(gameState, piece, moves, r, c, distance, turns[t]);
+          }
+        }
+        return moves;
+      }
+
+      function generateSquareMoves(gameState, piece) {
+        var moves = [];
+        var orthogonal = ALL_DIRS.slice(0, 4);
+        var d;
+        var distance;
+        var r;
+        var c;
+        var occupant;
+        var jumped;
+
+        for (d = 0; d < orthogonal.length; d += 1) {
+          jumped = false;
+          for (distance = 1; distance < SIZE; distance += 1) {
+            r = piece.r + orthogonal[d].dr * distance;
+            c = piece.c + orthogonal[d].dc * distance;
+            if (!inBounds(r, c)) { break; }
+            occupant = pieceAt(gameState, r, c);
+
+            if (!occupant) {
+              moves.push(moveObject(piece, r, c, [], { distance: distance, jumped: jumped }));
+              continue;
+            }
+
+            if (occupant.player === piece.player) { break; }
+
+            moves.push(moveObject(piece, r, c, [occupant.id], { distance: distance, jumped: jumped }));
+
+            if (!jumped && occupant.type !== "cross") {
+              jumped = true;
+              continue;
+            }
+            break;
+          }
+        }
+        return moves;
+      }
+
+      function generateCrossMoves(gameState, piece) {
+        var moves = [];
+        var d;
+        var distance;
+        var r;
+        var c;
+        var occupant;
+        var captures;
+
+        for (d = 0; d < ALL_DIRS.length; d += 1) {
+          captures = [];
+          for (distance = 1; distance <= 3; distance += 1) {
+            r = piece.r + ALL_DIRS[d].dr * distance;
+            c = piece.c + ALL_DIRS[d].dc * distance;
+            if (!inBounds(r, c)) { break; }
+            occupant = pieceAt(gameState, r, c);
+            if (occupant && occupant.player === piece.player) { break; }
+            if (occupant && occupant.player !== piece.player) {
+              captures.push(occupant.id);
+            }
+            moves.push(moveObject(piece, r, c, captures.slice(), { distance: distance }));
+            if (occupant && occupant.type === "cross") { break; }
+          }
+        }
+        return moves;
+      }
+
+      function generatePseudoMovesForPiece(gameState, piece) {
+        if (!piece || !piece.alive) { return []; }
+        if (piece.type === "circle") { return generateCircleMoves(gameState, piece); }
+        if (piece.type === "triangle") { return generateTriangleMoves(gameState, piece); }
+        if (piece.type === "square") { return generateSquareMoves(gameState, piece); }
+        if (piece.type === "cross") { return generateCrossMoves(gameState, piece); }
+        return [];
+      }
+
+      function simulateMove(gameState, move) {
+        var simulated = {
+          pieces: clonePieces(gameState.pieces),
+          currentPlayer: gameState.currentPlayer,
+          halfmoveClock: gameState.halfmoveClock,
+          positionCounts: gameState.positionCounts,
+          gameOver: gameState.gameOver,
+          result: gameState.result,
+          moveNumber: gameState.moveNumber
+        };
+        applyMoveMutable(simulated, move);
+        return simulated;
+      }
+
+      function applyMoveMutable(gameState, move) {
+        var piece = pieceById(gameState, move.pieceId);
+        var i;
+        var captured;
+        if (!piece || !piece.alive) { return; }
+        for (i = 0; i < move.captures.length; i += 1) {
+          captured = pieceById(gameState, move.captures[i]);
+          if (captured) { captured.alive = false; }
+        }
+        piece.r = move.toR;
+        piece.c = move.toC;
+        piece.facing = move.newFacing;
+      }
+
+      function isSquareAttacked(gameState, r, c, byPlayer) {
+        var target = pieceAt(gameState, r, c);
+        var i;
+        var j;
+        var moves;
+        if (!target) { return false; }
+        for (i = 0; i < gameState.pieces.length; i += 1) {
+          if (!gameState.pieces[i].alive || gameState.pieces[i].player !== byPlayer) { continue; }
+          moves = generatePseudoMovesForPiece(gameState, gameState.pieces[i]);
+          for (j = 0; j < moves.length; j += 1) {
+            if (moves[j].captures.indexOf(target.id) !== -1) { return true; }
+          }
+        }
+        return false;
+      }
+
+      function isInCheck(gameState, player) {
+        var cross = crossFor(gameState, player);
+        if (!cross) { return true; }
+        return isSquareAttacked(gameState, cross.r, cross.c, otherPlayer(player));
+      }
+
+      function legalMovesForPiece(gameState, piece) {
+        var pseudo = generatePseudoMovesForPiece(gameState, piece);
+        var legal = [];
+        var i;
+        var next;
+        var ownCross;
+        for (i = 0; i < pseudo.length; i += 1) {
+          next = simulateMove(gameState, pseudo[i]);
+          ownCross = crossFor(next, piece.player);
+          if (ownCross && !isSquareAttacked(next, ownCross.r, ownCross.c, otherPlayer(piece.player))) {
+            legal.push(pseudo[i]);
+          }
+        }
+        return legal;
+      }
+
+      function allLegalMoves(gameState, player) {
+        var result = [];
+        var i;
+        var moves;
+        for (i = 0; i < gameState.pieces.length; i += 1) {
+          if (gameState.pieces[i].alive && gameState.pieces[i].player === player) {
+            moves = legalMovesForPiece(gameState, gameState.pieces[i]);
+            result = result.concat(moves);
+          }
+        }
+        return result;
+      }
+
+      function positionKey(gameState) {
+        var list = gameState.pieces.filter(function (piece) { return piece.alive; }).map(function (piece) {
+          return [piece.player, piece.type, piece.r, piece.c, piece.type === "triangle" ? piece.facing : 0].join(":");
+        });
+        list.sort();
+        return gameState.currentPlayer + "|" + list.join("|");
+      }
+
+      function pieceCount(player) {
+        return state.pieces.filter(function (piece) { return piece.alive && piece.player === player; }).length;
+      }
+
+      function selectedPiece() {
+        return selectedId ? pieceById(state, selectedId) : null;
+      }
+
+      function createCells() {
+        var r;
+        var c;
+        var cell;
+        boardEl.innerHTML = "";
+        cellEls = [];
+        for (r = 0; r < SIZE; r += 1) {
+          cellEls[r] = [];
+          for (c = 0; c < SIZE; c += 1) {
+            cell = document.createElement("button");
+            cell.type = "button";
+            cell.className = "cell" + ((r + c) % 2 ? " alt" : "");
+            cell.setAttribute("role", "gridcell");
+            cell.setAttribute("data-r", String(r));
+            cell.setAttribute("data-c", String(c));
+            cell.addEventListener("click", onCellClick);
+            boardEl.appendChild(cell);
+            cellEls[r][c] = cell;
+          }
+        }
+      }
+
+      function pieceMarkup(piece, inCheck) {
+        var classes = "piece p" + piece.player + " type-" + piece.type;
+        var glyph = piece.type;
+        if (piece.type === "triangle") { classes += " facing-" + piece.facing; }
+        if (piece.id === lastMovePieceId) { classes += " last-moved"; }
+        if (piece.type === "cross" && inCheck) { classes += " cross-in-check"; }
+        return '<span class="' + classes + '"><span class="glyph ' + glyph + '"></span></span>';
+      }
+
+      function moveForDestination(r, c) {
+        var i;
+        for (i = 0; i < selectedMoves.length; i += 1) {
+          if (selectedMoves[i].type !== "triangle" && selectedMoves[i].toR === r && selectedMoves[i].toC === c) {
+            return selectedMoves[i];
+          }
+        }
+        return null;
+      }
+
+      function triangleLandingMoves(r, c) {
+        return selectedMoves.filter(function (move) {
+          return move.type === "triangle" && move.distance > 0 && move.landingR === r && move.landingC === c;
+        });
+      }
+
+      function renderBoard() {
+        var r;
+        var c;
+        var cell;
+        var piece;
+        var label;
+        var currentCheck = isInCheck(state, state.currentPlayer);
+        var selected = selectedPiece();
+        var i;
+        var move;
+        var landingMoves;
+        var threatenedTargets = {};
+
+        if (selected && selected.type === "triangle") {
+          for (i = 0; i < selectedMoves.length; i += 1) {
+            move = selectedMoves[i];
+            if (move.captures.length) { threatenedTargets[move.toR + ":" + move.toC] = true; }
+          }
+        }
+
+        for (r = 0; r < SIZE; r += 1) {
+          for (c = 0; c < SIZE; c += 1) {
+            cell = cellEls[r][c];
+            cell.className = "cell" + ((r + c) % 2 ? " alt" : "");
+            cell.innerHTML = "";
+            piece = pieceAt(state, r, c);
+            label = "Row " + (r + 1) + ", column " + (c + 1);
+            if (piece) {
+              label += ", Player " + piece.player + " " + TYPE_NAMES[piece.type];
+              cell.innerHTML = pieceMarkup(piece, currentCheck && piece.player === state.currentPlayer && piece.type === "cross");
+            } else {
+              label += ", empty";
+            }
+            if (selected && selected.r === r && selected.c === c) { cell.classList.add("selected"); }
+
+            if (selected) {
+              if (selected.type === "triangle") {
+                landingMoves = triangleLandingMoves(r, c);
+                if (landingMoves.length) { cell.classList.add("triangle-target"); }
+                if (threatenedTargets[r + ":" + c]) { cell.classList.add("capture"); }
+              } else {
+                move = moveForDestination(r, c);
+                if (move) { cell.classList.add(move.captures.length ? "capture" : "legal"); }
+              }
+            }
+
+            if (piece && piece.type === "cross" && piece.player === state.currentPlayer && currentCheck) {
+              cell.classList.add("in-check");
+            }
+            cell.setAttribute("aria-label", label);
+          }
+        }
+
+        if (lastCapturedSquares.length) {
+          window.setTimeout(function () {
+            var squares = lastCapturedSquares.slice();
+            lastCapturedSquares = [];
+            squares.forEach(function (square, index) {
+              burstAt(square.r, square.c, square.player, index);
+            });
+          }, 20);
+        }
+      }
+
+      function renderPlayers() {
+        var currentCheck = isInCheck(state, state.currentPlayer);
+        var p1Check = state.currentPlayer === 1 && currentCheck;
+        var p2Check = state.currentPlayer === 2 && currentCheck;
+        player1Card.classList.toggle("active", state.currentPlayer === 1 && !state.gameOver);
+        player2Card.classList.toggle("active", state.currentPlayer === 2 && !state.gameOver);
+        player1Card.classList.toggle("check", p1Check);
+        player2Card.classList.toggle("check", p2Check);
+        player1Chip.textContent = p1Check ? "Check" : (state.currentPlayer === 1 && !state.gameOver ? "Your turn" : "Waiting");
+        player2Chip.textContent = p2Check ? "Check" : (state.currentPlayer === 2 && !state.gameOver ? "Your turn" : "Waiting");
+        player1Detail.textContent = pieceCount(1) + " pieces · " + (p1Check ? "Cross threatened" : "Cross safe");
+        player2Detail.textContent = pieceCount(2) + " pieces · " + (p2Check ? "Cross threatened" : "Cross safe");
+      }
+
+      function renderStatus() {
+        var check = isInCheck(state, state.currentPlayer);
+        statusEl.className = "status p" + state.currentPlayer + (check ? " danger" : "");
+        if (state.gameOver) {
+          statusText.textContent = "Match complete";
+        } else if (check) {
+          statusText.textContent = "Player " + state.currentPlayer + " is in check — escape or stop the threat";
+        } else {
+          statusText.textContent = "Player " + state.currentPlayer + " to move";
+        }
+      }
+
+      function turnLabel(turn) {
+        if (turn === -1) { return "Turn left"; }
+        if (turn === 1) { return "Turn right"; }
+        return "Keep facing";
+      }
+
+      function renderActions() {
+        var piece = selectedPiece();
+        var oldDynamic = actionButtons.querySelectorAll("[data-dynamic='true']");
+        var i;
+        var rotateMoves;
+        var button;
+        for (i = 0; i < oldDynamic.length; i += 1) { oldDynamic[i].remove(); }
+        clearButton.hidden = !piece;
+
+        if (!piece) {
+          actionTitle.textContent = "Select one of your pieces";
+          actionSub.textContent = "No-capture draw: " + state.halfmoveClock + "/" + NO_CAPTURE_LIMIT + " moves";
+          return;
+        }
+
+        actionTitle.textContent = TYPE_NAMES[piece.type] + " selected · " + selectedMoves.length + " legal " + (selectedMoves.length === 1 ? "move" : "moves");
+        if (piece.type !== "triangle") {
+          actionSub.textContent = selectedMoves.length ? "Tap a highlighted square to move." : "This piece has no legal move while your cross stays safe.";
+          return;
+        }
+
+        actionSub.textContent = "Tap a diamond to move, or turn the triangle in place.";
+        rotateMoves = selectedMoves.filter(function (move) { return move.type === "triangle" && move.distance === 0; });
+        rotateMoves.forEach(function (move) {
+          button = document.createElement("button");
+          button.type = "button";
+          button.className = "small-button" + (move.captures.length ? " capture-action" : "");
+          button.setAttribute("data-dynamic", "true");
+          button.textContent = move.turn === -1 ? "↶" : "↷";
+          button.setAttribute("aria-label", turnLabel(move.turn) + (move.captures.length ? " and capture" : ""));
+          button.title = turnLabel(move.turn) + (move.captures.length ? " · capture" : "");
+          button.addEventListener("click", function () { commitMove(move); });
+          actionButtons.insertBefore(button, clearButton);
+        });
+      }
+
+      function render() {
+        renderBoard();
+        renderPlayers();
+        renderStatus();
+        renderActions();
+        soundButton.textContent = soundOn ? "♪" : "×";
+        soundButton.setAttribute("aria-label", soundOn ? "Turn sound off" : "Turn sound on");
+      }
+
+      function selectPiece(piece) {
+        if (!piece || !piece.alive || piece.player !== state.currentPlayer || state.gameOver) { return; }
+        selectedId = piece.id;
+        selectedMoves = legalMovesForPiece(state, piece);
+        playTone(420, 0.035, "sine", 0.035);
+        render();
+      }
+
+      function clearSelection() {
+        selectedId = null;
+        selectedMoves = [];
+        render();
+      }
+
+      function onCellClick(event) {
+        var r = Number(event.currentTarget.getAttribute("data-r"));
+        var c = Number(event.currentTarget.getAttribute("data-c"));
+        var piece = pieceAt(state, r, c);
+        var selected = selectedPiece();
+        var move;
+        var landingMoves;
+        ensureAudio();
+        if (state.gameOver || directionOverlay.classList.contains("open")) { return; }
+
+        if (selected) {
+          if (selected.type === "triangle") {
+            landingMoves = triangleLandingMoves(r, c);
+            if (landingMoves.length) {
+              openDirectionPicker(landingMoves);
+              return;
+            }
+          } else {
+            move = moveForDestination(r, c);
+            if (move) {
+              commitMove(move);
+              return;
+            }
+          }
+        }
+
+        if (piece && piece.player === state.currentPlayer) {
+          selectPiece(piece);
+        } else {
+          selectedId = null;
+          selectedMoves = [];
+          render();
+        }
+      }
+
+      function openDirectionPicker(moves) {
+        var order = [-1, 0, 1];
+        directionGrid.innerHTML = "";
+        order.forEach(function (turn) {
+          var move = null;
+          var i;
+          var button;
+          var arrow;
+          var detail;
+          for (i = 0; i < moves.length; i += 1) {
+            if (moves[i].turn === turn) { move = moves[i]; break; }
+          }
+          if (!move) { return; }
+          button = document.createElement("button");
+          button.type = "button";
+          button.className = "sheet-button" + (move.captures.length ? " capture-action" : "");
+          arrow = turn === -1 ? "↶" : (turn === 1 ? "↷" : "↑");
+          detail = move.captures.length ? "Capture" : "No capture";
+          button.innerHTML = '<span class="arrow">' + arrow + '</span><strong>' + turnLabel(turn) + '</strong><span>' + detail + '</span>';
+          button.addEventListener("click", function () {
+            directionOverlay.classList.remove("open");
+            commitMove(move);
+          });
+          directionGrid.appendChild(button);
+        });
+        directionOverlay.classList.add("open");
+      }
+
+      function closeDirectionPicker() { directionOverlay.classList.remove("open"); }
+
+      function captureSquaresForMove(move) {
+        return move.captures.map(function (id) {
+          var captured = pieceById(state, id);
+          return captured ? { r: captured.r, c: captured.c, player: captured.player } : null;
+        }).filter(function (value) { return Boolean(value); });
+      }
+
+      function commitMove(move) {
+        var mover = state.currentPlayer;
+        var captureSquares = captureSquaresForMove(move);
+        var capturedCross = false;
+        var i;
+        var capturedPiece;
+        var key;
+        var nextMoves;
+        var nextCheck;
+
+        if (state.gameOver) { return; }
+        for (i = 0; i < move.captures.length; i += 1) {
+          capturedPiece = pieceById(state, move.captures[i]);
+          if (capturedPiece && capturedPiece.type === "cross") { capturedCross = true; }
+        }
+
+        applyMoveMutable(state, move);
+        state.moveNumber += 1;
+        state.halfmoveClock = move.captures.length ? 0 : state.halfmoveClock + 1;
+        lastMovePieceId = move.pieceId;
+        lastCapturedSquares = captureSquares;
+        selectedId = null;
+        selectedMoves = [];
+        closeDirectionPicker();
+
+        if (move.captures.length) {
+          playCaptureSound(move.captures.length);
+          if (navigator.vibrate) { navigator.vibrate(28); }
+        } else {
+          playTone(300, 0.05, "triangle", 0.035);
+        }
+
+        if (capturedCross) {
+          finishGame("win", mover, "The opposing cross was captured.");
+          render();
+          return;
+        }
+
+        state.currentPlayer = otherPlayer(mover);
+        key = positionKey(state);
+        state.positionCounts[key] = (state.positionCounts[key] || 0) + 1;
+        nextCheck = isInCheck(state, state.currentPlayer);
+        nextMoves = allLegalMoves(state, state.currentPlayer);
+
+        if (nextMoves.length === 0) {
+          if (nextCheck) {
+            finishGame("win", mover, "Checkmate — the opposing cross has no legal escape.");
+          } else {
+            finishGame("draw", 0, "Stalemate — the player to move has no legal move.");
+          }
+        } else if (state.positionCounts[key] >= 3) {
+          finishGame("draw", 0, "The same full position occurred three times.");
+        } else if (state.halfmoveClock >= NO_CAPTURE_LIMIT) {
+          finishGame("draw", 0, "Thirty turns each passed without a capture.");
+        } else if (nextCheck) {
+          showToast("Check! Player " + state.currentPlayer + " must protect the cross.");
+          playTone(165, 0.12, "sawtooth", 0.06);
+        }
+
+        render();
+      }
+
+      function finishGame(type, winner, reason) {
+        state.gameOver = true;
+        state.result = { type: type, winner: winner, reason: reason };
+        if (type === "win") {
+          endKicker.textContent = "Match complete";
+          endTitle.textContent = "Player " + winner + " wins!";
+          endReason.textContent = reason;
+          endEmblem.textContent = "×";
+          endEmblem.style.background = winner === 1 ? "linear-gradient(145deg, var(--p1-soft), var(--p1))" : "linear-gradient(145deg, var(--p2-soft), var(--p2))";
+          playWinSound();
+        } else {
+          endKicker.textContent = "Draw";
+          endTitle.textContent = "The siege holds.";
+          endReason.textContent = reason;
+          endEmblem.textContent = "=";
+          endEmblem.style.background = "linear-gradient(145deg, #fff2ae, var(--gold))";
+          playTone(240, 0.18, "sine", 0.05);
+        }
+        window.setTimeout(function () { endOverlay.classList.add("open"); }, 420);
+      }
+
+      function newGame(showIntro) {
+        state = createInitialState();
+        selectedId = null;
+        selectedMoves = [];
+        lastMovePieceId = null;
+        lastCapturedSquares = [];
+        endOverlay.classList.remove("open");
+        directionOverlay.classList.remove("open");
+        state.positionCounts[positionKey(state)] = 1;
+        render();
+        showToast("Player " + state.currentPlayer + " moves first");
+        if (showIntro) { helpOverlay.classList.add("open"); }
+      }
+
+      function showToast(message) {
+        window.clearTimeout(toastTimer);
+        toastEl.textContent = message;
+        toastEl.classList.add("show");
+        toastTimer = window.setTimeout(function () { toastEl.classList.remove("show"); }, 1900);
+      }
+
+      function burstAt(r, c, player, delayIndex) {
+        var cell = cellEls[r] && cellEls[r][c];
+        var rect;
+        var boardRect;
+        var i;
+        var particle;
+        var angle;
+        var distance;
+        if (!cell) { return; }
+        rect = cell.getBoundingClientRect();
+        boardRect = boardEl.getBoundingClientRect();
+        for (i = 0; i < 7; i += 1) {
+          particle = document.createElement("span");
+          particle.className = "burst";
+          angle = (Math.PI * 2 * i / 7) + delayIndex * 0.19;
+          distance = 18 + (i % 3) * 7;
+          particle.style.left = (rect.left - boardRect.left + rect.width / 2 - 3) + "px";
+          particle.style.top = (rect.top - boardRect.top + rect.height / 2 - 3) + "px";
+          particle.style.setProperty("--dx", Math.cos(angle) * distance + "px");
+          particle.style.setProperty("--dy", Math.sin(angle) * distance + "px");
+          particle.style.setProperty("--burst-color", player === 1 ? "var(--p1)" : "var(--p2)");
+          boardEl.appendChild(particle);
+          window.setTimeout((function (node) { return function () { if (node.parentNode) { node.parentNode.removeChild(node); } }; }(particle)), 600);
+        }
+      }
+
+      function ensureAudio() {
+        if (!soundOn || audioContext) { return; }
+        try {
+          audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (error) {
+          audioContext = null;
+        }
+      }
+
+      function playTone(frequency, duration, type, volume, delay) {
+        var oscillator;
+        var gain;
+        var start;
+        if (!soundOn) { return; }
+        ensureAudio();
+        if (!audioContext) { return; }
+        try {
+          if (audioContext.state === "suspended") { audioContext.resume(); }
+          oscillator = audioContext.createOscillator();
+          gain = audioContext.createGain();
+          start = audioContext.currentTime + (delay || 0);
+          oscillator.type = type || "sine";
+          oscillator.frequency.setValueAtTime(frequency, start);
+          gain.gain.setValueAtTime(0.0001, start);
+          gain.gain.exponentialRampToValueAtTime(volume || 0.04, start + 0.008);
+          gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+          oscillator.connect(gain);
+          gain.connect(audioContext.destination);
+          oscillator.start(start);
+          oscillator.stop(start + duration + 0.02);
+        } catch (error) { return; }
+      }
+
+      function playCaptureSound(count) {
+        playTone(220, 0.07, "square", 0.045, 0);
+        playTone(340, 0.08, "triangle", 0.04, 0.055);
+        if (count > 1) { playTone(510, 0.1, "triangle", 0.04, 0.11); }
+      }
+
+      function playWinSound() {
+        playTone(330, 0.13, "sine", 0.05, 0);
+        playTone(440, 0.13, "sine", 0.05, 0.12);
+        playTone(660, 0.24, "sine", 0.055, 0.24);
+      }
+
+      function toggleSound() {
+        soundOn = !soundOn;
+        safeSet("shape-siege-sound", soundOn ? "on" : "off");
+        if (soundOn) { ensureAudio(); playTone(440, 0.06, "sine", 0.04); }
+        render();
+      }
+
+      clearButton.addEventListener("click", clearSelection);
+      newMatchButton.addEventListener("click", function () { newGame(false); });
+      resetButton.addEventListener("click", function () { newGame(false); });
+      playAgainButton.addEventListener("click", function () { newGame(false); });
+      helpButton.addEventListener("click", function () { helpOverlay.classList.add("open"); });
+      closeHelpButton.addEventListener("click", function () {
+        helpOverlay.classList.remove("open");
+        safeSet("shape-siege-seen-rules", "yes");
+        ensureAudio();
+      });
+      cancelDirectionButton.addEventListener("click", closeDirectionPicker);
+      soundButton.addEventListener("click", toggleSound);
+      helpOverlay.addEventListener("click", function (event) { if (event.target === helpOverlay) { helpOverlay.classList.remove("open"); } });
+      directionOverlay.addEventListener("click", function (event) { if (event.target === directionOverlay) { closeDirectionPicker(); } });
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          if (directionOverlay.classList.contains("open")) { closeDirectionPicker(); }
+          else if (helpOverlay.classList.contains("open")) { helpOverlay.classList.remove("open"); }
+          else if (selectedId) { clearSelection(); }
+        }
+      });
+
+      createCells();
+      newGame(safeGet("shape-siege-seen-rules") !== "yes");
+    }());
+  </script>
+</body>
+</html>
