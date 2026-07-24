@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#071426">
-  <title>Word Territory · Gidi's Game Room</title>
+  <meta name="theme-color" content="#07091a">
+  <title>Word Territory</title>
   <link rel="stylesheet" href="../shared/gidi-word-theme.css">
   <style>
     .score.red { background:linear-gradient(150deg,rgba(100,29,49,.94),rgba(45,17,35,.94)); }
@@ -15,10 +15,10 @@
       width:100%;
       display:grid;
       grid-template-columns:repeat(var(--n),minmax(0,1fr));
-      gap:clamp(3px,1vw,7px);
-      padding:clamp(5px,1.4vw,9px);
+      gap:clamp(2px,.75vw,5px);
+      padding:clamp(3px,1vw,6px);
       border:1px solid var(--line);
-      border-radius:20px;
+      border-radius:18px;
       background:rgba(5,9,29,.76);
       touch-action:none;
       user-select:none;
@@ -32,40 +32,37 @@
       place-items:center;
       padding:0;
       border:1px solid rgba(152,185,255,.24);
-      border-radius:clamp(7px,2vw,13px);
+      border-radius:clamp(6px,1.6vw,11px);
       color:#f7f9ff;
       background:linear-gradient(155deg,#283b7a,#121a44);
-      font-size:clamp(13px,5.7vw,32px);
-      font-weight:950;
+      font-weight:1000;
+      line-height:1;
+      text-shadow:0 2px 2px rgba(0,0,0,.35);
       box-shadow:inset 0 -3px 0 rgba(0,0,0,.2);
     }
+    .board[data-size="4"] .tile { font-size:clamp(30px,11vw,49px); }
+    .board[data-size="5"] .tile { font-size:clamp(25px,9vw,42px); }
+    .board[data-size="6"] .tile { font-size:clamp(21px,7.5vw,36px); }
+    .board[data-size="7"] .tile { font-size:clamp(18px,6.2vw,31px); }
+    .board[data-size="8"] .tile { font-size:clamp(16px,5.4vw,27px); }
     .tile.p1 { border-color:#ff7b8d; background:linear-gradient(155deg,#df435f,#8f2944); }
     .tile.p2 { border-color:#85ffb5; background:linear-gradient(155deg,#35c47a,#17724d); }
     .tile.blocked { opacity:.48; filter:saturate(.6); }
     .tile.selected { outline:3px solid #fff; outline-offset:-4px; transform:scale(.94); z-index:2; }
     .tile.new::after { content:"+1"; position:absolute; right:3px; top:2px; color:#fff4a2; font-size:clamp(7px,2.2vw,11px); font-weight:950; }
-    .path-word { min-height:50px; display:flex; align-items:center; justify-content:center; gap:3px; color:white; font-size:clamp(25px,9vw,48px); font-weight:950; letter-spacing:.06em; text-transform:uppercase; }
-    .controls { display:grid; grid-template-columns:1fr 1fr 1.25fr; gap:7px; }
+    .path-word { min-height:46px; display:flex; align-items:center; justify-content:center; gap:3px; color:white; font-size:clamp(24px,8vw,43px); font-weight:950; letter-spacing:.05em; text-transform:uppercase; }
     .size-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:7px; }
     .size-grid .choice { min-height:62px; padding:8px; text-align:center; }
     .legend { display:flex; justify-content:center; gap:10px; flex-wrap:wrap; }
     .dot { width:10px; height:10px; display:inline-block; border-radius:50%; }
-    @media (max-width:380px){ .panel { padding:8px; } .board { border-radius:16px; } .controls .btn { min-height:43px; padding:8px 5px; font-size:13px; } }
+    @media (max-width:380px){ .panel { padding:8px; } .board { border-radius:15px; } }
   </style>
-
-  <!-- GIDI-SUITE:START -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="format-detection" content="telephone=no">
-  <link rel="stylesheet" href="../shared/gidi-suite.css?v=3.0.1">
-  <script defer src="../shared/gidi-suite.js?v=3.0.1"></script>
-  <!-- GIDI-SUITE:END -->
 </head>
 <body>
 <div class="app stack">
   <header class="topbar">
     <a class="back" href="../../" aria-label="Back to game room">←</a>
-    <div class="top-title"><strong>Word Territory</strong><small>revision 1.0.0</small></div>
+    <div class="top-title"><strong>Word Territory</strong><small>revision 1.0.1</small></div>
     <button class="icon-button" id="rulesBtn" type="button">?</button>
   </header>
 
@@ -79,12 +76,6 @@
     <div class="legend"><span class="pill" id="turnPill"><i class="dot" style="background:var(--red)"></i>Waiting</span><span class="pill" id="skipPill">0 consecutive passes</span><span class="pill" id="boardPill">4×4</span></div>
     <div class="path-word" id="pathWord">—</div>
     <div class="board-wrap"><div class="board" id="board" aria-label="Word territory letter board"></div></div>
-    <div class="controls">
-      <button class="btn secondary" id="undoBtn" type="button">Undo</button>
-      <button class="btn secondary" id="clearBtn" type="button">Clear</button>
-      <button class="btn good" id="submitBtn" type="button">Claim word</button>
-    </div>
-    <button class="btn danger" id="passBtn" type="button">Pass turn</button>
     <div class="status" id="status" aria-live="polite">Choose a board size to begin.</div>
   </section>
 </div>
@@ -97,8 +88,8 @@
       <li><b>1</b><span>Select letters that touch horizontally or vertically. Diagonal moves and reused tiles are not allowed.</span></li>
       <li><b>2</b><span>Words must contain at least 3 letters and appear in the built-in dictionary.</span></li>
       <li><b>3</b><span>Neutral tiles in a legal word become your colour. You may reuse your own tiles, but your opponent can never use them.</span></li>
-      <li><b>4</b><span>Each owned tile is worth 1 point. Every turn lasts 10 seconds.</span></li>
-      <li><b>5</b><span>Two consecutive passes or timeouts—one turn after another—end the game. The most territory wins.</span></li>
+      <li><b>4</b><span>Build your word before the 10-second timer reaches zero. A legal word is claimed automatically when time expires—there is no submit button.</span></li>
+      <li><b>5</b><span>Tap any selected letter to rewind the path from that letter. Two consecutive turns without a claim end the game. The most territory wins.</span></li>
     </ul>
     <span class="label">Board size</span>
     <div class="size-grid">
@@ -143,9 +134,9 @@
     }
     for(var i=0;i<arr.length&&found.size<limit;i++)walk(i,trie,''); return found.size;
   }
-  function generate(){ var best=null,bestCount=-1,target=Math.max(12,size*4); for(var i=0;i<18;i++){var a=weightedBoard(),n=countWords(a,target);if(n>bestCount){best=a;bestCount=n;}if(n>=target)break;} letters=best;owners=new Array(size*size).fill(0);scores=[0,0];passes=0;path=[];current=Math.random()<.5?1:2;running=true;renderBoard();startTurn();C.setStatus(status,'Player '+current+' starts. Drag or tap through a word.'); }
+  function generate(){ var best=null,bestCount=-1,target=Math.max(12,size*4); for(var i=0;i<18;i++){var a=weightedBoard(),n=countWords(a,target);if(n>bestCount){best=a;bestCount=n;}if(n>=target)break;} letters=best;owners=new Array(size*size).fill(0);scores=[0,0];passes=0;path=[];current=Math.random()<.5?1:2;running=true;renderBoard();startTurn();C.setStatus(status,'Player '+current+' starts. Build a word before time runs out.'); }
   function renderBoard(){
-    board.style.setProperty('--n',size);board.innerHTML='';
+    board.style.setProperty('--n',size);board.dataset.size=String(size);board.innerHTML='';
     letters.forEach(function(ch,i){var b=document.createElement('button');b.type='button';b.className='tile';b.dataset.index=i;b.textContent=ch;b.setAttribute('aria-label','Letter '+ch);board.appendChild(b);});render();
   }
   function render(){
@@ -157,19 +148,45 @@
     Array.prototype.forEach.call(board.children,function(tile,i){tile.classList.toggle('p1',owners[i]===1);tile.classList.toggle('p2',owners[i]===2);tile.classList.toggle('blocked',owners[i]!==0&&owners[i]!==current);tile.classList.toggle('selected',path.indexOf(i)!==-1);tile.classList.toggle('new',path.indexOf(i)!==-1&&owners[i]===0);});
   }
   function adjacent(a,b){var ar=Math.floor(a/size),ac=a%size,br=Math.floor(b/size),bc=b%size;return Math.abs(ar-br)+Math.abs(ac-bc)===1;}
-  function addIndex(i){if(!running||i<0||path.indexOf(i)!==-1||owners[i]!==0&&owners[i]!==current)return false;if(path.length&& !adjacent(path[path.length-1],i))return false;path.push(i);render();return true;}
+  function addIndex(i,allowRewind){
+    if(!running||i<0)return false;
+    var selectedAt=path.indexOf(i);
+    if(selectedAt!==-1){
+      if(allowRewind){path=path.slice(0,selectedAt);render();return true;}
+      return false;
+    }
+    if(owners[i]!==0&&owners[i]!==current)return false;
+    if(path.length&&!adjacent(path[path.length-1],i))return false;
+    path.push(i);render();return true;
+  }
   function indexFromEvent(e){var el=document.elementFromPoint(e.clientX,e.clientY);if(!el)return -1;var tile=el.closest&&el.closest('.tile');return tile&&board.contains(tile)?Number(tile.dataset.index):-1;}
   function clearPath(){path=[];render();}
-  function startTurn(){clearInterval(ticker);time=10;path=[];render();ticker=setInterval(function(){if(!running)return;time--;render();if(time<=0){clearInterval(ticker);passTurn(true);}},1000);}
-  function nextTurn(){current=current===1?2:1;running=true;startTurn();C.setStatus(status,'Player '+current+' turn.');}
-  function submit(){if(!running)return;var word=path.map(function(i){return letters[i].toLowerCase();}).join('');if(word.length<3){C.setStatus(status,'Use at least 3 connected letters.','bad');return;}if(!C.isWord(word,3)){C.setStatus(status,word.toUpperCase()+' is not in the dictionary. Try again.','bad');return;}var fresh=path.filter(function(i){return owners[i]===0;});if(!fresh.length){C.setStatus(status,'Your word must claim at least one neutral tile.','bad');return;}fresh.forEach(function(i){owners[i]=current;});passes=0;running=false;clearInterval(ticker);C.setStatus(status,'Player '+current+' claims '+fresh.length+' new '+(fresh.length===1?'tile':'tiles')+' with '+word.toUpperCase()+'!','good');C.vibrate(30);C.confetti(document.body,Math.min(18,8+fresh.length));render();if(owners.every(function(x){return x!==0;})){endGame();return;}setTimeout(nextTurn,650);}
-  function passTurn(timed){if(!running)return;running=false;clearInterval(ticker);passes++;path=[];C.setStatus(status,(timed?'Time expired. ':'')+'Player '+current+' passes.','bad');C.vibrate(45);render();if(passes>=2){setTimeout(endGame,550);return;}setTimeout(nextTurn,550);}
+  function startTurn(){clearInterval(ticker);time=10;path=[];render();ticker=setInterval(function(){if(!running)return;time--;render();if(time<=0){clearInterval(ticker);resolveTurn();}},1000);}
+  function nextTurn(){current=current===1?2:1;running=true;startTurn();C.setStatus(status,'Player '+current+' turn. Build a word before time runs out.');}
+  function resolveTurn(){
+    if(!running)return;
+    running=false;clearInterval(ticker);
+    var word=path.map(function(i){return letters[i].toLowerCase();}).join('');
+    var fresh=path.filter(function(i){return owners[i]===0;});
+    if(word.length>=3&&C.isWord(word,3)&&fresh.length){
+      fresh.forEach(function(i){owners[i]=current;});
+      passes=0;
+      C.setStatus(status,'Player '+current+' claims '+fresh.length+' new '+(fresh.length===1?'tile':'tiles')+' with '+word.toUpperCase()+'!','good');
+      C.vibrate(30);C.confetti(document.body,Math.min(18,8+fresh.length));render();
+      if(owners.every(function(x){return x!==0;})){endGame();return;}
+      setTimeout(nextTurn,650);return;
+    }
+    passes++;path=[];
+    var reason=!word?'No word selected.':word.length<3?'Words need at least 3 letters.':!C.isWord(word,3)?word.toUpperCase()+' is not in the dictionary.':'A word must include at least one neutral tile.';
+    C.setStatus(status,reason+' Turn lost.','bad');C.vibrate(45);render();
+    if(passes>=2){setTimeout(endGame,550);return;}
+    setTimeout(nextTurn,550);
+  }
   function endGame(){running=false;clearInterval(ticker);path=[];render();var msg=scores[0]===scores[1]?'Tie game at '+scores[0]+' tiles each!':('Player '+(scores[0]>scores[1]?1:2)+' wins '+Math.max(scores[0],scores[1])+'–'+Math.min(scores[0],scores[1])+'!');C.setStatus(status,msg,'good');C.confetti(document.body,32);}
 
-  board.addEventListener('pointerdown',function(e){dragging=true;addIndex(indexFromEvent(e));e.preventDefault();});
-  board.addEventListener('pointermove',function(e){if(dragging)addIndex(indexFromEvent(e));e.preventDefault();});
+  board.addEventListener('pointerdown',function(e){dragging=true;addIndex(indexFromEvent(e),true);e.preventDefault();});
+  board.addEventListener('pointermove',function(e){if(dragging)addIndex(indexFromEvent(e),false);e.preventDefault();});
   window.addEventListener('pointerup',function(){dragging=false;});
-  document.getElementById('undoBtn').addEventListener('click',function(){path.pop();render();});document.getElementById('clearBtn').addEventListener('click',clearPath);document.getElementById('submitBtn').addEventListener('click',submit);document.getElementById('passBtn').addEventListener('click',function(){passTurn(false);});
   document.querySelectorAll('[data-size]').forEach(function(b){b.addEventListener('click',function(){document.querySelectorAll('[data-size]').forEach(function(x){x.classList.remove('selected');});b.classList.add('selected');size=Number(b.dataset.size);});});
   document.getElementById('startBtn').addEventListener('click',function(){document.getElementById('intro').hidden=true;generate();});document.getElementById('rulesBtn').addEventListener('click',function(){running=false;clearInterval(ticker);document.getElementById('intro').hidden=false;});
   render();
