@@ -384,6 +384,25 @@
     .selected .piece { transform: translateY(-2px) scale(1.06); filter: brightness(1.17); }
     .piece.last-moved { animation: arrive 340ms cubic-bezier(.2,.8,.25,1.25); }
     .piece.cross-in-check { animation: crossDanger 560ms ease-in-out infinite alternate; }
+    .piece.upgraded-circle::after {
+      content: "\2194";
+      position: absolute;
+      right: -10%;
+      top: -12%;
+      min-width: 41%;
+      height: 41%;
+      padding: 0 1px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      color: #f8fbff;
+      font-size: clamp(7px, 2.4vw, 11px);
+      font-weight: 950;
+      line-height: 1;
+      background: linear-gradient(145deg, rgba(245,248,255,0.34), rgba(var(--piece-rgb),0.72));
+      border: 1px solid rgba(255,255,255,0.62);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.38), 0 0 8px rgba(var(--piece-rgb),0.46);
+    }
 
     .glyph { width: 59%; height: 59%; display: block; position: relative; color: currentColor; }
     .glyph.circle { border: max(3px, 0.11em) solid currentColor; border-radius: 50%; box-shadow: inset 0 0 0 2px rgba(255,255,255,0.1); }
@@ -743,7 +762,7 @@
       <a class="icon-button" href="../../" aria-label="Back to games">←</a>
       <div class="title-block">
         <p class="eyebrow">Two-player strategy</p>
-        <h1>Shape Siege <span class="version">v1.0.4</span></h1>
+        <h1>Shape Siege <span class="version">v1.0.6</span></h1>
       </div>
       <div class="top-actions">
         <button class="icon-button" id="soundButton" type="button" aria-label="Turn sound off" title="Sound">♪</button>
@@ -799,15 +818,15 @@
       <div class="rules-grid">
         <article class="rule-card">
           <div class="rule-head"><span class="rule-icon">○</span><strong>Circle</strong></div>
-          <p>Move 1 or 2 squares straight forward or backward. Capture exactly 1 square diagonally forward. Circles never jump.</p>
+          <p>Move 1 or 2 squares straight forward or backward. Capture exactly 1 square diagonally forward. After reaching the far edge, a circle is permanently upgraded and may also move 1 or 2 empty squares sideways. Circles never jump.</p>
         </article>
         <article class="rule-card">
           <div class="rule-head"><span class="rule-icon">△</span><strong>Triangle</strong></div>
-          <p>Before moving, it may keep facing or turn 90° left or right, then move 1 or 2 squares in that direction. After moving, use the small on-board control to keep facing or turn 90° left or right again. It may also turn in place. An adjacent enemy in its final direction is captured automatically.</p>
+          <p>Turn at most once per turn. It may turn 90° left or right before moving and then move 1 or 2 squares in the new direction, or move straight first and optionally turn 90° afterward. It may also turn in place. An adjacent enemy in its final direction is captured automatically.</p>
         </article>
         <article class="rule-card">
           <div class="rule-head"><span class="rule-icon">□</span><strong>Square</strong></div>
-          <p>Move any distance horizontally or vertically. It may jump over one enemy, which survives, then land on an empty square or capture the next enemy. Friendly pieces and a second obstacle block it.</p>
+          <p>Move any distance horizontally or vertically. It may jump over one enemy, which survives, then land on an empty square or capture the next ordinary enemy. A cross can only be checked or captured along a completely clear line; it cannot be threatened by jumping. Friendly pieces and a second obstacle block the square.</p>
         </article>
         <article class="rule-card">
           <div class="rule-head"><span class="rule-icon">×</span><strong>Cross</strong></div>
@@ -924,6 +943,7 @@
             r: piece.r,
             c: piece.c,
             facing: piece.facing,
+            upgraded: Boolean(piece.upgraded),
             alive: piece.alive
           };
         });
@@ -965,6 +985,7 @@
           r: r,
           c: c,
           facing: typeof facing === "number" ? facing : 0,
+          upgraded: false,
           alive: true
         });
         idCounter.value += 1;
@@ -1027,6 +1048,7 @@
         var s;
         var distance;
         var r;
+        var c;
         var occupant;
         var forward = piece.player === 1 ? -1 : 1;
         var dc;
@@ -1038,6 +1060,21 @@
             occupant = pieceAt(gameState, r, piece.c);
             if (occupant) { break; }
             moves.push(moveObject(piece, r, piece.c, [], { distance: distance }));
+          }
+        }
+
+        if (piece.upgraded) {
+          for (s = 0; s < steps.length; s += 1) {
+            for (distance = 1; distance <= 2; distance += 1) {
+              c = piece.c + steps[s] * distance;
+              if (!inBounds(piece.r, c)) { break; }
+              occupant = pieceAt(gameState, piece.r, c);
+              if (occupant) { break; }
+              moves.push(moveObject(piece, piece.r, c, [], {
+                distance: distance,
+                sideways: true
+              }));
+            }
           }
         }
 
@@ -1084,9 +1121,7 @@
 
       function generateTriangleMoves(gameState, piece) {
         var moves = [];
-        var preTurns = [0, -1, 1];
         var postTurns = [0, -1, 1];
-        var preIndex;
         var postIndex;
         var preTurn;
         var travelFacing;
@@ -1098,27 +1133,43 @@
         addTriangleOption(gameState, piece, moves, piece.r, piece.c, 0, 0, -1);
         addTriangleOption(gameState, piece, moves, piece.r, piece.c, 0, 0, 1);
 
-        for (preIndex = 0; preIndex < preTurns.length; preIndex += 1) {
-          preTurn = preTurns[preIndex];
+        travelFacing = piece.facing;
+        dir = DIRS[travelFacing];
+        for (distance = 1; distance <= 2; distance += 1) {
+          r = piece.r + dir.dr * distance;
+          c = piece.c + dir.dc * distance;
+          if (!inBounds(r, c) || pieceAt(gameState, r, c)) { break; }
+          for (postIndex = 0; postIndex < postTurns.length; postIndex += 1) {
+            addTriangleOption(
+              gameState,
+              piece,
+              moves,
+              r,
+              c,
+              distance,
+              0,
+              postTurns[postIndex]
+            );
+          }
+        }
+
+        for (preTurn = -1; preTurn <= 1; preTurn += 2) {
           travelFacing = mod4(piece.facing + preTurn);
           dir = DIRS[travelFacing];
-
           for (distance = 1; distance <= 2; distance += 1) {
             r = piece.r + dir.dr * distance;
             c = piece.c + dir.dc * distance;
             if (!inBounds(r, c) || pieceAt(gameState, r, c)) { break; }
-            for (postIndex = 0; postIndex < postTurns.length; postIndex += 1) {
-              addTriangleOption(
-                gameState,
-                piece,
-                moves,
-                r,
-                c,
-                distance,
-                preTurn,
-                postTurns[postIndex]
-              );
-            }
+            addTriangleOption(
+              gameState,
+              piece,
+              moves,
+              r,
+              c,
+              distance,
+              preTurn,
+              0
+            );
           }
         }
         return moves;
@@ -1148,6 +1199,11 @@
             }
 
             if (occupant.player === piece.player) { break; }
+
+            // A cross may only be checked or captured along a completely clear line.
+            // Once this square has jumped an enemy, the cross blocks the route and
+            // is not a legal capture target.
+            if (occupant.type === "cross" && jumped) { break; }
 
             moves.push(moveObject(piece, r, c, [occupant.id], { distance: distance, jumped: jumped }));
 
@@ -1223,6 +1279,13 @@
         piece.r = move.toR;
         piece.c = move.toC;
         piece.facing = move.newFacing;
+        if (
+          piece.type === "circle" &&
+          !piece.upgraded &&
+          ((piece.player === 1 && piece.r === 0) || (piece.player === 2 && piece.r === SIZE - 1))
+        ) {
+          piece.upgraded = true;
+        }
       }
 
       function isSquareAttacked(gameState, r, c, byPlayer) {
@@ -1278,7 +1341,14 @@
 
       function positionKey(gameState) {
         var list = gameState.pieces.filter(function (piece) { return piece.alive; }).map(function (piece) {
-          return [piece.player, piece.type, piece.r, piece.c, piece.type === "triangle" ? piece.facing : 0].join(":");
+          return [
+            piece.player,
+            piece.type,
+            piece.r,
+            piece.c,
+            piece.type === "triangle" ? piece.facing : 0,
+            piece.type === "circle" && piece.upgraded ? 1 : 0
+          ].join(":");
         });
         list.sort();
         return gameState.currentPlayer + "|" + list.join("|");
@@ -1318,6 +1388,7 @@
         var classes = "piece p" + piece.player + " type-" + piece.type;
         var glyph = piece.type;
         if (piece.type === "triangle") { classes += " facing-" + piece.facing; }
+        if (piece.type === "circle" && piece.upgraded) { classes += " upgraded-circle"; }
         if (piece.id === lastMovePieceId) { classes += " last-moved"; }
         if (piece.type === "cross" && inCheck) { classes += " cross-in-check"; }
         return '<span class="' + classes + '"><span class="glyph ' + glyph + '"></span></span>';
@@ -1368,6 +1439,7 @@
             label = "Row " + (r + 1) + ", column " + (c + 1);
             if (piece) {
               label += ", Player " + piece.player + " " + TYPE_NAMES[piece.type];
+              if (piece.type === "circle" && piece.upgraded) { label += ", upgraded for sideways movement"; }
               cell.innerHTML = pieceMarkup(piece, currentCheck && piece.player === state.currentPlayer && piece.type === "cross");
             } else {
               label += ", empty";
@@ -1450,11 +1522,15 @@
 
         actionTitle.textContent = TYPE_NAMES[piece.type] + " selected · " + selectedMoves.length + " legal " + (selectedMoves.length === 1 ? "move" : "moves");
         if (piece.type !== "triangle") {
-          actionSub.textContent = selectedMoves.length ? "Tap a highlighted square to move." : "This piece has no legal move while your cross stays safe.";
+          if (piece.type === "circle" && piece.upgraded && selectedMoves.length) {
+            actionSub.textContent = "Upgraded circle: move forward, backward, or sideways. Captures remain diagonally forward.";
+          } else {
+            actionSub.textContent = selectedMoves.length ? "Tap a highlighted square to move." : "This piece has no legal move while your cross stays safe.";
+          }
           return;
         }
 
-        actionSub.textContent = "Tap a diamond ahead, left, or right to choose the move direction — or tap the triangle again to turn in place.";
+        actionSub.textContent = "Turn once: choose a diamond to turn before moving, or move straight and choose a final turn afterward.";
       }
 
       function render() {
@@ -1504,7 +1580,11 @@
             }
             landingMoves = triangleLandingMoves(r, c);
             if (landingMoves.length) {
-              openDirectionPicker(landingMoves);
+              if (landingMoves.length === 1 && landingMoves[0].preTurn !== 0) {
+                commitMove(landingMoves[0]);
+              } else {
+                openDirectionPicker(landingMoves);
+              }
               return;
             }
           } else {
@@ -1581,11 +1661,7 @@
         cellEls[anchorMove.landingR][anchorMove.landingC].classList.add("direction-anchor");
         directionOverlay.classList.add("open");
         actionTitle.textContent = "Choose the triangle's direction";
-        if (anchorMove.distance > 0 && anchorMove.preTurn !== 0) {
-          actionSub.textContent = "The triangle turned " + (anchorMove.preTurn === -1 ? "left" : "right") + " before moving. Choose its final direction.";
-        } else {
-          actionSub.textContent = "Choose the final direction. The controls face Player " + state.currentPlayer + ".";
-        }
+        actionSub.textContent = "Choose the one final turn. The controls face Player " + state.currentPlayer + ".";
         positionDirectionPicker(anchorMove);
       }
 
