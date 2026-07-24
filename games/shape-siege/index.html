@@ -237,6 +237,7 @@
     .board-shell {
       width: var(--board-size);
       min-width: 296px;
+      aspect-ratio: 1 / 1;
       max-width: 560px;
       padding: clamp(5px, 1.6vw, 9px);
       border: 1px solid rgba(151,174,219,0.18);
@@ -265,7 +266,7 @@
 
     .board {
       width: 100%;
-      aspect-ratio: 1;
+      height: 100%;
       display: grid;
       grid-template-columns: repeat(9, minmax(0,1fr));
       grid-template-rows: repeat(9, minmax(0,1fr));
@@ -359,7 +360,11 @@
 
     .piece {
       width: 82%;
-      height: 82%;
+      height: auto;
+      max-height: 82%;
+      aspect-ratio: 1 / 1;
+      flex: 0 0 auto;
+      box-sizing: border-box;
       border-radius: 30%;
       position: relative;
       z-index: 2;
@@ -384,29 +389,18 @@
     .selected .piece { transform: translateY(-2px) scale(1.06); filter: brightness(1.17); }
     .piece.last-moved { animation: arrive 340ms cubic-bezier(.2,.8,.25,1.25); }
     .piece.cross-in-check { animation: crossDanger 560ms ease-in-out infinite alternate; }
-    .piece.upgraded-circle::after {
-      content: "\2194";
-      position: absolute;
-      right: -10%;
-      top: -12%;
-      min-width: 41%;
-      height: 41%;
-      padding: 0 1px;
-      border-radius: 999px;
-      display: grid;
-      place-items: center;
-      color: #f8fbff;
-      font-size: clamp(7px, 2.4vw, 11px);
-      font-weight: 950;
-      line-height: 1;
-      background: linear-gradient(145deg, rgba(245,248,255,0.34), rgba(var(--piece-rgb),0.72));
-      border: 1px solid rgba(255,255,255,0.62);
-      box-shadow: 0 1px 4px rgba(0,0,0,0.38), 0 0 8px rgba(var(--piece-rgb),0.46);
-    }
-
     .glyph { width: 59%; height: 59%; display: block; position: relative; color: currentColor; }
     .glyph.circle { border: max(3px, 0.11em) solid currentColor; border-radius: 50%; box-shadow: inset 0 0 0 2px rgba(255,255,255,0.1); }
     .glyph.square { border: max(3px, 0.11em) solid currentColor; border-radius: 20%; box-shadow: inset 0 0 0 2px rgba(255,255,255,0.08); }
+    .glyph.diamond {
+      width: 54%;
+      height: 54%;
+      border: max(3px, 0.11em) solid currentColor;
+      border-radius: 16%;
+      transform: rotate(45deg);
+      background: rgba(var(--piece-rgb),0.08);
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,0.09), 0 0 7px rgba(var(--piece-rgb),0.2);
+    }
     .glyph.triangle {
       width: 62%;
       height: 65%;
@@ -513,6 +507,42 @@
     .modal-kicker { color: var(--p2); font-size: 9px; font-weight: 900; letter-spacing: 0.16em; text-transform: uppercase; }
     .modal h2 { margin: 5px 0 7px; font-size: clamp(28px, 8vw, 43px); line-height: 0.98; letter-spacing: -0.055em; }
     .modal-lead { margin: 0 0 14px; color: #b3c0d5; font-size: 12px; line-height: 1.45; }
+
+    .setup-modal { width: min(100%, 470px); text-align: center; }
+    .setup-modal .modal-lead { max-width: 370px; margin-left: auto; margin-right: auto; }
+    .size-options {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin: 17px 0 11px;
+    }
+    .size-option {
+      min-width: 0;
+      min-height: 113px;
+      padding: 11px 6px 9px;
+      border: 1px solid rgba(151,174,219,0.18);
+      border-radius: 17px;
+      display: grid;
+      place-items: center;
+      align-content: center;
+      gap: 4px;
+      color: #eaf2ff;
+      background: linear-gradient(145deg, rgba(35,47,76,0.92), rgba(12,19,35,0.96));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 18px rgba(0,0,0,0.2);
+      cursor: pointer;
+      transition: transform 120ms ease, border-color 120ms ease, filter 120ms ease, box-shadow 120ms ease;
+    }
+    .size-option:active { transform: scale(0.97); filter: brightness(1.12); }
+    .size-option:focus-visible { outline: 2px solid var(--p2); outline-offset: 2px; }
+    .size-option.selected {
+      border-color: rgba(var(--p2-rgb),0.62);
+      box-shadow: inset 0 0 0 1px rgba(var(--p2-rgb),0.12), 0 0 22px rgba(var(--p2-rgb),0.14);
+    }
+    .size-number { font-size: clamp(25px, 8vw, 38px); font-weight: 950; line-height: 0.95; letter-spacing: -0.06em; }
+    .size-name { color: var(--p2-soft); font-size: 10px; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; }
+    .size-detail { color: #8f9db5; font-size: 8px; font-weight: 750; line-height: 1.25; }
+    .size-layout { color: #c4d0e2; font-size: 10px; letter-spacing: 0.08em; }
+    .size-note { margin: 0; color: #8796af; font-size: 9px; line-height: 1.4; }
 
     .rules-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; }
     .rule-card {
@@ -762,7 +792,7 @@
       <a class="icon-button" href="../../" aria-label="Back to games">←</a>
       <div class="title-block">
         <p class="eyebrow">Two-player strategy</p>
-        <h1>Shape Siege <span class="version">v1.0.6</span></h1>
+        <h1>Shape Siege <span class="version">v1.0.7</span></h1>
       </div>
       <div class="top-actions">
         <button class="icon-button" id="soundButton" type="button" aria-label="Turn sound off" title="Sound">♪</button>
@@ -785,8 +815,8 @@
       <span id="statusText">Preparing the board…</span>
     </div>
 
-    <section class="board-shell" aria-label="9 by 9 Shape Siege board">
-      <div class="board" id="board" role="grid" aria-label="Shape Siege board"></div>
+    <section class="board-shell" id="boardShell" aria-label="9 by 9 Shape Siege board">
+      <div class="board" id="board" role="grid" aria-label="9 by 9 Shape Siege board"></div>
     </section>
 
     <section class="player-card p1" id="player1Card" aria-label="Player 1">
@@ -810,15 +840,39 @@
     </section>
   </main>
 
+
+  <div class="overlay open" id="setupOverlay" role="dialog" aria-modal="true" aria-labelledby="setupTitle">
+    <section class="modal setup-modal">
+      <div class="modal-kicker">New match</div>
+      <h2 id="setupTitle">Choose your battlefield.</h2>
+      <p class="modal-lead">The same rules, with a faster close fight or more room to build a plan.</p>
+      <div class="size-options" id="sizeOptions">
+        <button class="size-option" type="button" data-size="7">
+          <span class="size-number">7×7</span>
+          <span class="size-name">Tactical</span>
+          <span class="size-layout" aria-hidden="true">□ △ · × · △ □</span>
+          <span class="size-detail">12 pieces each</span>
+        </button>
+        <button class="size-option" type="button" data-size="9">
+          <span class="size-number">9×9</span>
+          <span class="size-name">Classic</span>
+          <span class="size-layout" aria-hidden="true">□ · △ · × · △ · □</span>
+          <span class="size-detail">14 pieces each</span>
+        </button>
+      </div>
+      <p class="size-note">The starting player is chosen randomly after you select a board.</p>
+    </section>
+  </div>
+
   <div class="overlay" id="helpOverlay" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
     <section class="modal">
       <div class="modal-kicker">How to play</div>
       <h2 id="helpTitle">Protect your cross.<br>Break theirs.</h2>
-      <p class="modal-lead">Shape Siege is a tactical duel on a 9×9 board. Each side starts with nine circles in front of five stronger pieces, with empty gaps between them. Player 2 begins at the top; Player 1 begins at the bottom. The starting player is chosen at random.</p>
+      <p class="modal-lead">Shape Siege is a tactical duel on a 7×7 or 9×9 board. Each side starts with a full row of circles in front of five stronger pieces. Larger boards add empty gaps between the strong pieces. Player 2 begins at the top; Player 1 begins at the bottom.</p>
       <div class="rules-grid">
         <article class="rule-card">
           <div class="rule-head"><span class="rule-icon">○</span><strong>Circle</strong></div>
-          <p>Move 1 or 2 squares straight forward or backward. Capture exactly 1 square diagonally forward. After reaching the far edge, a circle is permanently upgraded and may also move 1 or 2 empty squares sideways. Circles never jump.</p>
+          <p>Move 1 or 2 squares straight forward or backward and capture exactly 1 square diagonally forward. At the far edge, the circle becomes a diamond. A diamond may also move 1 or 2 empty squares sideways, but still captures only diagonally forward. Neither piece can jump.</p>
         </article>
         <article class="rule-card">
           <div class="rule-head"><span class="rule-icon">△</span><strong>Triangle</strong></div>
@@ -867,6 +921,7 @@
 
       var SIZE = 9;
       var NO_CAPTURE_LIMIT = 60;
+      var VALID_SIZES = [7, 9];
       var DIRS = [
         { dr: -1, dc: 0, name: "up" },
         { dr: 0, dc: 1, name: "right" },
@@ -877,10 +932,14 @@
         { dr: -1, dc: 0 }, { dr: 1, dc: 0 }, { dr: 0, dc: -1 }, { dr: 0, dc: 1 },
         { dr: -1, dc: -1 }, { dr: -1, dc: 1 }, { dr: 1, dc: -1 }, { dr: 1, dc: 1 }
       ];
-      var TYPE_NAMES = { circle: "Circle", square: "Square", triangle: "Triangle", cross: "Cross" };
-      var BACK_ROW = ["square", null, "triangle", null, "cross", null, "triangle", null, "square"];
+      var TYPE_NAMES = { circle: "Circle", diamond: "Diamond", square: "Square", triangle: "Triangle", cross: "Cross" };
+      var BACK_ROWS = {
+        7: ["square", "triangle", null, "cross", null, "triangle", "square"],
+        9: ["square", null, "triangle", null, "cross", null, "triangle", null, "square"]
+      };
 
       var boardEl = document.getElementById("board");
+      var boardShell = document.getElementById("boardShell");
       var statusEl = document.getElementById("status");
       var statusText = document.getElementById("statusText");
       var player1Card = document.getElementById("player1Card");
@@ -897,6 +956,9 @@
       var resetButton = document.getElementById("resetButton");
       var helpButton = document.getElementById("helpButton");
       var soundButton = document.getElementById("soundButton");
+      var setupOverlay = document.getElementById("setupOverlay");
+      var sizeOptions = document.getElementById("sizeOptions");
+      var sizeButtons = sizeOptions.querySelectorAll("[data-size]");
       var helpOverlay = document.getElementById("helpOverlay");
       var closeHelpButton = document.getElementById("closeHelpButton");
       var directionOverlay = document.getElementById("directionOverlay");
@@ -919,6 +981,8 @@
       var toastTimer = 0;
       var audioContext = null;
       var soundOn = safeGet("shape-siege-sound") !== "off";
+      var pendingIntro = false;
+      var layoutRefreshFrame = 0;
 
       function safeGet(key) {
         try { return window.localStorage.getItem(key) || ""; }
@@ -943,7 +1007,6 @@
             r: piece.r,
             c: piece.c,
             facing: piece.facing,
-            upgraded: Boolean(piece.upgraded),
             alive: piece.alive
           };
         });
@@ -985,7 +1048,6 @@
           r: r,
           c: c,
           facing: typeof facing === "number" ? facing : 0,
-          upgraded: false,
           alive: true
         });
         idCounter.value += 1;
@@ -994,15 +1056,16 @@
       function createInitialState() {
         var pieces = [];
         var idCounter = { value: 1 };
+        var backRow = BACK_ROWS[SIZE];
         var c;
         for (c = 0; c < SIZE; c += 1) {
-          if (BACK_ROW[c]) {
-            addPiece(pieces, BACK_ROW[c], 2, 0, c, BACK_ROW[c] === "triangle" ? 2 : 0, idCounter);
+          if (backRow[c]) {
+            addPiece(pieces, backRow[c], 2, 0, c, backRow[c] === "triangle" ? 2 : 0, idCounter);
           }
           addPiece(pieces, "circle", 2, 1, c, 2, idCounter);
-          addPiece(pieces, "circle", 1, 7, c, 0, idCounter);
-          if (BACK_ROW[c]) {
-            addPiece(pieces, BACK_ROW[c], 1, 8, c, BACK_ROW[c] === "triangle" ? 0 : 0, idCounter);
+          addPiece(pieces, "circle", 1, SIZE - 2, c, 0, idCounter);
+          if (backRow[c]) {
+            addPiece(pieces, backRow[c], 1, SIZE - 1, c, backRow[c] === "triangle" ? 0 : 0, idCounter);
           }
         }
         return {
@@ -1048,7 +1111,6 @@
         var s;
         var distance;
         var r;
-        var c;
         var occupant;
         var forward = piece.player === 1 ? -1 : 1;
         var dc;
@@ -1063,21 +1125,6 @@
           }
         }
 
-        if (piece.upgraded) {
-          for (s = 0; s < steps.length; s += 1) {
-            for (distance = 1; distance <= 2; distance += 1) {
-              c = piece.c + steps[s] * distance;
-              if (!inBounds(piece.r, c)) { break; }
-              occupant = pieceAt(gameState, piece.r, c);
-              if (occupant) { break; }
-              moves.push(moveObject(piece, piece.r, c, [], {
-                distance: distance,
-                sideways: true
-              }));
-            }
-          }
-        }
-
         for (dc = -1; dc <= 1; dc += 2) {
           r = piece.r + forward;
           if (inBounds(r, piece.c + dc)) {
@@ -1085,6 +1132,28 @@
             if (occupant && occupant.player !== piece.player) {
               moves.push(moveObject(piece, r, piece.c + dc, [occupant.id], { distance: 1 }));
             }
+          }
+        }
+        return moves;
+      }
+
+      function generateDiamondMoves(gameState, piece) {
+        var moves = generateCircleMoves(gameState, piece);
+        var steps = [-1, 1];
+        var s;
+        var distance;
+        var c;
+        var occupant;
+        for (s = 0; s < steps.length; s += 1) {
+          for (distance = 1; distance <= 2; distance += 1) {
+            c = piece.c + steps[s] * distance;
+            if (!inBounds(piece.r, c)) { break; }
+            occupant = pieceAt(gameState, piece.r, c);
+            if (occupant) { break; }
+            moves.push(moveObject(piece, piece.r, c, [], {
+              distance: distance,
+              sideways: true
+            }));
           }
         }
         return moves;
@@ -1247,6 +1316,7 @@
       function generatePseudoMovesForPiece(gameState, piece) {
         if (!piece || !piece.alive) { return []; }
         if (piece.type === "circle") { return generateCircleMoves(gameState, piece); }
+        if (piece.type === "diamond") { return generateDiamondMoves(gameState, piece); }
         if (piece.type === "triangle") { return generateTriangleMoves(gameState, piece); }
         if (piece.type === "square") { return generateSquareMoves(gameState, piece); }
         if (piece.type === "cross") { return generateCrossMoves(gameState, piece); }
@@ -1281,10 +1351,9 @@
         piece.facing = move.newFacing;
         if (
           piece.type === "circle" &&
-          !piece.upgraded &&
           ((piece.player === 1 && piece.r === 0) || (piece.player === 2 && piece.r === SIZE - 1))
         ) {
-          piece.upgraded = true;
+          piece.type = "diamond";
         }
       }
 
@@ -1346,12 +1415,11 @@
             piece.type,
             piece.r,
             piece.c,
-            piece.type === "triangle" ? piece.facing : 0,
-            piece.type === "circle" && piece.upgraded ? 1 : 0
+            piece.type === "triangle" ? piece.facing : 0
           ].join(":");
         });
         list.sort();
-        return gameState.currentPlayer + "|" + list.join("|");
+        return SIZE + "|" + gameState.currentPlayer + "|" + list.join("|");
       }
 
       function pieceCount(player) {
@@ -1367,6 +1435,10 @@
         var c;
         var cell;
         boardEl.innerHTML = "";
+        boardEl.style.gridTemplateColumns = "repeat(" + SIZE + ", minmax(0, 1fr))";
+        boardEl.style.gridTemplateRows = "repeat(" + SIZE + ", minmax(0, 1fr))";
+        boardEl.setAttribute("aria-label", SIZE + " by " + SIZE + " Shape Siege board");
+        boardShell.setAttribute("aria-label", SIZE + " by " + SIZE + " Shape Siege board");
         cellEls = [];
         for (r = 0; r < SIZE; r += 1) {
           cellEls[r] = [];
@@ -1388,7 +1460,6 @@
         var classes = "piece p" + piece.player + " type-" + piece.type;
         var glyph = piece.type;
         if (piece.type === "triangle") { classes += " facing-" + piece.facing; }
-        if (piece.type === "circle" && piece.upgraded) { classes += " upgraded-circle"; }
         if (piece.id === lastMovePieceId) { classes += " last-moved"; }
         if (piece.type === "cross" && inCheck) { classes += " cross-in-check"; }
         return '<span class="' + classes + '"><span class="glyph ' + glyph + '"></span></span>';
@@ -1439,7 +1510,7 @@
             label = "Row " + (r + 1) + ", column " + (c + 1);
             if (piece) {
               label += ", Player " + piece.player + " " + TYPE_NAMES[piece.type];
-              if (piece.type === "circle" && piece.upgraded) { label += ", upgraded for sideways movement"; }
+              if (piece.type === "diamond") { label += ", promoted from a circle"; }
               cell.innerHTML = pieceMarkup(piece, currentCheck && piece.player === state.currentPlayer && piece.type === "cross");
             } else {
               label += ", empty";
@@ -1522,15 +1593,15 @@
 
         actionTitle.textContent = TYPE_NAMES[piece.type] + " selected · " + selectedMoves.length + " legal " + (selectedMoves.length === 1 ? "move" : "moves");
         if (piece.type !== "triangle") {
-          if (piece.type === "circle" && piece.upgraded && selectedMoves.length) {
-            actionSub.textContent = "Upgraded circle: move forward, backward, or sideways. Captures remain diagonally forward.";
+          if (piece.type === "diamond" && selectedMoves.length) {
+            actionSub.textContent = "Diamond: move forward, backward, or sideways. Capture only diagonally forward.";
           } else {
             actionSub.textContent = selectedMoves.length ? "Tap a highlighted square to move." : "This piece has no legal move while your cross stays safe.";
           }
           return;
         }
 
-        actionSub.textContent = "Turn once: choose a diamond to turn before moving, or move straight and choose a final turn afterward.";
+        actionSub.textContent = "Turn once: turn before moving, or move straight and choose a final turn afterward.";
       }
 
       function render() {
@@ -1540,6 +1611,23 @@
         renderActions();
         soundButton.textContent = soundOn ? "♪" : "×";
         soundButton.setAttribute("aria-label", soundOn ? "Turn sound off" : "Turn sound on");
+      }
+
+      function refreshInitialLayout() {
+        window.cancelAnimationFrame(layoutRefreshFrame);
+        layoutRefreshFrame = window.requestAnimationFrame(function () {
+          layoutRefreshFrame = window.requestAnimationFrame(function () {
+            var width;
+            if (!state) { return; }
+            width = Math.round(boardShell.getBoundingClientRect().width);
+            if (width > 0) {
+              boardShell.style.height = width + "px";
+              boardEl.style.height = width + "px";
+            }
+            boardEl.getBoundingClientRect();
+            renderBoard();
+          });
+        });
       }
 
       function selectPiece(piece) {
@@ -1762,18 +1850,45 @@
         window.setTimeout(function () { endOverlay.classList.add("open"); }, 420);
       }
 
-      function newGame(showIntro) {
+      function isValidSize(value) {
+        return VALID_SIZES.indexOf(Number(value)) !== -1;
+      }
+
+      function newGame(boardSize, showIntro, silent) {
+        SIZE = isValidSize(boardSize) ? Number(boardSize) : 9;
+        safeSet("shape-siege-board-size", String(SIZE));
+        createCells();
+        boardEl.appendChild(directionOverlay);
         state = createInitialState();
         selectedId = null;
         selectedMoves = [];
         lastMovePieceId = null;
         lastCapturedSquares = [];
+        setupOverlay.classList.remove("open");
         endOverlay.classList.remove("open");
         closeDirectionPicker();
         state.positionCounts[positionKey(state)] = 1;
         render();
-        showToast("Player " + state.currentPlayer + " moves first");
+        refreshInitialLayout();
+        window.setTimeout(refreshInitialLayout, 90);
+        window.setTimeout(refreshInitialLayout, 280);
+        if (!silent) { showToast("Player " + state.currentPlayer + " moves first on " + SIZE + "×" + SIZE); }
         if (showIntro) { helpOverlay.classList.add("open"); }
+      }
+
+      function openSetup(showIntro) {
+        pendingIntro = Boolean(showIntro);
+        endOverlay.classList.remove("open");
+        helpOverlay.classList.remove("open");
+        closeDirectionPicker();
+        sizeButtons.forEach(function (button) {
+          button.classList.toggle("selected", Number(button.getAttribute("data-size")) === SIZE);
+        });
+        setupOverlay.classList.add("open");
+      }
+
+      function chooseBoardSize(size) {
+        newGame(size, pendingIntro, false);
       }
 
       function showToast(message) {
@@ -1862,9 +1977,14 @@
       }
 
       clearButton.addEventListener("click", clearSelection);
-      newMatchButton.addEventListener("click", function () { newGame(false); });
-      resetButton.addEventListener("click", function () { newGame(false); });
-      playAgainButton.addEventListener("click", function () { newGame(false); });
+      newMatchButton.addEventListener("click", function () { openSetup(false); });
+      resetButton.addEventListener("click", function () { openSetup(false); });
+      playAgainButton.addEventListener("click", function () { openSetup(false); });
+      sizeButtons.forEach(function (button) {
+        button.addEventListener("click", function () {
+          chooseBoardSize(Number(button.getAttribute("data-size")));
+        });
+      });
       helpButton.addEventListener("click", function () { helpOverlay.classList.add("open"); });
       closeHelpButton.addEventListener("click", function () {
         helpOverlay.classList.remove("open");
@@ -1878,15 +1998,23 @@
 
       document.addEventListener("keydown", function (event) {
         if (event.key === "Escape") {
+          if (setupOverlay.classList.contains("open")) { return; }
           if (directionOverlay.classList.contains("open")) { closeDirectionPicker(); }
           else if (helpOverlay.classList.contains("open")) { helpOverlay.classList.remove("open"); }
           else if (selectedId) { clearSelection(); }
         }
       });
 
-      createCells();
-      boardEl.appendChild(directionOverlay);
-      newGame(safeGet("shape-siege-seen-rules") !== "yes");
+      SIZE = isValidSize(safeGet("shape-siege-board-size")) ? Number(safeGet("shape-siege-board-size")) : 9;
+      newGame(SIZE, false, true);
+      openSetup(safeGet("shape-siege-seen-rules") !== "yes");
+      refreshInitialLayout();
+      window.setTimeout(refreshInitialLayout, 120);
+      window.setTimeout(refreshInitialLayout, 360);
+      window.addEventListener("pageshow", refreshInitialLayout);
+      window.addEventListener("resize", refreshInitialLayout);
+      window.addEventListener("orientationchange", refreshInitialLayout);
+      if (window.visualViewport) { window.visualViewport.addEventListener("resize", refreshInitialLayout); }
     }());
   </script>
 </body>
