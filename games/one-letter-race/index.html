@@ -27,7 +27,7 @@
 <div class="app stack">
   <header class="topbar">
     <a class="back" href="../../" aria-label="Back to game room">←</a>
-    <div class="top-title"><strong>One-Letter Race</strong><small>revision 1.0.1</small></div>
+    <div class="top-title"><strong>One-Letter Race</strong><small>revision 1.1.0</small></div>
     <button class="icon-button" id="rulesBtn" type="button">?</button>
   </header>
   <section class="scorebar">
@@ -38,7 +38,7 @@
   <section class="panel stack">
     <div class="targets"><div class="target"><small>Start</small><strong id="startWord">----</strong></div><div>→</div><div class="target"><small>Goal</small><strong id="goalWord">----</strong></div></div>
     <div class="ladder" id="ladder"></div>
-    <label><span class="label">Change exactly one letter</span><input class="input" id="wordInput" autocomplete="off" autocapitalize="characters" maxlength="5"></label>
+    <label><span class="label">Change exactly one letter</span><input class="input" id="wordInput" autocomplete="off" autocapitalize="characters" maxlength="8"></label>
     <button class="btn good" id="submitBtn" type="button">Add step</button>
     <div class="status" id="status" aria-live="polite">Read the rules, then start.</div>
     <button class="btn secondary" id="newPuzzle" type="button">New puzzle</button>
@@ -51,8 +51,8 @@
     <ul class="rules-list">
       <li><b>1</b><span>The start word, goal word, and every step must be legal words of the same length. Start and goal words come from a curated common-word puzzle list.</span></li>
       <li><b>2</b><span>Each new word must differ from the previous word by exactly one letter.</span></li>
-      <li><b>3</b><span>Solo mode records your move count.</span></li>
-      <li><b>4</b><span>In 2-player mode, each player gets the same puzzle and 45 seconds. Fewer moves wins; time breaks ties.</span></li>
+      <li><b>3</b><span>Every win makes the next puzzle one letter longer, starting at 3 letters and building up to 8.</span></li>
+      <li><b>4</b><span>In 2-player mode, each player gets the same real-word puzzle and 45 seconds. Fewer moves wins; time breaks ties.</span></li>
     </ul>
     <div class="grid-2">
       <button class="choice selected" data-mode="solo" type="button"><strong>Solo</strong><small>Solve at your pace</small></button>
@@ -66,88 +66,313 @@
 <script src="../shared/gidi-word-core.js"></script>
 <script>
 (function(){
-  'use strict';
-  var C=window.GidiWordCore, mode='solo', length=4, start='', goal='', path=[], currentPlayer=1, results=[], time=45, ticker=null, running=false, startedAt=0;
-  var COMMON_PUZZLES=[
-    ['cat','cot','dot','dog'],
-    ['cat','bat','bag','bog','dog'],
-    ['hit','hot','cot','cat'],
-    ['sun','run','ran','man'],
-    ['bed','bad','mad','map'],
-    ['hen','pen','pin','sin'],
-    ['fox','box','bog','dog'],
-    ['cup','cap','cat'],
-    ['red','bed','bad'],
-    ['cold','cord','card','ward','warm'],
-    ['head','heal','teal','tell','tall','tail'],
-    ['game','gate','late','lake','like'],
-    ['fish','dish','dash','cash','case'],
-    ['book','boon','moon','moor','door'],
-    ['farm','form','foam','roam','road'],
-    ['lead','load','goad','gold'],
-    ['hand','sand','send','seed'],
-    ['rain','pain','pair','fair'],
-    ['coat','boat','boot','book'],
-    ['wall','walk','talk','tall'],
-    ['mind','wind','wine','line'],
-    ['best','rest','rent','bent'],
-    ['ship','shop','shot','spot'],
-    ['stone','atone','alone','clone','close'],
-    ['light','night','right'],
-    ['heart','heard','beard','board'],
-    ['smart','start','stark','stack'],
-    ['could','would','wound','pound'],
-    ['spare','space','spice','slice','slick'],
-    ['sight','light','night','right'],
-    ['cream','dream','dread','bread'],
-    ['teach','reach','react'],
-    ['sound','pound','found'],
-    ['green','greet','great'],
-    ['shore','score','scare','share']
-  ];
-  var lastPuzzleKey='';
-  var input=document.getElementById('wordInput'), status=document.getElementById('status'), timer=document.getElementById('timer'), ladder=document.getElementById('ladder');
-  function buckets(n){ var words=(C.byLength[n]||[]).filter(function(w){return !/[qxz]/.test(w);}), map={}; words.forEach(function(w){for(var i=0;i<n;i++){var k=w.slice(0,i)+'*'+w.slice(i+1);(map[k]||(map[k]=[])).push(w);}}); return {words:words,map:map}; }
-  function neighbors(word,data){var out=new Set();for(var i=0;i<word.length;i++){var k=word.slice(0,i)+'*'+word.slice(i+1);(data.map[k]||[]).forEach(function(w){if(w!==word)out.add(w);});}return Array.from(out);}
-  function puzzleIsUsable(chain){
-    if(!chain||chain.length<2)return false;
-    var n=chain[0].length;
-    if(n<3||n>5)return false;
-    for(var i=0;i<chain.length;i++){
-      if(chain[i].length!==n||!C.isWord(chain[i],3))return false;
-      if(i&& !C.oneLetterApart(chain[i-1],chain[i]))return false;
-    }
-    return true;
+ 'use strict';
+
+ var C=window.GidiWordCore;
+ var mode='solo', length=3, nextLength=3, maxLength=8;
+ var start='', goal='', path=[], currentPlayer=1, results=[];
+ var time=45, ticker=null, running=false, startedAt=0;
+
+ var COMMON_PUZZLES=[
+  ['sun','run','ran','man'],
+  ['bed','bad','mad','map'],
+  ['cup','cap','cat'],
+  ['red','bed','bad'],
+
+  ['cold','cord','card','ward','warm'],
+  ['game','gate','late','lake','like'],
+  ['fish','dish','dash','cash','case'],
+  ['hand','sand','send','seed'],
+  ['rain','pain','pair','fair'],
+  ['coat','boat','boot','book'],
+  ['wall','walk','talk','tall'],
+  ['mind','wind','wine','line'],
+  ['best','rest','rent','bent'],
+  ['ship','shop','shot','spot'],
+
+  ['light','night','right'],
+  ['could','would','wound','pound'],
+  ['sight','light','night','right'],
+  ['sound','pound','found'],
+
+  ['better','letter','latter','matter','master','faster','foster'],
+  ['spring','string','strong'],
+
+  ['reading','leading','lending','landing'],
+  ['funding','finding','binding','bidding'],
+
+  ['products','produces','producer','produced']
+ ];
+
+ var lastPuzzleKey='';
+ var bucketCache={};
+ var input=document.getElementById('wordInput');
+ var status=document.getElementById('status');
+ var timer=document.getElementById('timer');
+ var ladder=document.getElementById('ladder');
+ var startEl=document.getElementById('startWord');
+ var goalEl=document.getElementById('goalWord');
+
+ function friendlyWord(word,n){
+  return word.length===n && C.isWord(word,3) && /^[a-z]+$/.test(word) && /[aeiouy]/.test(word) && !/[qzxj]/.test(word);
+ }
+
+ function buckets(n){
+  if(bucketCache[n])return bucketCache[n];
+  var words=(C.byLength[n]||[]).filter(function(w){return friendlyWord(w,n);});
+  var map={};
+  words.forEach(function(w){
+   for(var i=0;i<n;i++){
+    var k=w.slice(0,i)+'*'+w.slice(i+1);
+    (map[k]||(map[k]=[])).push(w);
+   }
+  });
+  bucketCache[n]={words:words,map:map};
+  return bucketCache[n];
+ }
+
+ function neighbors(word,data){
+  var found={};
+  var out=[];
+  for(var i=0;i<word.length;i++){
+   var k=word.slice(0,i)+'*'+word.slice(i+1);
+   (data.map[k]||[]).forEach(function(w){
+    if(w!==word&&!found[w]){found[w]=true;out.push(w);}
+   });
   }
-  function makePuzzle(){
-    var usable=COMMON_PUZZLES.filter(puzzleIsUsable);
-    if(!usable.length){
-      length=3;start='cat';goal='dog';
-      return;
-    }
-    var chain=null,key='';
-    for(var tries=0;tries<12;tries++){
-      chain=C.random(usable).slice();
-      if(Math.random()<.5)chain.reverse();
-      key=chain[0]+'>'+chain[chain.length-1];
-      if(key!==lastPuzzleKey||usable.length===1)break;
-    }
-    lastPuzzleKey=key;
-    length=chain[0].length;
-    start=chain[0];
-    goal=chain[chain.length-1];
+  return out;
+ }
+
+ function puzzleIsUsable(chain){
+  if(!chain||chain.length<2)return false;
+  var n=chain[0].length;
+  if(n<3||n>maxLength)return false;
+  for(var i=0;i<chain.length;i++){
+   if(chain[i].length!==n||!C.isWord(chain[i],3))return false;
+   if(i&&!C.oneLetterApart(chain[i-1],chain[i]))return false;
   }
-  function render(){document.getElementById('startWord').textContent=start.toUpperCase();document.getElementById('goalWord').textContent=goal.toUpperCase();ladder.innerHTML='';path.forEach(function(w,i){var s=document.createElement('span');s.className='pill';s.textContent=(i? '→ ':'')+w.toUpperCase();ladder.appendChild(s);});document.getElementById('p1Score').textContent=Math.max(0,path.length-1);timer.textContent=mode==='duel'?time:'∞';timer.classList.toggle('urgent',mode==='duel'&&time<=8);input.maxLength=length;}
-  function resetAttempt(){path=[start];input.value='';running=true;startedAt=Date.now();time=45;clearInterval(ticker);if(mode==='duel')ticker=setInterval(function(){if(!running)return;time--;render();if(time<=0)finish(false);},1000);C.setStatus(status,'Player '+currentPlayer+': reach '+goal.toUpperCase()+'.');render();setTimeout(function(){input.focus();},80);}
-  function submit(){if(!running)return;var w=C.clean(input.value), prev=path[path.length-1];if(w.length!==length){C.setStatus(status,'Use a '+length+'-letter word.','bad');return;}if(!C.isWord(w,3)){C.setStatus(status,'That word is not in the dictionary.','bad');return;}if(path.indexOf(w)!==-1){C.setStatus(status,'That word is already in your path.','bad');return;}if(!C.oneLetterApart(prev,w)){C.setStatus(status,'Change exactly one letter.','bad');return;}path.push(w);input.value='';C.vibrate(20);render();if(w===goal)finish(true);else C.setStatus(status,'Good step. Keep going!','good');}
-  function finish(success){if(!running)return;running=false;clearInterval(ticker);var elapsed=Math.round((Date.now()-startedAt)/100)/10;var result={success:success,moves:success?path.length-1:999,time:success?elapsed:999};
-    if(mode==='solo'){C.setStatus(status,success?'Solved in '+result.moves+' moves!':'Time is up.','good');if(success)C.confetti(document.body,24);return;}
-    results.push(result);if(currentPlayer===1){currentPlayer=2;document.getElementById('handoff').hidden=false;}else{var a=results[0],b=results[1],winner=0;if(a.moves<b.moves||(a.moves===b.moves&&a.time<b.time))winner=1;else if(b.moves<a.moves||(a.moves===b.moves&&b.time<a.time))winner=2;C.setStatus(status,winner?'Player '+winner+' wins!':'It is a tie!','good');document.getElementById('p1Name').textContent='P1';document.getElementById('p2Name').textContent='P2';document.getElementById('p1Score').textContent=a.success?a.moves:'X';document.getElementById('p2Score').textContent=b.success?b.moves:'X';C.confetti(document.body,28);}}
-  function newGame(){makePuzzle();results=[];currentPlayer=1;document.getElementById('p1Name').textContent=mode==='solo'?'Moves':'P1 moves';document.getElementById('p2Name').textContent=mode==='solo'?'Goal':'P2 moves';document.getElementById('p2Score').textContent=mode==='solo'?'✓':'--';resetAttempt();}
-  document.querySelectorAll('[data-mode]').forEach(function(b){b.addEventListener('click',function(){document.querySelectorAll('[data-mode]').forEach(function(x){x.classList.remove('selected');});b.classList.add('selected');mode=b.dataset.mode;});});
-  document.getElementById('submitBtn').addEventListener('click',submit);input.addEventListener('keydown',function(e){if(e.key==='Enter')submit();});document.getElementById('newPuzzle').addEventListener('click',newGame);
-  document.getElementById('handoffBtn').addEventListener('click',function(){document.getElementById('handoff').hidden=true;resetAttempt();});
-  document.getElementById('startBtn').addEventListener('click',function(){document.getElementById('intro').hidden=true;newGame();});document.getElementById('rulesBtn').addEventListener('click',function(){running=false;clearInterval(ticker);document.getElementById('intro').hidden=false;});render();
+  return true;
+ }
+
+ function reconstruct(goalWord,parent){
+  var chain=[goalWord];
+  var word=goalWord;
+  while(parent[word]){word=parent[word];chain.push(word);}
+  chain.reverse();
+  return chain;
+ }
+
+ function generatedPuzzle(n){
+  var data=buckets(n);
+  if(data.words.length<2)return null;
+  var pool=data.words.slice(0,Math.min(600,data.words.length));
+  var candidates=C.shuffle(pool).slice(0,Math.min(140,pool.length));
+
+  for(var attempt=0;attempt<candidates.length;attempt++){
+   var first=candidates[attempt];
+   var queue=[first], head=0, depth={};
+   var parent={}, seen={};
+   depth[first]=0;seen[first]=true;
+
+   while(head<queue.length&&head<900){
+    var word=queue[head++];
+    var next=C.shuffle(neighbors(word,data));
+    for(var i=0;i<next.length;i++){
+     var candidate=next[i];
+     if(seen[candidate])continue;
+     seen[candidate]=true;
+     parent[candidate]=word;
+     depth[candidate]=depth[word]+1;
+     if(depth[candidate]>=3&&depth[candidate]<=6){
+      var chain=reconstruct(candidate,parent);
+      var key=chain[0]+'>'+chain[chain.length-1];
+      if(key!==lastPuzzleKey&&puzzleIsUsable(chain))return chain;
+     }
+     if(depth[candidate]<6)queue.push(candidate);
+    }
+   }
+  }
+  return null;
+ }
+
+ function choosePuzzleForLength(n){
+  var usable=COMMON_PUZZLES.filter(function(chain){
+   return chain[0].length===n&&puzzleIsUsable(chain);
+  });
+  var chain=null, key='';
+
+  if(usable.length){
+   for(var tries=0;tries<16;tries++){
+    chain=C.random(usable).slice();
+    if(Math.random()<.5)chain.reverse();
+    key=chain[0]+'>'+chain[chain.length-1];
+    if(key!==lastPuzzleKey||usable.length===1)break;
+   }
+   return chain;
+  }
+  return generatedPuzzle(n);
+ }
+
+ function makePuzzle(){
+  var requested=Math.max(3,Math.min(maxLength,nextLength));
+  var chain=choosePuzzleForLength(requested);
+
+  if(!chain){
+   for(var fallback=requested-1;fallback>=3&&!chain;fallback--){
+    chain=choosePuzzleForLength(fallback);
+   }
+  }
+  if(!chain){
+   chain=['cat','cot','dot','dog'];
+  }
+
+  lastPuzzleKey=chain[0]+'>'+chain[chain.length-1];
+  length=chain[0].length;
+  nextLength=length;
+  start=chain[0];
+  goal=chain[chain.length-1];
+ }
+
+ function render(){
+  startEl.textContent=start.toUpperCase();
+  goalEl.textContent=goal.toUpperCase();
+  var wordSize=length>=8?15:length===7?17:length===6?20:25;
+  startEl.style.fontSize=wordSize+'px';
+  goalEl.style.fontSize=wordSize+'px';
+
+  ladder.innerHTML='';
+  path.forEach(function(w,i){
+   var s=document.createElement('span');
+   s.className='pill';
+   s.textContent=(i?'→ ':'')+w.toUpperCase();
+   ladder.appendChild(s);
+  });
+
+  document.getElementById('p1Score').textContent=Math.max(0,path.length-1);
+  if(mode==='solo'){
+   document.getElementById('p2Name').textContent='Letters';
+   document.getElementById('p2Score').textContent=length;
+  }
+  timer.textContent=mode==='duel'?time:'∞';
+  timer.classList.toggle('urgent',mode==='duel'&&time<=8);
+  input.maxLength=length;
+ }
+
+ function resetAttempt(){
+  path=[start];
+  input.value='';
+  running=true;
+  startedAt=Date.now();
+  time=45;
+  clearInterval(ticker);
+  if(mode==='duel'){
+   ticker=setInterval(function(){
+    if(!running)return;
+    time--;
+    render();
+    if(time<=0)finish(false);
+   },1000);
+  }
+  C.setStatus(status,'Player '+currentPlayer+': reach '+goal.toUpperCase()+' using real '+length+'-letter words.');
+  render();
+  setTimeout(function(){input.focus();},80);
+ }
+
+ function submit(){
+  if(!running)return;
+  var w=C.clean(input.value), prev=path[path.length-1];
+  if(w.length!==length){C.setStatus(status,'Use a '+length+'-letter word.','bad');return;}
+  if(!C.isWord(w,3)){C.setStatus(status,'That is not a real dictionary word.','bad');return;}
+  if(path.indexOf(w)!==-1){C.setStatus(status,'That word is already in your path.','bad');return;}
+  if(!C.oneLetterApart(prev,w)){C.setStatus(status,'Change exactly one letter.','bad');return;}
+  path.push(w);
+  input.value='';
+  C.vibrate(20);
+  render();
+  if(w===goal)finish(true);
+  else C.setStatus(status,'Real word accepted. Keep going!','good');
+ }
+
+ function advanceLength(){
+  nextLength=Math.min(maxLength,length+1);
+ }
+
+ function finish(success){
+  if(!running)return;
+  running=false;
+  clearInterval(ticker);
+  var elapsed=Math.round((Date.now()-startedAt)/100)/10;
+  var result={success:success,moves:success?path.length-1:999,time:success?elapsed:999};
+
+  if(mode==='solo'){
+   if(success){
+    advanceLength();
+    var nextMessage=length<maxLength?' Next puzzle: '+nextLength+' letters!':' You reached the 8-letter maximum!';
+    C.setStatus(status,'Solved in '+result.moves+' moves!'+nextMessage,'good');
+    C.confetti(document.body,24);
+   }else{
+    C.setStatus(status,'Time is up.','bad');
+   }
+   return;
+  }
+
+  results.push(result);
+  if(currentPlayer===1){
+   currentPlayer=2;
+   document.getElementById('handoff').hidden=false;
+   return;
+  }
+
+  var a=results[0], b=results[1], winner=0;
+  if(a.moves<b.moves||(a.moves===b.moves&&a.time<b.time))winner=1;
+  else if(b.moves<a.moves||(a.moves===b.moves&&b.time<a.time))winner=2;
+
+  if(winner)advanceLength();
+  var growth=winner&&length<maxLength?' Next round: '+nextLength+' letters!':winner?' Maximum length reached!':'';
+  C.setStatus(status,winner?'Player '+winner+' wins!'+growth:'It is a tie — the length stays the same.','good');
+  document.getElementById('p1Name').textContent='P1';
+  document.getElementById('p2Name').textContent='P2';
+  document.getElementById('p1Score').textContent=a.success?a.moves:'X';
+  document.getElementById('p2Score').textContent=b.success?b.moves:'X';
+  C.confetti(document.body,28);
+ }
+
+ function newGame(){
+  makePuzzle();
+  results=[];
+  currentPlayer=1;
+  document.getElementById('p1Name').textContent=mode==='solo'?'Moves':'P1 moves';
+  document.getElementById('p2Name').textContent=mode==='solo'?'Letters':'P2 moves';
+  document.getElementById('p2Score').textContent=mode==='solo'?length:'--';
+  resetAttempt();
+ }
+
+ document.querySelectorAll('[data-mode]').forEach(function(b){
+  b.addEventListener('click',function(){
+   document.querySelectorAll('[data-mode]').forEach(function(x){x.classList.remove('selected');});
+   b.classList.add('selected');
+   mode=b.dataset.mode;
+  });
+ });
+
+ document.getElementById('submitBtn').addEventListener('click',submit);
+ input.addEventListener('keydown',function(e){if(e.key==='Enter')submit();});
+ document.getElementById('newPuzzle').addEventListener('click',newGame);
+ document.getElementById('handoffBtn').addEventListener('click',function(){
+  document.getElementById('handoff').hidden=true;
+  resetAttempt();
+ });
+ document.getElementById('startBtn').addEventListener('click',function(){
+  nextLength=3;
+  document.getElementById('intro').hidden=true;
+  newGame();
+ });
+ document.getElementById('rulesBtn').addEventListener('click',function(){
+  running=false;
+  clearInterval(ticker);
+  document.getElementById('intro').hidden=false;
+ });
+ render();
 }());
 </script>
 </body>
