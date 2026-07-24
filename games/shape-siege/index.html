@@ -429,6 +429,71 @@
     .facing-2 .glyph.triangle { transform: rotate(180deg); }
     .facing-3 .glyph.triangle { transform: rotate(270deg); }
 
+
+
+    .cell.forcefield-p1::before {
+      opacity: 0.58;
+      background:
+        radial-gradient(circle at 50% 50%, rgba(var(--p1-rgb),0.13), transparent 58%),
+        linear-gradient(145deg, rgba(var(--p1-rgb),0.15), transparent 46%);
+      box-shadow: inset 0 0 0 1px rgba(var(--p1-rgb),0.18);
+    }
+    .cell.forcefield-p2::before {
+      opacity: 0.58;
+      background:
+        radial-gradient(circle at 50% 50%, rgba(var(--p2-rgb),0.13), transparent 58%),
+        linear-gradient(145deg, rgba(var(--p2-rgb),0.15), transparent 46%);
+      box-shadow: inset 0 0 0 1px rgba(var(--p2-rgb),0.18);
+    }
+    .cell.forcefield-p1.forcefield-p2::before {
+      background:
+        linear-gradient(135deg, rgba(var(--p2-rgb),0.14), transparent 48%),
+        linear-gradient(315deg, rgba(var(--p1-rgb),0.14), transparent 48%);
+      box-shadow: inset 0 0 0 1px rgba(223,232,255,0.2);
+    }
+    .piece.type-diamond {
+      border-radius: 25%;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.2),
+        inset 0 -3px 6px rgba(0,0,0,0.2),
+        0 4px 8px rgba(0,0,0,0.32),
+        0 0 0 2px rgba(var(--piece-rgb),0.09),
+        0 0 15px rgba(var(--piece-rgb),0.27);
+    }
+    .piece.type-diamond::after {
+      content: "";
+      position: absolute;
+      inset: -10%;
+      border: 1px solid rgba(var(--piece-rgb),0.34);
+      border-radius: 34%;
+      animation: shieldBreathe 1200ms ease-in-out infinite alternate;
+    }
+    .cell.annihilation-destination {
+      box-shadow: inset 0 0 0 2px rgba(255,209,102,0.82), 0 0 18px rgba(255,209,102,0.28);
+    }
+    .cell.annihilate-target {
+      box-shadow: inset 0 0 0 2px rgba(255,95,109,0.92), 0 0 19px rgba(255,95,109,0.42);
+      z-index: 4;
+    }
+    .cell.annihilate-target::after {
+      content: "✦";
+      width: 40%;
+      height: 40%;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      position: absolute;
+      z-index: 8;
+      color: #fff;
+      background: rgba(255,95,109,0.82);
+      box-shadow: 0 0 0 5px rgba(255,95,109,0.2), 0 0 18px rgba(255,95,109,0.62);
+      font-size: clamp(10px, 3vw, 18px);
+      animation: captureHintPulse 650ms ease-in-out infinite alternate;
+      pointer-events: none;
+    }
+    .rule-card.forcefield-rule { grid-column: 1 / -1; min-height: 0; }
+    @keyframes shieldBreathe { from { opacity: 0.35; transform: scale(0.95); } to { opacity: 0.85; transform: scale(1.04); } }
+
     .action-bar {
       width: min(100%, 590px);
       min-height: 47px;
@@ -794,7 +859,7 @@
       <a class="icon-button" href="../../" aria-label="Back to games">←</a>
       <div class="title-block">
         <p class="eyebrow">Two-player strategy</p>
-        <h1>Shape Siege <span class="version">v1.0.9</span></h1>
+        <h1>Shape Siege <span class="version">v1.1.0</span></h1>
       </div>
       <div class="top-actions">
         <button class="icon-button" id="soundButton" type="button" aria-label="Turn sound off" title="Sound">♪</button>
@@ -807,7 +872,7 @@
       <div class="player-token">2</div>
       <div class="player-copy">
         <div class="player-name">Player 2 · Cyan</div>
-        <div class="player-detail" id="player2Detail">14 pieces · Cross safe</div>
+        <div class="player-detail" id="player2Detail">16 pieces · Cross safe</div>
       </div>
       <div class="turn-chip" id="player2Chip">Waiting</div>
     </section>
@@ -825,7 +890,7 @@
       <div class="player-token">1</div>
       <div class="player-copy">
         <div class="player-name">Player 1 · Rose</div>
-        <div class="player-detail" id="player1Detail">14 pieces · Cross safe</div>
+        <div class="player-detail" id="player1Detail">16 pieces · Cross safe</div>
       </div>
       <div class="turn-chip" id="player1Chip">Waiting</div>
     </section>
@@ -843,53 +908,34 @@
   </main>
 
 
-  <div class="overlay open" id="setupOverlay" role="dialog" aria-modal="true" aria-labelledby="setupTitle">
-    <section class="modal setup-modal">
-      <div class="modal-kicker">New match</div>
-      <h2 id="setupTitle">Choose your battlefield.</h2>
-      <p class="modal-lead">The same rules, with a faster close fight or more room to build a plan.</p>
-      <div class="size-options" id="sizeOptions">
-        <button class="size-option" type="button" data-size="7">
-          <span class="size-number">7×7</span>
-          <span class="size-name">Tactical</span>
-          <span class="size-layout" aria-hidden="true">□ △ · × · △ □</span>
-          <span class="size-detail">12 pieces each</span>
-        </button>
-        <button class="size-option" type="button" data-size="9">
-          <span class="size-number">9×9</span>
-          <span class="size-name">Classic</span>
-          <span class="size-layout" aria-hidden="true">□ · △ · × · △ · □</span>
-          <span class="size-detail">14 pieces each</span>
-        </button>
-      </div>
-      <p class="size-note">The starting player is chosen randomly after you select a board.</p>
-    </section>
-  </div>
-
   <div class="overlay" id="helpOverlay" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
     <section class="modal">
       <div class="modal-kicker">How to play</div>
       <h2 id="helpTitle">Protect your cross.<br>Break theirs.</h2>
-      <p class="modal-lead">Shape Siege is a tactical duel on a 7×7 or 9×9 board. Each side starts with a full row of circles in front of five stronger pieces. Larger boards add empty gaps between the strong pieces. Player 2 begins at the top; Player 1 begins at the bottom.</p>
+      <p class="modal-lead">Shape Siege is a tactical duel on a 9×9 board. Each side starts with nine circles in front of two diamonds, two squares, two triangles, and one cross. Player 2 begins at the top; Player 1 begins at the bottom.</p>
       <div class="rules-grid">
         <article class="rule-card">
           <div class="rule-head"><span class="rule-icon">○</span><strong>Circle</strong></div>
-          <p>Move 1 or 2 squares straight forward or backward and capture exactly 1 square diagonally forward. At the far edge, the circle becomes a diamond. A diamond may also move 1 or 2 empty squares sideways, but still captures only diagonally forward. Neither piece can jump.</p>
+          <p>Move 1 or 2 squares straight forward or backward and capture exactly 1 square diagonally forward. On reaching the far edge, choose any enemy except the cross: that enemy and the arriving circle both disappear. If no legal target exists, the circle stays.</p>
         </article>
         <article class="rule-card">
           <div class="rule-head"><span class="rule-icon">△</span><strong>Triangle</strong></div>
-          <p>Turn at most once per turn. It may turn 90° left or right before moving and then move 1 or 2 squares in the new direction, or move straight first and optionally turn 90° afterward. It may also turn in place. An adjacent enemy in its final direction is captured automatically. If an enemy is already directly in front at the start of the turn, the triangle may capture it immediately by moving into its square.</p>
+          <p>Turn at most once per turn. It may turn 90° before moving 1 or 2 squares, or move straight first and optionally turn 90° afterward. It may also turn in place. An adjacent enemy in its final direction is captured automatically, unless it is a diamond.</p>
         </article>
         <article class="rule-card">
           <div class="rule-head"><span class="rule-icon">□</span><strong>Square</strong></div>
-          <p>Move any distance horizontally or vertically. It may jump over one enemy, which survives, then land on an empty square or capture the next ordinary enemy. A cross can only be checked or captured along a completely clear line; it cannot be threatened by jumping. Friendly pieces and a second obstacle block the square.</p>
+          <p>Move any distance horizontally or vertically. It may jump over one enemy, which survives, then land on an empty square or capture the next ordinary enemy. It may destroy a diamond only by landing directly on it, including after one legal jump.</p>
         </article>
         <article class="rule-card">
           <div class="rule-head"><span class="rule-icon">×</span><strong>Cross</strong></div>
-          <p>Move up to 3 squares in any straight or diagonal direction. It captures every enemy crossed along the route. Friendly pieces stop it.</p>
+          <p>Move up to 3 squares in any straight or diagonal direction and capture every enemy crossed. A cross may never enter either of its own diamonds’ forcefields. It may cross an enemy diamond’s field only to land on and destroy that diamond.</p>
+        </article>
+        <article class="rule-card forcefield-rule">
+          <div class="rule-head"><span class="rule-icon">◇</span><strong>Diamond forcefield</strong></div>
+          <p>A diamond moves 1 square in any direction to an empty square. Its 8 surrounding squares form a forcefield: enemy pieces cannot enter, capture into, or pass through them. The diamond cannot move if its new field would contain any enemy or its own cross. Only a square, a cross, or a far-edge circle blast can destroy it.</p>
         </article>
       </div>
-      <div class="rule-note"><strong>Check rules:</strong> you may not finish a move with your own cross threatened. Checkmate wins. Stalemate, a threefold repetition, or 60 consecutive player moves without a capture ends the game in a draw.</div>
+      <div class="rule-note"><strong>Check and forcefields:</strong> you may not finish a move with your own cross threatened. Forcefield squares block enemy movement and attacks. Checkmate wins. Stalemate, a threefold repetition, or 60 consecutive player moves without a capture ends the game in a draw.</div>
       <div class="modal-actions">
         <button class="primary-button" id="closeHelpButton" type="button">Start match</button>
       </div>
@@ -923,7 +969,6 @@
 
       var SIZE = 9;
       var NO_CAPTURE_LIMIT = 60;
-      var VALID_SIZES = [7, 9];
       var DIRS = [
         { dr: -1, dc: 0, name: "up" },
         { dr: 0, dc: 1, name: "right" },
@@ -935,10 +980,7 @@
         { dr: -1, dc: -1 }, { dr: -1, dc: 1 }, { dr: 1, dc: -1 }, { dr: 1, dc: 1 }
       ];
       var TYPE_NAMES = { circle: "Circle", diamond: "Diamond", square: "Square", triangle: "Triangle", cross: "Cross" };
-      var BACK_ROWS = {
-        7: ["square", "triangle", null, "cross", null, "triangle", "square"],
-        9: ["square", null, "triangle", null, "cross", null, "triangle", null, "square"]
-      };
+      var BACK_ROW = ["diamond", "square", "triangle", null, "cross", null, "triangle", "square", "diamond"];
 
       var boardEl = document.getElementById("board");
       var boardShell = document.getElementById("boardShell");
@@ -958,9 +1000,6 @@
       var resetButton = document.getElementById("resetButton");
       var helpButton = document.getElementById("helpButton");
       var soundButton = document.getElementById("soundButton");
-      var setupOverlay = document.getElementById("setupOverlay");
-      var sizeOptions = document.getElementById("sizeOptions");
-      var sizeButtons = sizeOptions.querySelectorAll("[data-size]");
       var helpOverlay = document.getElementById("helpOverlay");
       var closeHelpButton = document.getElementById("closeHelpButton");
       var directionOverlay = document.getElementById("directionOverlay");
@@ -983,7 +1022,7 @@
       var toastTimer = 0;
       var audioContext = null;
       var soundOn = safeGet("shape-siege-sound") !== "off";
-      var pendingIntro = false;
+      var pendingAnnihilationMoves = [];
       var layoutRefreshFrame = 0;
 
       function safeGet(key) {
@@ -999,6 +1038,51 @@
       function inBounds(r, c) { return r >= 0 && r < SIZE && c >= 0 && c < SIZE; }
       function otherPlayer(player) { return player === 1 ? 2 : 1; }
       function mod4(value) { return (value % 4 + 4) % 4; }
+
+      function isAdjacent(r1, c1, r2, c2) {
+        return Math.max(Math.abs(r1 - r2), Math.abs(c1 - c2)) === 1;
+      }
+
+      function isForcefieldSquare(gameState, owner, r, c, ignoredDiamondId) {
+        var i;
+        var piece;
+        for (i = 0; i < gameState.pieces.length; i += 1) {
+          piece = gameState.pieces[i];
+          if (
+            piece.alive && piece.player === owner && piece.type === "diamond" &&
+            piece.id !== ignoredDiamondId && isAdjacent(piece.r, piece.c, r, c)
+          ) { return true; }
+        }
+        return false;
+      }
+
+      function isEnemyForcefield(gameState, player, r, c, ignoredDiamondId) {
+        return isForcefieldSquare(gameState, otherPlayer(player), r, c, ignoredDiamondId);
+      }
+
+      function isOwnForcefield(gameState, player, r, c) {
+        return isForcefieldSquare(gameState, player, r, c, null);
+      }
+
+      function crossFieldBlocked(gameState, player, r, c, ignoredEnemyDiamondId) {
+        return isOwnForcefield(gameState, player, r, c) ||
+          isEnemyForcefield(gameState, player, r, c, ignoredEnemyDiamondId);
+      }
+
+      function diamondCanCreateField(gameState, diamond, r, c) {
+        var i;
+        var piece;
+        if (pieceAt(gameState, r, c)) { return false; }
+        if (isEnemyForcefield(gameState, diamond.player, r, c, null)) { return false; }
+        for (i = 0; i < gameState.pieces.length; i += 1) {
+          piece = gameState.pieces[i];
+          if (!piece.alive || piece.id === diamond.id) { continue; }
+          if (isAdjacent(r, c, piece.r, piece.c)) {
+            if (piece.player !== diamond.player || piece.type === "cross") { return false; }
+          }
+        }
+        return true;
+      }
 
       function clonePieces(pieces) {
         return pieces.map(function (piece) {
@@ -1058,16 +1142,15 @@
       function createInitialState() {
         var pieces = [];
         var idCounter = { value: 1 };
-        var backRow = BACK_ROWS[SIZE];
         var c;
         for (c = 0; c < SIZE; c += 1) {
-          if (backRow[c]) {
-            addPiece(pieces, backRow[c], 2, 0, c, backRow[c] === "triangle" ? 2 : 0, idCounter);
+          if (BACK_ROW[c]) {
+            addPiece(pieces, BACK_ROW[c], 2, 0, c, BACK_ROW[c] === "triangle" ? 2 : 0, idCounter);
           }
           addPiece(pieces, "circle", 2, 1, c, 2, idCounter);
           addPiece(pieces, "circle", 1, SIZE - 2, c, 0, idCounter);
-          if (backRow[c]) {
-            addPiece(pieces, backRow[c], 1, SIZE - 1, c, backRow[c] === "triangle" ? 0 : 0, idCounter);
+          if (BACK_ROW[c]) {
+            addPiece(pieces, BACK_ROW[c], 1, SIZE - 1, c, BACK_ROW[c] === "triangle" ? 0 : 0, idCounter);
           }
         }
         return {
@@ -1107,6 +1190,43 @@
         return move;
       }
 
+      function addCircleArrivalMoves(gameState, piece, baseMove, moves) {
+        var targets = [];
+        var i;
+        var candidate;
+        var arrivalKey = piece.id + ":" + baseMove.toR + ":" + baseMove.toC + ":" + baseMove.captures.join(",");
+        for (i = 0; i < gameState.pieces.length; i += 1) {
+          candidate = gameState.pieces[i];
+          if (
+            candidate.alive && candidate.player !== piece.player && candidate.type !== "cross" &&
+            baseMove.captures.indexOf(candidate.id) === -1
+          ) { targets.push(candidate); }
+        }
+        for (i = 0; i < targets.length; i += 1) {
+          moves.push(moveObject(piece, baseMove.toR, baseMove.toC, baseMove.captures.concat([targets[i].id]), {
+            distance: baseMove.distance,
+            arrivalKey: arrivalKey,
+            edgeBlast: true,
+            destroyTargetId: targets[i].id,
+            selfDestruct: true
+          }));
+        }
+        moves.push(moveObject(piece, baseMove.toR, baseMove.toC, baseMove.captures.slice(), {
+          distance: baseMove.distance,
+          arrivalKey: arrivalKey,
+          edgeFallback: true
+        }));
+      }
+
+      function addCircleMove(gameState, piece, moves, toR, toC, captures, extra) {
+        var move = moveObject(piece, toR, toC, captures, extra);
+        if ((piece.player === 1 && toR === 0) || (piece.player === 2 && toR === SIZE - 1)) {
+          addCircleArrivalMoves(gameState, piece, move, moves);
+        } else {
+          moves.push(move);
+        }
+      }
+
       function generateCircleMoves(gameState, piece) {
         var moves = [];
         var steps = [-1, 1];
@@ -1121,18 +1241,19 @@
           for (distance = 1; distance <= 2; distance += 1) {
             r = piece.r + steps[s] * distance;
             if (!inBounds(r, piece.c)) { break; }
+            if (isEnemyForcefield(gameState, piece.player, r, piece.c, null)) { break; }
             occupant = pieceAt(gameState, r, piece.c);
             if (occupant) { break; }
-            moves.push(moveObject(piece, r, piece.c, [], { distance: distance }));
+            addCircleMove(gameState, piece, moves, r, piece.c, [], { distance: distance });
           }
         }
 
         for (dc = -1; dc <= 1; dc += 2) {
           r = piece.r + forward;
-          if (inBounds(r, piece.c + dc)) {
+          if (inBounds(r, piece.c + dc) && !isEnemyForcefield(gameState, piece.player, r, piece.c + dc, null)) {
             occupant = pieceAt(gameState, r, piece.c + dc);
-            if (occupant && occupant.player !== piece.player) {
-              moves.push(moveObject(piece, r, piece.c + dc, [occupant.id], { distance: 1 }));
+            if (occupant && occupant.player !== piece.player && occupant.type !== "diamond") {
+              addCircleMove(gameState, piece, moves, r, piece.c + dc, [occupant.id], { distance: 1 });
             }
           }
         }
@@ -1140,22 +1261,15 @@
       }
 
       function generateDiamondMoves(gameState, piece) {
-        var moves = generateCircleMoves(gameState, piece);
-        var steps = [-1, 1];
-        var s;
-        var distance;
+        var moves = [];
+        var d;
+        var r;
         var c;
-        var occupant;
-        for (s = 0; s < steps.length; s += 1) {
-          for (distance = 1; distance <= 2; distance += 1) {
-            c = piece.c + steps[s] * distance;
-            if (!inBounds(piece.r, c)) { break; }
-            occupant = pieceAt(gameState, piece.r, c);
-            if (occupant) { break; }
-            moves.push(moveObject(piece, piece.r, c, [], {
-              distance: distance,
-              sideways: true
-            }));
+        for (d = 0; d < ALL_DIRS.length; d += 1) {
+          r = piece.r + ALL_DIRS[d].dr;
+          c = piece.c + ALL_DIRS[d].dc;
+          if (inBounds(r, c) && diamondCanCreateField(gameState, piece, r, c)) {
+            moves.push(moveObject(piece, r, c, [], { distance: 1, kind: "diamond" }));
           }
         }
         return moves;
@@ -1172,7 +1286,10 @@
         var finalC = landingC;
         var captures = [];
 
-        if (occupant && occupant.player !== piece.player) {
+        if (
+          occupant && occupant.player !== piece.player && occupant.type !== "diamond" &&
+          !isEnemyForcefield(gameState, piece.player, targetR, targetC, null)
+        ) {
           finalR = targetR;
           finalC = targetC;
           captures.push(occupant.id);
@@ -1200,6 +1317,7 @@
         var distance;
         var r;
         var c;
+        var facingOccupant;
 
         addTriangleOption(gameState, piece, moves, piece.r, piece.c, 0, 0, -1);
         addTriangleOption(gameState, piece, moves, piece.r, piece.c, 0, 0, 1);
@@ -1207,9 +1325,9 @@
         dir = DIRS[piece.facing];
         r = piece.r + dir.dr;
         c = piece.c + dir.dc;
-        if (inBounds(r, c)) {
-          var facingOccupant = pieceAt(gameState, r, c);
-          if (facingOccupant && facingOccupant.player !== piece.player) {
+        if (inBounds(r, c) && !isEnemyForcefield(gameState, piece.player, r, c, null)) {
+          facingOccupant = pieceAt(gameState, r, c);
+          if (facingOccupant && facingOccupant.player !== piece.player && facingOccupant.type !== "diamond") {
             addTriangleOption(gameState, piece, moves, piece.r, piece.c, 0, 0, 0);
           }
         }
@@ -1219,18 +1337,9 @@
         for (distance = 1; distance <= 2; distance += 1) {
           r = piece.r + dir.dr * distance;
           c = piece.c + dir.dc * distance;
-          if (!inBounds(r, c) || pieceAt(gameState, r, c)) { break; }
+          if (!inBounds(r, c) || isEnemyForcefield(gameState, piece.player, r, c, null) || pieceAt(gameState, r, c)) { break; }
           for (postIndex = 0; postIndex < postTurns.length; postIndex += 1) {
-            addTriangleOption(
-              gameState,
-              piece,
-              moves,
-              r,
-              c,
-              distance,
-              0,
-              postTurns[postIndex]
-            );
+            addTriangleOption(gameState, piece, moves, r, c, distance, 0, postTurns[postIndex]);
           }
         }
 
@@ -1240,17 +1349,51 @@
           for (distance = 1; distance <= 2; distance += 1) {
             r = piece.r + dir.dr * distance;
             c = piece.c + dir.dc * distance;
-            if (!inBounds(r, c) || pieceAt(gameState, r, c)) { break; }
-            addTriangleOption(
-              gameState,
-              piece,
-              moves,
-              r,
-              c,
-              distance,
-              preTurn,
-              0
-            );
+            if (!inBounds(r, c) || isEnemyForcefield(gameState, piece.player, r, c, null) || pieceAt(gameState, r, c)) { break; }
+            addTriangleOption(gameState, piece, moves, r, c, distance, preTurn, 0);
+          }
+        }
+        return moves;
+      }
+
+      function specialSquareDiamondCaptures(gameState, piece) {
+        var moves = [];
+        var i;
+        var target;
+        var dr;
+        var dc;
+        var stepR;
+        var stepC;
+        var distance;
+        var r;
+        var c;
+        var occupant;
+        var jumped;
+        var blocked;
+        for (i = 0; i < gameState.pieces.length; i += 1) {
+          target = gameState.pieces[i];
+          if (!target.alive || target.player === piece.player || target.type !== "diamond") { continue; }
+          if (target.r !== piece.r && target.c !== piece.c) { continue; }
+          dr = target.r === piece.r ? 0 : (target.r > piece.r ? 1 : -1);
+          dc = target.c === piece.c ? 0 : (target.c > piece.c ? 1 : -1);
+          distance = Math.max(Math.abs(target.r - piece.r), Math.abs(target.c - piece.c));
+          jumped = false;
+          blocked = false;
+          for (stepR = 1; stepR < distance; stepR += 1) {
+            r = piece.r + dr * stepR;
+            c = piece.c + dc * stepR;
+            if (isEnemyForcefield(gameState, piece.player, r, c, target.id)) { blocked = true; break; }
+            occupant = pieceAt(gameState, r, c);
+            if (!occupant) { continue; }
+            if (occupant.player === piece.player || occupant.type === "cross" || jumped) { blocked = true; break; }
+            jumped = true;
+          }
+          if (!blocked) {
+            moves.push(moveObject(piece, target.r, target.c, [target.id], {
+              distance: distance,
+              jumped: jumped,
+              diamondCapture: true
+            }));
           }
         }
         return moves;
@@ -1272,27 +1415,68 @@
             r = piece.r + orthogonal[d].dr * distance;
             c = piece.c + orthogonal[d].dc * distance;
             if (!inBounds(r, c)) { break; }
+            if (isEnemyForcefield(gameState, piece.player, r, c, null)) { break; }
             occupant = pieceAt(gameState, r, c);
 
             if (!occupant) {
               moves.push(moveObject(piece, r, c, [], { distance: distance, jumped: jumped }));
               continue;
             }
-
-            if (occupant.player === piece.player) { break; }
-
-            // A cross may only be checked or captured along a completely clear line.
-            // Once this square has jumped an enemy, the cross blocks the route and
-            // is not a legal capture target.
+            if (occupant.player === piece.player || occupant.type === "diamond") { break; }
             if (occupant.type === "cross" && jumped) { break; }
-
             moves.push(moveObject(piece, r, c, [occupant.id], { distance: distance, jumped: jumped }));
-
             if (!jumped && occupant.type !== "cross") {
               jumped = true;
               continue;
             }
             break;
+          }
+        }
+        return moves.concat(specialSquareDiamondCaptures(gameState, piece));
+      }
+
+      function specialCrossDiamondCaptures(gameState, piece) {
+        var moves = [];
+        var i;
+        var target;
+        var dr;
+        var dc;
+        var distance;
+        var step;
+        var r;
+        var c;
+        var occupant;
+        var captures;
+        var blocked;
+        for (i = 0; i < gameState.pieces.length; i += 1) {
+          target = gameState.pieces[i];
+          if (!target.alive || target.player === piece.player || target.type !== "diamond") { continue; }
+          dr = target.r - piece.r;
+          dc = target.c - piece.c;
+          distance = Math.max(Math.abs(dr), Math.abs(dc));
+          if (distance < 1 || distance > 3) { continue; }
+          if (!(dr === 0 || dc === 0 || Math.abs(dr) === Math.abs(dc))) { continue; }
+          dr = dr === 0 ? 0 : (dr > 0 ? 1 : -1);
+          dc = dc === 0 ? 0 : (dc > 0 ? 1 : -1);
+          captures = [];
+          blocked = false;
+          for (step = 1; step < distance; step += 1) {
+            r = piece.r + dr * step;
+            c = piece.c + dc * step;
+            if (isOwnForcefield(gameState, piece.player, r, c) || isEnemyForcefield(gameState, piece.player, r, c, target.id)) {
+              blocked = true; break;
+            }
+            occupant = pieceAt(gameState, r, c);
+            if (!occupant) { continue; }
+            if (occupant.player === piece.player || occupant.type === "cross") { blocked = true; break; }
+            captures.push(occupant.id);
+          }
+          if (!blocked) {
+            captures.push(target.id);
+            moves.push(moveObject(piece, target.r, target.c, captures, {
+              distance: distance,
+              diamondCapture: true
+            }));
           }
         }
         return moves;
@@ -1312,17 +1496,16 @@
           for (distance = 1; distance <= 3; distance += 1) {
             r = piece.r + ALL_DIRS[d].dr * distance;
             c = piece.c + ALL_DIRS[d].dc * distance;
-            if (!inBounds(r, c)) { break; }
+            if (!inBounds(r, c) || crossFieldBlocked(gameState, piece.player, r, c, null)) { break; }
             occupant = pieceAt(gameState, r, c);
             if (occupant && occupant.player === piece.player) { break; }
-            if (occupant && occupant.player !== piece.player) {
-              captures.push(occupant.id);
-            }
+            if (occupant && occupant.type === "diamond") { break; }
+            if (occupant && occupant.player !== piece.player) { captures.push(occupant.id); }
             moves.push(moveObject(piece, r, c, captures.slice(), { distance: distance }));
             if (occupant && occupant.type === "cross") { break; }
           }
         }
-        return moves;
+        return moves.concat(specialCrossDiamondCaptures(gameState, piece));
       }
 
       function generatePseudoMovesForPiece(gameState, piece) {
@@ -1361,12 +1544,7 @@
         piece.r = move.toR;
         piece.c = move.toC;
         piece.facing = move.newFacing;
-        if (
-          piece.type === "circle" &&
-          ((piece.player === 1 && piece.r === 0) || (piece.player === 2 && piece.r === SIZE - 1))
-        ) {
-          piece.type = "diamond";
-        }
+        if (move.selfDestruct) { piece.alive = false; }
       }
 
       function isSquareAttacked(gameState, r, c, byPlayer) {
@@ -1394,6 +1572,7 @@
       function legalMovesForPiece(gameState, piece) {
         var pseudo = generatePseudoMovesForPiece(gameState, piece);
         var legal = [];
+        var legalBlastArrivals = {};
         var i;
         var next;
         var ownCross;
@@ -1402,9 +1581,12 @@
           ownCross = crossFor(next, piece.player);
           if (ownCross && !isSquareAttacked(next, ownCross.r, ownCross.c, otherPlayer(piece.player))) {
             legal.push(pseudo[i]);
+            if (pseudo[i].edgeBlast) { legalBlastArrivals[pseudo[i].arrivalKey] = true; }
           }
         }
-        return legal;
+        return legal.filter(function (move) {
+          return !(move.edgeFallback && legalBlastArrivals[move.arrivalKey]);
+        });
       }
 
       function allLegalMoves(gameState, player) {
@@ -1477,11 +1659,19 @@
         return '<span class="' + classes + '"><span class="glyph ' + glyph + '"></span></span>';
       }
 
-      function moveForDestination(r, c) {
+      function movesForDestination(r, c) {
+        return selectedMoves.filter(function (move) {
+          return move.type !== "triangle" && move.toR === r && move.toC === c;
+        });
+      }
+
+      function pendingAnnihilationTargetAt(r, c) {
+        var piece = pieceAt(state, r, c);
         var i;
-        for (i = 0; i < selectedMoves.length; i += 1) {
-          if (selectedMoves[i].type !== "triangle" && selectedMoves[i].toR === r && selectedMoves[i].toC === c) {
-            return selectedMoves[i];
+        if (!piece) { return null; }
+        for (i = 0; i < pendingAnnihilationMoves.length; i += 1) {
+          if (pendingAnnihilationMoves[i].destroyTargetId === piece.id) {
+            return pendingAnnihilationMoves[i];
           }
         }
         return null;
@@ -1518,14 +1708,23 @@
         var currentCheck = isInCheck(state, state.currentPlayer);
         var selected = selectedPiece();
         var i;
+        var moves;
         var move;
         var landingMoves;
         var threatenedTargets = {};
+        var annihilationTargets = {};
+        var annihilationDestination = null;
 
         if (selected && selected.type === "triangle") {
           for (i = 0; i < selectedMoves.length; i += 1) {
             move = selectedMoves[i];
             if (move.captures.length) { threatenedTargets[move.toR + ":" + move.toC] = true; }
+          }
+        }
+        if (pendingAnnihilationMoves.length) {
+          annihilationDestination = pendingAnnihilationMoves[0].toR + ":" + pendingAnnihilationMoves[0].toC;
+          for (i = 0; i < pendingAnnihilationMoves.length; i += 1) {
+            annihilationTargets[pendingAnnihilationMoves[i].destroyTargetId] = true;
           }
         }
 
@@ -1534,25 +1733,34 @@
             cell = cellEls[r][c];
             cell.className = "cell" + ((r + c) % 2 ? " alt" : "");
             cell.innerHTML = "";
+            if (isForcefieldSquare(state, 1, r, c, null)) { cell.classList.add("forcefield-p1"); }
+            if (isForcefieldSquare(state, 2, r, c, null)) { cell.classList.add("forcefield-p2"); }
             piece = pieceAt(state, r, c);
             label = "Row " + (r + 1) + ", column " + (c + 1);
             if (piece) {
               label += ", Player " + piece.player + " " + TYPE_NAMES[piece.type];
-              if (piece.type === "diamond") { label += ", promoted from a circle"; }
+              if (piece.type === "diamond") { label += ", forcefield generator"; }
               cell.innerHTML = pieceMarkup(piece, currentCheck && piece.player === state.currentPlayer && piece.type === "cross");
             } else {
               label += ", empty";
             }
+            if (isForcefieldSquare(state, 1, r, c, null)) { label += ", inside Player 1 forcefield"; }
+            if (isForcefieldSquare(state, 2, r, c, null)) { label += ", inside Player 2 forcefield"; }
             if (selected && selected.r === r && selected.c === c) { cell.classList.add("selected"); }
 
-            if (selected) {
+            if (pendingAnnihilationMoves.length) {
+              if (annihilationDestination === r + ":" + c) { cell.classList.add("annihilation-destination"); }
+              if (piece && annihilationTargets[piece.id]) { cell.classList.add("annihilate-target"); }
+            } else if (selected) {
               if (selected.type === "triangle") {
                 landingMoves = triangleLandingMoves(r, c);
                 if (landingMoves.length) { cell.classList.add("triangle-target"); }
                 if (threatenedTargets[r + ":" + c]) { cell.classList.add("capture"); }
               } else {
-                move = moveForDestination(r, c);
-                if (move) { cell.classList.add(move.captures.length ? "capture" : "legal"); }
+                moves = movesForDestination(r, c);
+                if (moves.length) {
+                  cell.classList.add(moves.some(function (candidate) { return candidate.captures.length; }) ? "capture" : "legal");
+                }
               }
             }
 
@@ -1613,6 +1821,11 @@
         for (i = 0; i < oldDynamic.length; i += 1) { oldDynamic[i].remove(); }
         clearButton.hidden = !piece;
 
+        if (pendingAnnihilationMoves.length) {
+          actionTitle.textContent = "Choose an enemy piece to destroy";
+          actionSub.textContent = "The highlighted enemy and your arriving circle will both disappear.";
+          return;
+        }
         if (!piece) {
           actionTitle.textContent = "Select one of your pieces";
           actionSub.textContent = "No-capture draw: " + state.halfmoveClock + "/" + NO_CAPTURE_LIMIT + " moves";
@@ -1621,15 +1834,16 @@
 
         actionTitle.textContent = TYPE_NAMES[piece.type] + " selected · " + selectedMoves.length + " legal " + (selectedMoves.length === 1 ? "move" : "moves");
         if (piece.type !== "triangle") {
-          if (piece.type === "diamond" && selectedMoves.length) {
-            actionSub.textContent = "Diamond: move forward, backward, or sideways. Capture only diagonally forward.";
+          if (piece.type === "diamond") {
+            actionSub.textContent = selectedMoves.length ? "Move 1 square. The new forcefield may not contain an enemy or your cross." : "No legal forcefield position keeps your cross safe.";
+          } else if (piece.type === "circle") {
+            actionSub.textContent = "Reach the far edge to trade this circle for any enemy except the cross.";
           } else {
             actionSub.textContent = selectedMoves.length ? "Tap a highlighted square to move." : "This piece has no legal move while your cross stays safe.";
           }
           return;
         }
-
-        actionSub.textContent = "Turn once: turn before moving, or move straight and choose a final turn afterward. Tap a highlighted adjacent enemy to capture it immediately.";
+        actionSub.textContent = "Turn once: before moving, or after moving straight. Diamonds cannot be captured by triangles.";
       }
 
       function render() {
@@ -1660,6 +1874,7 @@
 
       function selectPiece(piece) {
         if (!piece || !piece.alive || piece.player !== state.currentPlayer || state.gameOver) { return; }
+        pendingAnnihilationMoves = [];
         selectedId = piece.id;
         selectedMoves = legalMovesForPiece(state, piece);
         playTone(420, 0.035, "sine", 0.035);
@@ -1668,8 +1883,25 @@
 
       function clearSelection() {
         closeDirectionPicker();
+        pendingAnnihilationMoves = [];
         selectedId = null;
         selectedMoves = [];
+        render();
+      }
+
+      function cancelPendingAction() {
+        if (pendingAnnihilationMoves.length) {
+          pendingAnnihilationMoves = [];
+          render();
+        } else {
+          clearSelection();
+        }
+      }
+
+      function openAnnihilationPicker(moves) {
+        pendingAnnihilationMoves = moves.slice();
+        playTone(510, 0.07, "triangle", 0.045);
+        showToast("Choose an enemy piece. Both it and your circle will disappear.");
         render();
       }
 
@@ -1679,47 +1911,48 @@
         var piece = pieceAt(state, r, c);
         var selected = selectedPiece();
         var move;
+        var moves;
+        var blastMoves;
         var landingMoves;
         ensureAudio();
         if (state.gameOver || directionOverlay.classList.contains("open")) { return; }
 
+        if (pendingAnnihilationMoves.length) {
+          move = pendingAnnihilationTargetAt(r, c);
+          if (move) { commitMove(move); }
+          else { showToast("Choose one of the highlighted enemy pieces, or tap Cancel."); }
+          return;
+        }
+
         if (selected) {
           if (selected.type === "triangle") {
             move = triangleImmediateCaptureAt(r, c);
-            if (move) {
-              commitMove(move);
-              return;
-            }
+            if (move) { commitMove(move); return; }
             if (selected.r === r && selected.c === c) {
               landingMoves = selectedMoves.filter(function (candidate) {
                 return candidate.type === "triangle" && candidate.distance === 0;
               });
-              if (landingMoves.length) {
-                openDirectionPicker(landingMoves);
-                return;
-              }
+              if (landingMoves.length) { openDirectionPicker(landingMoves); return; }
             }
             landingMoves = triangleLandingMoves(r, c);
             if (landingMoves.length) {
-              if (landingMoves.length === 1 && landingMoves[0].preTurn !== 0) {
-                commitMove(landingMoves[0]);
-              } else {
-                openDirectionPicker(landingMoves);
-              }
+              if (landingMoves.length === 1 && landingMoves[0].preTurn !== 0) { commitMove(landingMoves[0]); }
+              else { openDirectionPicker(landingMoves); }
               return;
             }
           } else {
-            move = moveForDestination(r, c);
-            if (move) {
-              commitMove(move);
+            moves = movesForDestination(r, c);
+            if (moves.length) {
+              blastMoves = moves.filter(function (candidate) { return candidate.edgeBlast; });
+              if (blastMoves.length) { openAnnihilationPicker(blastMoves); }
+              else { commitMove(moves[0]); }
               return;
             }
           }
         }
 
-        if (piece && piece.player === state.currentPlayer) {
-          selectPiece(piece);
-        } else {
+        if (piece && piece.player === state.currentPlayer) { selectPiece(piece); }
+        else {
           selectedId = null;
           selectedMoves = [];
           render();
@@ -1816,6 +2049,7 @@
           if (capturedPiece && capturedPiece.type === "cross") { capturedCross = true; }
         }
 
+        if (move.selfDestruct) { captureSquares.push({ r: move.toR, c: move.toC, player: mover }); }
         applyMoveMutable(state, move);
         state.moveNumber += 1;
         state.halfmoveClock = move.captures.length ? 0 : state.halfmoveClock + 1;
@@ -1823,6 +2057,7 @@
         lastCapturedSquares = captureSquares;
         selectedId = null;
         selectedMoves = [];
+        pendingAnnihilationMoves = [];
         closeDirectionPicker();
 
         if (move.captures.length) {
@@ -1883,21 +2118,16 @@
         window.setTimeout(function () { endOverlay.classList.add("open"); }, 420);
       }
 
-      function isValidSize(value) {
-        return VALID_SIZES.indexOf(Number(value)) !== -1;
-      }
-
-      function newGame(boardSize, showIntro, silent) {
-        SIZE = isValidSize(boardSize) ? Number(boardSize) : 9;
-        safeSet("shape-siege-board-size", String(SIZE));
+      function newGame(showIntro, silent) {
+        SIZE = 9;
         createCells();
         boardEl.appendChild(directionOverlay);
         state = createInitialState();
         selectedId = null;
         selectedMoves = [];
+        pendingAnnihilationMoves = [];
         lastMovePieceId = null;
         lastCapturedSquares = [];
-        setupOverlay.classList.remove("open");
         endOverlay.classList.remove("open");
         closeDirectionPicker();
         state.positionCounts[positionKey(state)] = 1;
@@ -1905,23 +2135,8 @@
         refreshInitialLayout();
         window.setTimeout(refreshInitialLayout, 90);
         window.setTimeout(refreshInitialLayout, 280);
-        if (!silent) { showToast("Player " + state.currentPlayer + " moves first on " + SIZE + "×" + SIZE); }
+        if (!silent) { showToast("Player " + state.currentPlayer + " moves first on 9×9"); }
         if (showIntro) { helpOverlay.classList.add("open"); }
-      }
-
-      function openSetup(showIntro) {
-        pendingIntro = Boolean(showIntro);
-        endOverlay.classList.remove("open");
-        helpOverlay.classList.remove("open");
-        closeDirectionPicker();
-        sizeButtons.forEach(function (button) {
-          button.classList.toggle("selected", Number(button.getAttribute("data-size")) === SIZE);
-        });
-        setupOverlay.classList.add("open");
-      }
-
-      function chooseBoardSize(size) {
-        newGame(size, pendingIntro, false);
       }
 
       function showToast(message) {
@@ -2009,15 +2224,10 @@
         render();
       }
 
-      clearButton.addEventListener("click", clearSelection);
-      newMatchButton.addEventListener("click", function () { openSetup(false); });
-      resetButton.addEventListener("click", function () { openSetup(false); });
-      playAgainButton.addEventListener("click", function () { openSetup(false); });
-      sizeButtons.forEach(function (button) {
-        button.addEventListener("click", function () {
-          chooseBoardSize(Number(button.getAttribute("data-size")));
-        });
-      });
+      clearButton.addEventListener("click", cancelPendingAction);
+      newMatchButton.addEventListener("click", function () { newGame(false, false); });
+      resetButton.addEventListener("click", function () { newGame(false, false); });
+      playAgainButton.addEventListener("click", function () { newGame(false, false); });
       helpButton.addEventListener("click", function () { helpOverlay.classList.add("open"); });
       closeHelpButton.addEventListener("click", function () {
         helpOverlay.classList.remove("open");
@@ -2031,16 +2241,13 @@
 
       document.addEventListener("keydown", function (event) {
         if (event.key === "Escape") {
-          if (setupOverlay.classList.contains("open")) { return; }
           if (directionOverlay.classList.contains("open")) { closeDirectionPicker(); }
           else if (helpOverlay.classList.contains("open")) { helpOverlay.classList.remove("open"); }
-          else if (selectedId) { clearSelection(); }
+          else if (pendingAnnihilationMoves.length || selectedId) { cancelPendingAction(); }
         }
       });
 
-      SIZE = isValidSize(safeGet("shape-siege-board-size")) ? Number(safeGet("shape-siege-board-size")) : 9;
-      newGame(SIZE, false, true);
-      openSetup(safeGet("shape-siege-seen-rules") !== "yes");
+      newGame(safeGet("shape-siege-seen-rules") !== "yes", true);
       refreshInitialLayout();
       window.setTimeout(refreshInitialLayout, 120);
       window.setTimeout(refreshInitialLayout, 360);
