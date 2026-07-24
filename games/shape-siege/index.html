@@ -421,7 +421,7 @@
     .action-sub { margin-top: 1px; color: var(--muted); font-size: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .action-buttons { display: flex; gap: 5px; flex: 0 0 auto; }
 
-    .small-button, .primary-button, .sheet-button {
+    .small-button, .primary-button {
       min-height: 34px;
       border: 1px solid rgba(151,174,219,0.17);
       border-radius: 11px;
@@ -436,7 +436,7 @@
       background: rgba(255,255,255,0.055);
       font-size: 10px;
     }
-    .small-button:active, .primary-button:active, .sheet-button:active { transform: translateY(1px) scale(0.98); }
+    .small-button:active, .primary-button:active { transform: translateY(1px) scale(0.98); }
     .small-button.capture-action { color: #ffd8dc; border-color: rgba(255,95,109,0.36); background: rgba(255,95,109,0.12); }
 
     .primary-button {
@@ -519,24 +519,97 @@
 
     .modal-actions { display: flex; justify-content: flex-end; gap: 7px; }
 
-    .direction-modal { width: min(100%, 430px); }
-    .direction-title { margin-bottom: 13px; }
-    .direction-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 7px; }
-    .sheet-button {
-      min-height: 82px;
-      padding: 8px 4px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 5px;
-      color: #dce8f8;
-      background: rgba(255,255,255,0.045);
-      font-size: 10px;
+    .board.direction-picking .cell {
+      filter: brightness(0.52) saturate(0.72);
+      transition: filter 150ms ease, transform 110ms ease, box-shadow 130ms ease;
     }
-    .sheet-button .arrow { font-size: 28px; line-height: 1; color: var(--gold); }
-    .sheet-button.capture-action { border-color: rgba(255,95,109,0.36); background: rgba(255,95,109,0.1); }
-    .sheet-button.capture-action .arrow { color: #ff9aa4; }
+
+    .board.direction-picking .cell.direction-anchor {
+      z-index: 8;
+      filter: none;
+      box-shadow: inset 0 0 0 2px var(--gold), 0 0 20px rgba(255,209,102,0.42);
+    }
+
+    .direction-picker {
+      --choice-size: clamp(31px, 10vw, 44px);
+      position: absolute;
+      z-index: 20;
+      left: 50%;
+      top: 50%;
+      display: none;
+      padding: 4px;
+      border: 1px solid rgba(224,233,247,0.28);
+      border-radius: 13px;
+      background: rgba(58, 65, 79, 0.93);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 12px 28px rgba(0,0,0,0.48);
+      transform: translate(-50%, -50%);
+      transform-origin: 50% 50%;
+      backdrop-filter: blur(7px);
+      -webkit-backdrop-filter: blur(7px);
+      touch-action: manipulation;
+    }
+
+    .direction-picker.open {
+      display: block;
+      animation: pickerIn 150ms cubic-bezier(.2,.8,.25,1.15) both;
+    }
+
+    .direction-picker.player-two {
+      transform: translate(-50%, -50%) rotate(180deg);
+    }
+
+    .direction-grid {
+      display: grid;
+      grid-template-columns: repeat(3, var(--choice-size));
+      gap: 3px;
+    }
+
+    .direction-choice {
+      width: var(--choice-size);
+      height: var(--choice-size);
+      padding: 2px;
+      border: 1px solid rgba(239,245,255,0.2);
+      border-radius: 9px;
+      display: grid;
+      place-items: center;
+      align-content: center;
+      gap: 0;
+      color: #f0f4fb;
+      background: linear-gradient(145deg, rgba(215,221,232,0.2), rgba(112,121,139,0.18));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.12);
+      cursor: pointer;
+      transition: transform 100ms ease, filter 100ms ease, border-color 100ms ease;
+    }
+
+    .direction-choice:active { transform: scale(0.93); filter: brightness(1.2); }
+    .direction-choice:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+    .direction-choice .arrow { color: var(--gold); font-size: clamp(17px, 5vw, 23px); line-height: 0.9; }
+    .direction-choice .choice-label { color: #cbd3df; font-size: 6px; font-weight: 900; letter-spacing: 0.04em; text-transform: uppercase; }
+    .direction-choice.capture-action {
+      border-color: rgba(255,95,109,0.5);
+      background: linear-gradient(145deg, rgba(255,95,109,0.3), rgba(103,35,46,0.32));
+    }
+    .direction-choice.capture-action .arrow,
+    .direction-choice.capture-action .choice-label { color: #ffd5da; }
+
+    .direction-cancel {
+      position: absolute;
+      right: -8px;
+      top: -8px;
+      width: 22px;
+      height: 22px;
+      padding: 0;
+      border: 1px solid rgba(239,245,255,0.24);
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: #e7edf6;
+      background: #4b5260;
+      box-shadow: 0 5px 12px rgba(0,0,0,0.35);
+      font-size: 13px;
+      font-weight: 900;
+      cursor: pointer;
+    }
 
     .end-emblem {
       width: 72px;
@@ -606,6 +679,7 @@
     @keyframes crossDanger { from { filter: brightness(1); } to { filter: brightness(1.45) drop-shadow(0 0 6px var(--danger)); } }
     @keyframes checkPulse { from { box-shadow: 0 0 0 1px rgba(255,95,109,0.1), 0 10px 24px rgba(0,0,0,0.17); } to { box-shadow: 0 0 0 2px rgba(255,95,109,0.42), 0 0 28px rgba(255,95,109,0.2); } }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes pickerIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes burst { from { transform: translate(0,0) scale(1); opacity: 1; } to { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; } }
 
     @media (max-width: 390px) {
@@ -652,7 +726,7 @@
       <a class="icon-button" href="../../" aria-label="Back to games">←</a>
       <div class="title-block">
         <p class="eyebrow">Two-player strategy</p>
-        <h1>Shape Siege <span class="version">v1.0.0</span></h1>
+        <h1>Shape Siege <span class="version">v1.0.1</span></h1>
       </div>
       <div class="top-actions">
         <button class="icon-button" id="soundButton" type="button" aria-label="Turn sound off" title="Sound">♪</button>
@@ -712,7 +786,7 @@
         </article>
         <article class="rule-card">
           <div class="rule-head"><span class="rule-icon">△</span><strong>Triangle</strong></div>
-          <p>Move 1 or 2 squares in the direction it points, then keep facing or turn 90° left or right. It may also turn in place. An adjacent enemy in its final direction is captured automatically.</p>
+          <p>Move 1 or 2 squares in the direction it points, then use the small on-board control to keep facing or turn 90° left or right. It may also turn in place. An adjacent enemy in its final direction is captured automatically.</p>
         </article>
         <article class="rule-card">
           <div class="rule-head"><span class="rule-icon">□</span><strong>Square</strong></div>
@@ -730,16 +804,9 @@
     </section>
   </div>
 
-  <div class="overlay" id="directionOverlay" role="dialog" aria-modal="true" aria-labelledby="directionTitle">
-    <section class="modal direction-modal">
-      <div class="modal-kicker">Triangle move</div>
-      <h2 class="direction-title" id="directionTitle">Choose its final direction</h2>
-      <p class="modal-lead">If the triangle points at an adjacent enemy after turning, that capture happens automatically.</p>
-      <div class="direction-grid" id="directionGrid"></div>
-      <div class="modal-actions" style="margin-top:11px">
-        <button class="small-button" id="cancelDirectionButton" type="button">Cancel</button>
-      </div>
-    </section>
+  <div class="direction-picker" id="directionOverlay" role="group" aria-label="Choose the triangle's final direction">
+    <div class="direction-grid" id="directionGrid"></div>
+    <button class="direction-cancel" id="cancelDirectionButton" type="button" aria-label="Cancel direction choice">×</button>
   </div>
 
   <div class="overlay" id="endOverlay" role="dialog" aria-modal="true" aria-labelledby="endTitle">
@@ -1329,8 +1396,6 @@
         var piece = selectedPiece();
         var oldDynamic = actionButtons.querySelectorAll("[data-dynamic='true']");
         var i;
-        var rotateMoves;
-        var button;
         for (i = 0; i < oldDynamic.length; i += 1) { oldDynamic[i].remove(); }
         clearButton.hidden = !piece;
 
@@ -1346,19 +1411,7 @@
           return;
         }
 
-        actionSub.textContent = "Tap a diamond to move, or turn the triangle in place.";
-        rotateMoves = selectedMoves.filter(function (move) { return move.type === "triangle" && move.distance === 0; });
-        rotateMoves.forEach(function (move) {
-          button = document.createElement("button");
-          button.type = "button";
-          button.className = "small-button" + (move.captures.length ? " capture-action" : "");
-          button.setAttribute("data-dynamic", "true");
-          button.textContent = move.turn === -1 ? "↶" : "↷";
-          button.setAttribute("aria-label", turnLabel(move.turn) + (move.captures.length ? " and capture" : ""));
-          button.title = turnLabel(move.turn) + (move.captures.length ? " · capture" : "");
-          button.addEventListener("click", function () { commitMove(move); });
-          actionButtons.insertBefore(button, clearButton);
-        });
+        actionSub.textContent = "Tap a diamond to move, or tap the triangle again to turn in place.";
       }
 
       function render() {
@@ -1379,6 +1432,7 @@
       }
 
       function clearSelection() {
+        closeDirectionPicker();
         selectedId = null;
         selectedMoves = [];
         render();
@@ -1396,6 +1450,15 @@
 
         if (selected) {
           if (selected.type === "triangle") {
+            if (selected.r === r && selected.c === c) {
+              landingMoves = selectedMoves.filter(function (candidate) {
+                return candidate.type === "triangle" && candidate.distance === 0;
+              });
+              if (landingMoves.length) {
+                openDirectionPicker(landingMoves);
+                return;
+              }
+            }
             landingMoves = triangleLandingMoves(r, c);
             if (landingMoves.length) {
               openDirectionPicker(landingMoves);
@@ -1419,35 +1482,72 @@
         }
       }
 
+      function clamp(value, minimum, maximum) {
+        return Math.max(minimum, Math.min(maximum, value));
+      }
+
+      function positionDirectionPicker(move) {
+        var boardRect = boardEl.getBoundingClientRect();
+        var cellRect = cellEls[move.landingR][move.landingC].getBoundingClientRect();
+        var pickerRect;
+        var x = cellRect.left - boardRect.left + cellRect.width / 2;
+        var y = cellRect.top - boardRect.top + cellRect.height / 2;
+        var towardPlayer = state.currentPlayer === 1 ? 1 : -1;
+
+        y += towardPlayer * cellRect.height * 1.15;
+        directionOverlay.style.left = x + "px";
+        directionOverlay.style.top = y + "px";
+        pickerRect = directionOverlay.getBoundingClientRect();
+        x = clamp(x, pickerRect.width / 2 + 5, boardRect.width - pickerRect.width / 2 - 5);
+        y = clamp(y, pickerRect.height / 2 + 5, boardRect.height - pickerRect.height / 2 - 5);
+        directionOverlay.style.left = x + "px";
+        directionOverlay.style.top = y + "px";
+      }
+
       function openDirectionPicker(moves) {
         var order = [-1, 0, 1];
+        var anchorMove = moves[0];
         directionGrid.innerHTML = "";
+        directionOverlay.classList.toggle("player-two", state.currentPlayer === 2);
         order.forEach(function (turn) {
           var move = null;
           var i;
           var button;
           var arrow;
-          var detail;
+          var label;
           for (i = 0; i < moves.length; i += 1) {
             if (moves[i].turn === turn) { move = moves[i]; break; }
           }
           if (!move) { return; }
           button = document.createElement("button");
           button.type = "button";
-          button.className = "sheet-button" + (move.captures.length ? " capture-action" : "");
+          button.className = "direction-choice" + (move.captures.length ? " capture-action" : "");
           arrow = turn === -1 ? "↶" : (turn === 1 ? "↷" : "↑");
-          detail = move.captures.length ? "Capture" : "No capture";
-          button.innerHTML = '<span class="arrow">' + arrow + '</span><strong>' + turnLabel(turn) + '</strong><span>' + detail + '</span>';
-          button.addEventListener("click", function () {
-            directionOverlay.classList.remove("open");
+          label = turn === -1 ? "Left" : (turn === 1 ? "Right" : "Straight");
+          button.innerHTML = '<span class="arrow" aria-hidden="true">' + arrow + '</span><span class="choice-label">' + label + '</span>';
+          button.setAttribute("aria-label", turnLabel(turn) + (move.captures.length ? " and capture" : ""));
+          button.addEventListener("click", function (event) {
+            event.stopPropagation();
+            closeDirectionPicker();
             commitMove(move);
           });
           directionGrid.appendChild(button);
         });
+        directionGrid.style.gridTemplateColumns = "repeat(" + directionGrid.children.length + ", var(--choice-size))";
+        boardEl.classList.add("direction-picking");
+        cellEls[anchorMove.landingR][anchorMove.landingC].classList.add("direction-anchor");
         directionOverlay.classList.add("open");
+        actionTitle.textContent = "Choose the triangle's direction";
+        actionSub.textContent = "The small controls are turned toward Player " + state.currentPlayer + ".";
+        positionDirectionPicker(anchorMove);
       }
 
-      function closeDirectionPicker() { directionOverlay.classList.remove("open"); }
+      function closeDirectionPicker() {
+        var anchor = boardEl.querySelector(".cell.direction-anchor");
+        directionOverlay.classList.remove("open", "player-two");
+        boardEl.classList.remove("direction-picking");
+        if (anchor) { anchor.classList.remove("direction-anchor"); }
+      }
 
       function captureSquaresForMove(move) {
         return move.captures.map(function (id) {
@@ -1546,7 +1646,7 @@
         lastMovePieceId = null;
         lastCapturedSquares = [];
         endOverlay.classList.remove("open");
-        directionOverlay.classList.remove("open");
+        closeDirectionPicker();
         state.positionCounts[positionKey(state)] = 1;
         render();
         showToast("Player " + state.currentPlayer + " moves first");
@@ -1651,7 +1751,7 @@
       cancelDirectionButton.addEventListener("click", closeDirectionPicker);
       soundButton.addEventListener("click", toggleSound);
       helpOverlay.addEventListener("click", function (event) { if (event.target === helpOverlay) { helpOverlay.classList.remove("open"); } });
-      directionOverlay.addEventListener("click", function (event) { if (event.target === directionOverlay) { closeDirectionPicker(); } });
+      directionOverlay.addEventListener("click", function (event) { event.stopPropagation(); });
 
       document.addEventListener("keydown", function (event) {
         if (event.key === "Escape") {
@@ -1662,6 +1762,7 @@
       });
 
       createCells();
+      boardEl.appendChild(directionOverlay);
       newGame(safeGet("shape-siege-seen-rules") !== "yes");
     }());
   </script>
