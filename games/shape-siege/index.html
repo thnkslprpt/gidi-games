@@ -743,7 +743,7 @@
       <a class="icon-button" href="../../" aria-label="Back to games">←</a>
       <div class="title-block">
         <p class="eyebrow">Two-player strategy</p>
-        <h1>Shape Siege <span class="version">v1.0.3</span></h1>
+        <h1>Shape Siege <span class="version">v1.0.4</span></h1>
       </div>
       <div class="top-actions">
         <button class="icon-button" id="soundButton" type="button" aria-label="Turn sound off" title="Sound">♪</button>
@@ -803,7 +803,7 @@
         </article>
         <article class="rule-card">
           <div class="rule-head"><span class="rule-icon">△</span><strong>Triangle</strong></div>
-          <p>Move 1 or 2 squares in the direction it points, then use the small on-board control to keep facing or turn 90° left or right. It may also turn in place. An adjacent enemy in its final direction is captured automatically.</p>
+          <p>Before moving, it may keep facing or turn 90° left or right, then move 1 or 2 squares in that direction. After moving, use the small on-board control to keep facing or turn 90° left or right again. It may also turn in place. An adjacent enemy in its final direction is captured automatically.</p>
         </article>
         <article class="rule-card">
           <div class="rule-head"><span class="rule-icon">□</span><strong>Square</strong></div>
@@ -1053,8 +1053,9 @@
         return moves;
       }
 
-      function addTriangleOption(gameState, piece, moves, landingR, landingC, distance, turn) {
-        var newFacing = mod4(piece.facing + turn);
+      function addTriangleOption(gameState, piece, moves, landingR, landingC, distance, preTurn, postTurn) {
+        var travelFacing = mod4(piece.facing + preTurn);
+        var newFacing = mod4(travelFacing + postTurn);
         var dir = DIRS[newFacing];
         var targetR = landingR + dir.dr;
         var targetC = landingC + dir.dc;
@@ -1075,28 +1076,49 @@
           landingR: landingR,
           landingC: landingC,
           distance: distance,
-          turn: turn
+          preTurn: preTurn,
+          turn: postTurn,
+          travelFacing: travelFacing
         }));
       }
 
       function generateTriangleMoves(gameState, piece) {
         var moves = [];
-        var dir = DIRS[piece.facing];
+        var preTurns = [0, -1, 1];
+        var postTurns = [0, -1, 1];
+        var preIndex;
+        var postIndex;
+        var preTurn;
+        var travelFacing;
+        var dir;
         var distance;
         var r;
         var c;
-        var turns = [0, -1, 1];
-        var t;
 
-        addTriangleOption(gameState, piece, moves, piece.r, piece.c, 0, -1);
-        addTriangleOption(gameState, piece, moves, piece.r, piece.c, 0, 1);
+        addTriangleOption(gameState, piece, moves, piece.r, piece.c, 0, 0, -1);
+        addTriangleOption(gameState, piece, moves, piece.r, piece.c, 0, 0, 1);
 
-        for (distance = 1; distance <= 2; distance += 1) {
-          r = piece.r + dir.dr * distance;
-          c = piece.c + dir.dc * distance;
-          if (!inBounds(r, c) || pieceAt(gameState, r, c)) { break; }
-          for (t = 0; t < turns.length; t += 1) {
-            addTriangleOption(gameState, piece, moves, r, c, distance, turns[t]);
+        for (preIndex = 0; preIndex < preTurns.length; preIndex += 1) {
+          preTurn = preTurns[preIndex];
+          travelFacing = mod4(piece.facing + preTurn);
+          dir = DIRS[travelFacing];
+
+          for (distance = 1; distance <= 2; distance += 1) {
+            r = piece.r + dir.dr * distance;
+            c = piece.c + dir.dc * distance;
+            if (!inBounds(r, c) || pieceAt(gameState, r, c)) { break; }
+            for (postIndex = 0; postIndex < postTurns.length; postIndex += 1) {
+              addTriangleOption(
+                gameState,
+                piece,
+                moves,
+                r,
+                c,
+                distance,
+                preTurn,
+                postTurns[postIndex]
+              );
+            }
           }
         }
         return moves;
@@ -1432,7 +1454,7 @@
           return;
         }
 
-        actionSub.textContent = "Tap a diamond to move, or tap the triangle again to turn in place.";
+        actionSub.textContent = "Tap a diamond ahead, left, or right to choose the move direction — or tap the triangle again to turn in place.";
       }
 
       function render() {
@@ -1559,7 +1581,11 @@
         cellEls[anchorMove.landingR][anchorMove.landingC].classList.add("direction-anchor");
         directionOverlay.classList.add("open");
         actionTitle.textContent = "Choose the triangle's direction";
-        actionSub.textContent = "The small controls are turned toward Player " + state.currentPlayer + ".";
+        if (anchorMove.distance > 0 && anchorMove.preTurn !== 0) {
+          actionSub.textContent = "The triangle turned " + (anchorMove.preTurn === -1 ? "left" : "right") + " before moving. Choose its final direction.";
+        } else {
+          actionSub.textContent = "Choose the final direction. The controls face Player " + state.currentPlayer + ".";
+        }
         positionDirectionPicker(anchorMove);
       }
 
