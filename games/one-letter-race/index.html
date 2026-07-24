@@ -27,7 +27,7 @@
 <div class="app stack">
   <header class="topbar">
     <a class="back" href="../../" aria-label="Back to game room">←</a>
-    <div class="top-title"><strong>One-Letter Race</strong><small>revision 1.0.0</small></div>
+    <div class="top-title"><strong>One-Letter Race</strong><small>revision 1.0.1</small></div>
     <button class="icon-button" id="rulesBtn" type="button">?</button>
   </header>
   <section class="scorebar">
@@ -49,7 +49,7 @@
     <h2><span class="gradient-text">One-Letter Race</span></h2>
     <p>Turn the start word into the goal word by changing one letter at a time.</p>
     <ul class="rules-list">
-      <li><b>1</b><span>Every step must be a legal word of the same length.</span></li>
+      <li><b>1</b><span>The start word, goal word, and every step must be legal words of the same length. Start and goal words come from a curated common-word puzzle list.</span></li>
       <li><b>2</b><span>Each new word must differ from the previous word by exactly one letter.</span></li>
       <li><b>3</b><span>Solo mode records your move count.</span></li>
       <li><b>4</b><span>In 2-player mode, each player gets the same puzzle and 45 seconds. Fewer moves wins; time breaks ties.</span></li>
@@ -68,10 +68,75 @@
 (function(){
   'use strict';
   var C=window.GidiWordCore, mode='solo', length=4, start='', goal='', path=[], currentPlayer=1, results=[], time=45, ticker=null, running=false, startedAt=0;
+  var COMMON_PUZZLES=[
+    ['cat','cot','dot','dog'],
+    ['cat','bat','bag','bog','dog'],
+    ['hit','hot','cot','cat'],
+    ['sun','run','ran','man'],
+    ['bed','bad','mad','map'],
+    ['hen','pen','pin','sin'],
+    ['fox','box','bog','dog'],
+    ['cup','cap','cat'],
+    ['red','bed','bad'],
+    ['cold','cord','card','ward','warm'],
+    ['head','heal','teal','tell','tall','tail'],
+    ['game','gate','late','lake','like'],
+    ['fish','dish','dash','cash','case'],
+    ['book','boon','moon','moor','door'],
+    ['farm','form','foam','roam','road'],
+    ['lead','load','goad','gold'],
+    ['hand','sand','send','seed'],
+    ['rain','pain','pair','fair'],
+    ['coat','boat','boot','book'],
+    ['wall','walk','talk','tall'],
+    ['mind','wind','wine','line'],
+    ['best','rest','rent','bent'],
+    ['ship','shop','shot','spot'],
+    ['stone','atone','alone','clone','close'],
+    ['light','night','right'],
+    ['heart','heard','beard','board'],
+    ['smart','start','stark','stack'],
+    ['could','would','wound','pound'],
+    ['spare','space','spice','slice','slick'],
+    ['sight','light','night','right'],
+    ['cream','dream','dread','bread'],
+    ['teach','reach','react'],
+    ['sound','pound','found'],
+    ['green','greet','great'],
+    ['shore','score','scare','share']
+  ];
+  var lastPuzzleKey='';
   var input=document.getElementById('wordInput'), status=document.getElementById('status'), timer=document.getElementById('timer'), ladder=document.getElementById('ladder');
   function buckets(n){ var words=(C.byLength[n]||[]).filter(function(w){return !/[qxz]/.test(w);}), map={}; words.forEach(function(w){for(var i=0;i<n;i++){var k=w.slice(0,i)+'*'+w.slice(i+1);(map[k]||(map[k]=[])).push(w);}}); return {words:words,map:map}; }
   function neighbors(word,data){var out=new Set();for(var i=0;i<word.length;i++){var k=word.slice(0,i)+'*'+word.slice(i+1);(data.map[k]||[]).forEach(function(w){if(w!==word)out.add(w);});}return Array.from(out);}
-  function makePuzzle(){ length=Math.random()<.35?3:(Math.random()<.75?4:5); var data=buckets(length), cur=C.random(data.words), chain=[cur]; for(var i=0;i<5;i++){var ns=neighbors(cur,data).filter(function(w){return chain.indexOf(w)===-1;}); if(!ns.length)break;cur=C.random(ns);chain.push(cur);} if(chain.length<4)return makePuzzle(); start=chain[0];goal=chain[chain.length-1]; }
+  function puzzleIsUsable(chain){
+    if(!chain||chain.length<2)return false;
+    var n=chain[0].length;
+    if(n<3||n>5)return false;
+    for(var i=0;i<chain.length;i++){
+      if(chain[i].length!==n||!C.isWord(chain[i],3))return false;
+      if(i&& !C.oneLetterApart(chain[i-1],chain[i]))return false;
+    }
+    return true;
+  }
+  function makePuzzle(){
+    var usable=COMMON_PUZZLES.filter(puzzleIsUsable);
+    if(!usable.length){
+      length=3;start='cat';goal='dog';
+      return;
+    }
+    var chain=null,key='';
+    for(var tries=0;tries<12;tries++){
+      chain=C.random(usable).slice();
+      if(Math.random()<.5)chain.reverse();
+      key=chain[0]+'>'+chain[chain.length-1];
+      if(key!==lastPuzzleKey||usable.length===1)break;
+    }
+    lastPuzzleKey=key;
+    length=chain[0].length;
+    start=chain[0];
+    goal=chain[chain.length-1];
+  }
   function render(){document.getElementById('startWord').textContent=start.toUpperCase();document.getElementById('goalWord').textContent=goal.toUpperCase();ladder.innerHTML='';path.forEach(function(w,i){var s=document.createElement('span');s.className='pill';s.textContent=(i? '→ ':'')+w.toUpperCase();ladder.appendChild(s);});document.getElementById('p1Score').textContent=Math.max(0,path.length-1);timer.textContent=mode==='duel'?time:'∞';timer.classList.toggle('urgent',mode==='duel'&&time<=8);input.maxLength=length;}
   function resetAttempt(){path=[start];input.value='';running=true;startedAt=Date.now();time=45;clearInterval(ticker);if(mode==='duel')ticker=setInterval(function(){if(!running)return;time--;render();if(time<=0)finish(false);},1000);C.setStatus(status,'Player '+currentPlayer+': reach '+goal.toUpperCase()+'.');render();setTimeout(function(){input.focus();},80);}
   function submit(){if(!running)return;var w=C.clean(input.value), prev=path[path.length-1];if(w.length!==length){C.setStatus(status,'Use a '+length+'-letter word.','bad');return;}if(!C.isWord(w,3)){C.setStatus(status,'That word is not in the dictionary.','bad');return;}if(path.indexOf(w)!==-1){C.setStatus(status,'That word is already in your path.','bad');return;}if(!C.oneLetterApart(prev,w)){C.setStatus(status,'Change exactly one letter.','bad');return;}path.push(w);input.value='';C.vibrate(20);render();if(w===goal)finish(true);else C.setStatus(status,'Good step. Keep going!','good');}
