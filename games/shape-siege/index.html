@@ -792,7 +792,7 @@
       <a class="icon-button" href="../../" aria-label="Back to games">←</a>
       <div class="title-block">
         <p class="eyebrow">Two-player strategy</p>
-        <h1>Shape Siege <span class="version">v1.0.7</span></h1>
+        <h1>Shape Siege <span class="version">v1.0.8</span></h1>
       </div>
       <div class="top-actions">
         <button class="icon-button" id="soundButton" type="button" aria-label="Turn sound off" title="Sound">♪</button>
@@ -876,7 +876,7 @@
         </article>
         <article class="rule-card">
           <div class="rule-head"><span class="rule-icon">△</span><strong>Triangle</strong></div>
-          <p>Turn at most once per turn. It may turn 90° left or right before moving and then move 1 or 2 squares in the new direction, or move straight first and optionally turn 90° afterward. It may also turn in place. An adjacent enemy in its final direction is captured automatically.</p>
+          <p>Turn at most once per turn. It may turn 90° left or right before moving and then move 1 or 2 squares in the new direction, or move straight first and optionally turn 90° afterward. It may also turn in place. An adjacent enemy in its final direction is captured automatically. If an enemy is already directly in front at the start of the turn, the triangle may capture it immediately by moving into its square.</p>
         </article>
         <article class="rule-card">
           <div class="rule-head"><span class="rule-icon">□</span><strong>Square</strong></div>
@@ -1202,6 +1202,16 @@
         addTriangleOption(gameState, piece, moves, piece.r, piece.c, 0, 0, -1);
         addTriangleOption(gameState, piece, moves, piece.r, piece.c, 0, 0, 1);
 
+        dir = DIRS[piece.facing];
+        r = piece.r + dir.dr;
+        c = piece.c + dir.dc;
+        if (inBounds(r, c)) {
+          var facingOccupant = pieceAt(gameState, r, c);
+          if (facingOccupant && facingOccupant.player !== piece.player) {
+            addTriangleOption(gameState, piece, moves, piece.r, piece.c, 0, 0, 0);
+          }
+        }
+
         travelFacing = piece.facing;
         dir = DIRS[travelFacing];
         for (distance = 1; distance <= 2; distance += 1) {
@@ -1481,6 +1491,22 @@
         });
       }
 
+      function triangleImmediateCaptureAt(r, c) {
+        var i;
+        for (i = 0; i < selectedMoves.length; i += 1) {
+          if (
+            selectedMoves[i].type === "triangle" &&
+            selectedMoves[i].distance === 0 &&
+            selectedMoves[i].captures.length &&
+            selectedMoves[i].toR === r &&
+            selectedMoves[i].toC === c
+          ) {
+            return selectedMoves[i];
+          }
+        }
+        return null;
+      }
+
       function renderBoard() {
         var r;
         var c;
@@ -1601,7 +1627,7 @@
           return;
         }
 
-        actionSub.textContent = "Turn once: turn before moving, or move straight and choose a final turn afterward.";
+        actionSub.textContent = "Turn once: turn before moving, or move straight and choose a final turn afterward. Tap a highlighted adjacent enemy to capture it immediately.";
       }
 
       function render() {
@@ -1657,6 +1683,11 @@
 
         if (selected) {
           if (selected.type === "triangle") {
+            move = triangleImmediateCaptureAt(r, c);
+            if (move) {
+              commitMove(move);
+              return;
+            }
             if (selected.r === r && selected.c === c) {
               landingMoves = selectedMoves.filter(function (candidate) {
                 return candidate.type === "triangle" && candidate.distance === 0;
