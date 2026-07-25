@@ -1126,6 +1126,123 @@
       .small-button { min-height: 29px; }
     }
 
+
+    /* Crossmate v1.5.0: offline computer opponent */
+    .mode-grid.three-modes { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .mode-card.computer-choice {
+      border-color: rgba(255,209,102,0.34);
+      background:
+        radial-gradient(circle at 82% 15%, rgba(255,209,102,0.12), transparent 34%),
+        linear-gradient(145deg, rgba(35,39,64,0.96), rgba(14,19,34,0.96));
+    }
+    .mode-icon {
+      width: 29px;
+      height: 29px;
+      margin-bottom: 3px;
+      border: 1px solid rgba(255,209,102,0.36);
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      color: var(--gold);
+      background: rgba(255,209,102,0.08);
+      font-size: 17px;
+      font-weight: 950;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 5px 14px rgba(0,0,0,0.18);
+    }
+    .ai-setup { margin-top: 11px; }
+    .ai-setup[hidden], .mode-main-choices[hidden] { display: none; }
+    .ai-setup-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 9px;
+      margin-bottom: 10px;
+    }
+    .ai-setup-head strong { font-size: 14px; letter-spacing: -0.02em; }
+    .ai-section {
+      margin-top: 10px;
+      padding: 10px;
+      border: 1px solid rgba(151,174,219,0.13);
+      border-radius: 16px;
+      background: rgba(255,255,255,0.028);
+    }
+    .ai-section-title {
+      margin-bottom: 7px;
+      color: #cbd8ec;
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+    .ai-choice-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 6px; }
+    .ai-choice {
+      min-height: 46px;
+      padding: 6px 5px;
+      border: 1px solid rgba(151,174,219,0.16);
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      gap: 2px;
+      color: #dce7f7;
+      background: rgba(255,255,255,0.045);
+      cursor: pointer;
+      text-align: center;
+    }
+    .ai-choice strong { font-size: 10px; }
+    .ai-choice span { color: var(--muted); font-size: 7px; line-height: 1.25; }
+    .ai-choice.selected {
+      color: #1d1707;
+      border-color: rgba(255,209,102,0.72);
+      background: linear-gradient(145deg, #fff1b1, var(--gold));
+      box-shadow: 0 0 0 2px rgba(255,209,102,0.09), 0 8px 18px rgba(255,209,102,0.12);
+    }
+    .ai-choice.selected span { color: rgba(29,23,7,0.72); }
+    .ai-setup-actions { display: flex; justify-content: space-between; gap: 8px; margin-top: 11px; }
+    .network-pill.ai { color: #ffe79a; background: rgba(255,209,102,0.13); }
+    .network-pill.ai-thinking::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      margin-right: 4px;
+      border: 1px solid rgba(255,231,154,0.35);
+      border-top-color: #ffe79a;
+      border-radius: 50%;
+      display: inline-block;
+      vertical-align: -1px;
+      animation: onlineSpin 650ms linear infinite;
+    }
+    .board-shell.ai-thinking::after {
+      content: "";
+      position: absolute;
+      z-index: 14;
+      right: 12px;
+      top: 12px;
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255,255,255,0.12);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: onlineSpin 650ms linear infinite;
+      pointer-events: none;
+      filter: drop-shadow(0 0 5px rgba(255,209,102,0.25));
+    }
+    .board-shell.ai-thinking .cell { cursor: default; }
+    @media (max-width: 430px) {
+      .mode-grid.three-modes { grid-template-columns: 1fr; }
+      .mode-grid.three-modes .mode-card {
+        min-height: 62px;
+        grid-template-columns: auto minmax(0,1fr);
+        grid-template-rows: auto auto;
+        column-gap: 9px;
+      }
+      .mode-grid.three-modes .mode-icon { grid-row: 1 / 3; margin: 0; }
+    }
+    @media (max-width: 350px) {
+      .ai-section { padding: 8px; }
+      .ai-choice { min-height: 42px; }
+      .ai-choice span { display: none; }
+    }
+
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
         animation-duration: 0.01ms !important;
@@ -1141,8 +1258,8 @@
     <header class="topbar">
       <a class="icon-button" href="../../" aria-label="Back to games">←</a>
       <div class="title-block">
-        <p class="eyebrow">Local + online strategy</p>
-        <h1>Crossmate <span class="version">v1.4.0</span></h1>
+        <p class="eyebrow">Local + AI + online strategy</p>
+        <h1>Crossmate <span class="version">v1.5.0</span></h1>
       </div>
       <div class="top-actions">
         <button class="icon-button" id="soundButton" type="button" aria-label="Turn sound off" title="Sound">♪</button>
@@ -1201,24 +1318,57 @@
   <div class="overlay open" id="modeOverlay" role="dialog" aria-modal="true" aria-labelledby="modeTitle">
     <section class="modal online-modal">
       <div class="modal-kicker">Choose how to play</div>
-      <h2 id="modeTitle">One phone or two?</h2>
-      <p class="modal-lead" id="modeLead">Play the original pass-and-play match, or connect two phones with a private room code.</p>
+      <h2 id="modeTitle">Choose a match</h2>
+      <p class="modal-lead" id="modeLead">Play the computer, share this device, or connect two phones with a private room code.</p>
       <div id="modeChoices">
-        <div class="mode-grid">
-          <button class="mode-card" id="localModeButton" type="button">
-            <strong>One phone</strong>
-            <span>Take turns on the same screen.</span>
-          </button>
-          <button class="mode-card online-choice" id="createOnlineButton" type="button">
-            <strong>Create online match</strong>
-            <span>Get a code to share. Rooms stay available for 10 days.</span>
-          </button>
+        <div class="mode-main-choices" id="modeMainChoices">
+          <div class="mode-grid three-modes">
+            <button class="mode-card computer-choice" id="computerModeButton" type="button">
+              <span class="mode-icon" aria-hidden="true">◆</span>
+              <strong>Play computer</strong>
+              <span>Offline opponent with three skill levels.</span>
+            </button>
+            <button class="mode-card" id="localModeButton" type="button">
+              <strong>Same device</strong>
+              <span>Take turns on this screen.</span>
+            </button>
+            <button class="mode-card online-choice" id="createOnlineButton" type="button">
+              <strong>Create online match</strong>
+              <span>Get a private code. Rooms last 10 days.</span>
+            </button>
+          </div>
+          <div class="join-box">
+            <label class="join-label" for="roomCodeInput">Join an existing online match</label>
+            <div class="join-row">
+              <input class="room-input" id="roomCodeInput" inputmode="text" maxlength="5" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="CODE">
+              <button class="small-button" id="joinOnlineButton" type="button">Join</button>
+            </div>
+          </div>
         </div>
-        <div class="join-box">
-          <label class="join-label" for="roomCodeInput">Join an existing match</label>
-          <div class="join-row">
-            <input class="room-input" id="roomCodeInput" inputmode="text" maxlength="5" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="CODE">
-            <button class="small-button" id="joinOnlineButton" type="button">Join</button>
+        <div class="ai-setup" id="aiSetupPanel" hidden>
+          <div class="ai-setup-head">
+            <strong>Computer match</strong>
+            <span class="network-pill ai">Works offline</span>
+          </div>
+          <div class="ai-section">
+            <div class="ai-section-title">Difficulty</div>
+            <div class="ai-choice-grid" id="aiDifficultyChoices">
+              <button class="ai-choice" type="button" data-ai-difficulty="easy"><strong>Easy</strong><span>Relaxed, imperfect moves</span></button>
+              <button class="ai-choice selected" type="button" data-ai-difficulty="normal"><strong>Normal</strong><span>Looks ahead and defends</span></button>
+              <button class="ai-choice" type="button" data-ai-difficulty="hard"><strong>Hard</strong><span>Deeper timed search</span></button>
+            </div>
+          </div>
+          <div class="ai-section">
+            <div class="ai-section-title">Who moves first?</div>
+            <div class="ai-choice-grid" id="aiOpeningChoices">
+              <button class="ai-choice selected" type="button" data-ai-opening="human"><strong>You</strong><span>Rose moves first</span></button>
+              <button class="ai-choice" type="button" data-ai-opening="computer"><strong>Computer</strong><span>Cyan moves first</span></button>
+              <button class="ai-choice" type="button" data-ai-opening="random"><strong>Random</strong><span>Choose each match</span></button>
+            </div>
+          </div>
+          <div class="ai-setup-actions">
+            <button class="small-button" id="aiSetupBackButton" type="button">Back</button>
+            <button class="primary-button" id="startComputerButton" type="button">Start match</button>
           </div>
         </div>
       </div>
@@ -1337,7 +1487,7 @@
       ];
       var TYPE_NAMES = { circle: "Circle", diamond: "Diamond", square: "Square", triangle: "Triangle", cross: "Cross" };
       var POINT_VALUES = { circle: 1, triangle: 3, square: 5, diamond: 6, cross: 0 };
-      var VERSION = "1.4.0";
+      var VERSION = "1.5.0";
       var ROOM_LIFETIME_MS = 10 * 24 * 60 * 60 * 1000;
       var BACK_ROW = ["diamond", "square", "triangle", null, "cross", null, "triangle", "square", "diamond"];
 
@@ -1402,6 +1552,14 @@
       var tutorialNextButton = document.getElementById("tutorialNextButton");
       var tutorialSkipButton = document.getElementById("tutorialSkipButton");
       var reviewGameButton = document.getElementById("reviewGameButton");
+      var modeTitle = document.getElementById("modeTitle");
+      var modeMainChoices = document.getElementById("modeMainChoices");
+      var computerModeButton = document.getElementById("computerModeButton");
+      var aiSetupPanel = document.getElementById("aiSetupPanel");
+      var aiDifficultyChoices = document.getElementById("aiDifficultyChoices");
+      var aiOpeningChoices = document.getElementById("aiOpeningChoices");
+      var aiSetupBackButton = document.getElementById("aiSetupBackButton");
+      var startComputerButton = document.getElementById("startComputerButton");
 
 
       var state = null;
@@ -1440,6 +1598,18 @@
       var blockedFieldTimer = 0;
       var tutorialStepIndex = 0;
       var tutorialPromptedThisSession = false;
+      var humanPlayer = 1;
+      var aiPlayer = 2;
+      var aiDifficulty = "normal";
+      var aiOpening = "human";
+      var aiStartingPlayer = 1;
+      var aiThinking = false;
+      var aiRequestId = 0;
+      var aiStartTimer = 0;
+      var aiDeferredTimer = 0;
+      var aiDeferredMove = null;
+      var aiWorker = null;
+      var aiWorkerSource = "";
 
 
       function safeGet(key) {
@@ -3764,6 +3934,590 @@
       window.addEventListener("orientationchange", syncViewportHeight);
       if (window.visualViewport) { window.visualViewport.addEventListener("resize", syncViewportHeight); }
 
+
+
+      /* Crossmate v1.5.0: local computer opponent and offline support */
+      function aiTitle(value) {
+        return value === "hard" ? "Hard" : (value === "easy" ? "Easy" : "Normal");
+      }
+      function setAiChoice(container, attribute, value) {
+        var buttons = container.querySelectorAll("[" + attribute + "]");
+        var i;
+        for (i = 0; i < buttons.length; i += 1) {
+          buttons[i].classList.toggle("selected", buttons[i].getAttribute(attribute) === value);
+        }
+      }
+      function openComputerSetup() {
+        cancelAiSearch();
+        aiDifficulty = safeGet("crossmate-ai-difficulty") || "normal";
+        aiOpening = safeGet("crossmate-ai-opening") || "human";
+        if (["easy", "normal", "hard"].indexOf(aiDifficulty) === -1) { aiDifficulty = "normal"; }
+        if (["human", "computer", "random"].indexOf(aiOpening) === -1) { aiOpening = "human"; }
+        modeMainChoices.hidden = true;
+        aiSetupPanel.hidden = false;
+        modeTitle.textContent = "Play the computer";
+        modeLead.textContent = "Choose a level and who takes the first turn. The complete opponent runs on this device.";
+        setAiChoice(aiDifficultyChoices, "data-ai-difficulty", aiDifficulty);
+        setAiChoice(aiOpeningChoices, "data-ai-opening", aiOpening);
+      }
+      function closeComputerSetup() {
+        aiSetupPanel.hidden = true;
+        modeMainChoices.hidden = false;
+        modeTitle.textContent = "Choose a match";
+        modeLead.textContent = "Play the computer, share this device, or connect two phones with a private room code.";
+      }
+      function chosenOpeningPlayer() {
+        if (aiOpening === "computer") { return aiPlayer; }
+        if (aiOpening === "random") { return Math.random() < 0.5 ? humanPlayer : aiPlayer; }
+        return humanPlayer;
+      }
+      function startComputerMatch() {
+        clearOnlineConnection(true);
+        cancelAiSearch();
+        playMode = "ai";
+        humanPlayer = 1;
+        aiPlayer = 2;
+        safeSet("crossmate-ai-difficulty", aiDifficulty);
+        safeSet("crossmate-ai-opening", aiOpening);
+        aiStartingPlayer = chosenOpeningPlayer();
+        onlineHasOpponent = true;
+        modeOverlay.classList.remove("open");
+        newGame(safeGet("crossmate-seen-tutorial") !== "yes", false);
+      }
+      function compactAiState(gameState) {
+        return {
+          pieces: clonePieces(gameState.pieces),
+          currentPlayer: Number(gameState.currentPlayer || 1),
+          halfmoveClock: Number(gameState.halfmoveClock || 0),
+          positionCounts: {},
+          gameOver: Boolean(gameState.gameOver),
+          result: clonePlain(gameState.result || null),
+          scores: {
+            1: Number(gameState.scores && gameState.scores[1] || 0),
+            2: Number(gameState.scores && gameState.scores[2] || 0)
+          },
+          lastMove: clonePlain(gameState.lastMove || null),
+          moveNumber: Number(gameState.moveNumber || 0)
+        };
+      }
+      function aiWorkerRuntime() {
+        "use strict";
+        var VALUES = { circle: 100, triangle: 325, square: 455, diamond: 525, cross: 25000 };
+        var SCORE_VALUES = { circle: 1, triangle: 3, square: 5, diamond: 6, cross: 0 };
+        var MATE = 1000000;
+        var deadline = 0;
+        var nodes = 0;
+        var timeChecks = 0;
+        var transposition = {};
+
+        function clockNow() {
+          return self.performance && self.performance.now ? self.performance.now() : Date.now();
+        }
+        function checkTime() {
+          timeChecks += 1;
+          if ((timeChecks & 127) === 0 && clockNow() >= deadline) { throw { aiTimeout: true }; }
+        }
+        function copyState(gameState) {
+          return {
+            pieces: clonePieces(gameState.pieces),
+            currentPlayer: gameState.currentPlayer,
+            halfmoveClock: Number(gameState.halfmoveClock || 0),
+            positionCounts: {},
+            gameOver: Boolean(gameState.gameOver),
+            result: gameState.result || null,
+            scores: {
+              1: Number(gameState.scores && gameState.scores[1] || 0),
+              2: Number(gameState.scores && gameState.scores[2] || 0)
+            },
+            lastMove: gameState.lastMove || null,
+            moveNumber: Number(gameState.moveNumber || 0)
+          };
+        }
+        function capturedMaterial(gameState, move) {
+          var total = 0;
+          var i;
+          var captured;
+          for (i = 0; i < move.captures.length; i += 1) {
+            captured = pieceById(gameState, move.captures[i]);
+            if (captured) { total += VALUES[captured.type] || 0; }
+          }
+          return total;
+        }
+        function advanceForSearch(gameState, move) {
+          var next = copyState(gameState);
+          var mover = next.currentPlayer;
+          var i;
+          var captured;
+          var points = 0;
+          applyMoveMutable(next, move);
+          for (i = 0; i < move.captures.length; i += 1) {
+            captured = pieceById(gameState, move.captures[i]);
+            if (captured) { points += SCORE_VALUES[captured.type] || 0; }
+          }
+          next.scores[mover] += points;
+          next.moveNumber += 1;
+          next.halfmoveClock = move.captures.length ? 0 : next.halfmoveClock + 1;
+          next.currentPlayer = otherPlayer(mover);
+          next.lastMove = { pieceId: move.pieceId, mover: mover, captures: move.captures.slice() };
+          return next;
+        }
+        function onlyCrossesRemain(gameState) {
+          var alive = gameState.pieces.filter(function (piece) { return piece.alive; });
+          return alive.length === 2 && alive[0].type === "cross" && alive[1].type === "cross";
+        }
+        function terminalScore(gameState, rootPlayer, ply, knownMoves) {
+          var rootCross = crossFor(gameState, rootPlayer);
+          var enemyCross = crossFor(gameState, otherPlayer(rootPlayer));
+          var moves;
+          if (!rootCross) { return -MATE + ply; }
+          if (!enemyCross) { return MATE - ply; }
+          if (onlyCrossesRemain(gameState) || gameState.halfmoveClock >= NO_CAPTURE_LIMIT) { return 0; }
+          moves = knownMoves || allLegalMoves(gameState, gameState.currentPlayer);
+          if (!moves.length) {
+            if (isInCheck(gameState, gameState.currentPlayer)) {
+              return gameState.currentPlayer === rootPlayer ? -MATE + ply : MATE - ply;
+            }
+            return 0;
+          }
+          return null;
+        }
+        function fieldInfluence(gameState, piece) {
+          var score = 0;
+          var r;
+          var c;
+          if (piece.type !== "diamond") { return 0; }
+          for (r = piece.r - 1; r <= piece.r + 1; r += 1) {
+            for (c = piece.c - 1; c <= piece.c + 1; c += 1) {
+              if (!inBounds(r, c) || (r === piece.r && c === piece.c)) { continue; }
+              score += 3;
+              if (r >= 2 && r <= 6 && c >= 2 && c <= 6) { score += 2; }
+            }
+          }
+          return score;
+        }
+        function evaluate(gameState, rootPlayer) {
+          var score = 0;
+          var mobilityRoot = 0;
+          var mobilityEnemy = 0;
+          var i;
+          var piece;
+          var sign;
+          var centre;
+          var advancement;
+          var pseudoCount;
+          var terminal = terminalScore(gameState, rootPlayer, 0, null);
+          if (terminal !== null) { return terminal; }
+          for (i = 0; i < gameState.pieces.length; i += 1) {
+            piece = gameState.pieces[i];
+            if (!piece.alive) { continue; }
+            sign = piece.player === rootPlayer ? 1 : -1;
+            score += sign * (VALUES[piece.type] || 0);
+            centre = 8 - (Math.abs(piece.r - 4) + Math.abs(piece.c - 4));
+            if (piece.type !== "cross" && piece.type !== "diamond") { score += sign * centre * 3; }
+            if (piece.type === "circle") {
+              advancement = piece.player === 1 ? (7 - piece.r) : (piece.r - 1);
+              score += sign * advancement * 11;
+            }
+            score += sign * fieldInfluence(gameState, piece);
+            if (piece.type !== "cross") {
+              pseudoCount = Math.min(18, generatePseudoMovesForPiece(gameState, piece).length);
+              if (piece.player === rootPlayer) { mobilityRoot += pseudoCount; }
+              else { mobilityEnemy += pseudoCount; }
+            }
+          }
+          score += (mobilityRoot - mobilityEnemy) * 1.6;
+          if (isInCheck(gameState, rootPlayer)) { score -= 145; }
+          if (isInCheck(gameState, otherPlayer(rootPlayer))) { score += 125; }
+          score += (Number(gameState.scores[rootPlayer] || 0) - Number(gameState.scores[otherPlayer(rootPlayer)] || 0)) * 5;
+          return score;
+        }
+        function tacticalOrder(gameState, move, rootPlayer) {
+          var score = capturedMaterial(gameState, move) * 12;
+          var mover = pieceById(gameState, move.pieceId);
+          var i;
+          var captured;
+          for (i = 0; i < move.captures.length; i += 1) {
+            captured = pieceById(gameState, move.captures[i]);
+            if (captured && captured.type === "cross") { score += MATE; }
+          }
+          if (move.edgeBlast) { score += 180; }
+          if (move.diamondCapture) { score += 120; }
+          if (mover && mover.type === "diamond") { score += 18; }
+          return mover && mover.player === rootPlayer ? score : -score;
+        }
+        function orderedMoves(gameState, moves, rootPlayer) {
+          return moves.map(function (move) {
+            return { move: move, order: tacticalOrder(gameState, move, rootPlayer) };
+          }).sort(function (a, b) {
+            return gameState.currentPlayer === rootPlayer ? b.order - a.order : a.order - b.order;
+          }).map(function (entry) { return entry.move; });
+        }
+        function minimax(gameState, depth, alpha, beta, rootPlayer, ply) {
+          var moves;
+          var terminal;
+          var maximizing;
+          var best;
+          var ordered;
+          var i;
+          var child;
+          var score;
+          var key;
+          var cutoff = false;
+          checkTime();
+          nodes += 1;
+          moves = allLegalMoves(gameState, gameState.currentPlayer);
+          terminal = terminalScore(gameState, rootPlayer, ply, moves);
+          if (terminal !== null) { return terminal; }
+          if (depth <= 0) { return evaluate(gameState, rootPlayer); }
+          key = positionKey(gameState) + "|" + depth + "|" + rootPlayer;
+          if (Object.prototype.hasOwnProperty.call(transposition, key)) { return transposition[key]; }
+          maximizing = gameState.currentPlayer === rootPlayer;
+          best = maximizing ? -Infinity : Infinity;
+          ordered = orderedMoves(gameState, moves, rootPlayer);
+          for (i = 0; i < ordered.length; i += 1) {
+            child = advanceForSearch(gameState, ordered[i]);
+            score = minimax(child, depth - 1, alpha, beta, rootPlayer, ply + 1);
+            if (maximizing) {
+              if (score > best) { best = score; }
+              if (best > alpha) { alpha = best; }
+            } else {
+              if (score < best) { best = score; }
+              if (best < beta) { beta = best; }
+            }
+            if (beta <= alpha) { cutoff = true; break; }
+          }
+          if (!cutoff) { transposition[key] = best; }
+          return best;
+        }
+        function searchRoot(gameState, depth, rootPlayer) {
+          var moves = orderedMoves(gameState, allLegalMoves(gameState, rootPlayer), rootPlayer);
+          var bestScore = -Infinity;
+          var bestMoves = [];
+          var i;
+          var child;
+          var score;
+          for (i = 0; i < moves.length; i += 1) {
+            checkTime();
+            child = advanceForSearch(gameState, moves[i]);
+            score = minimax(child, depth - 1, -Infinity, Infinity, rootPlayer, 1);
+            if (score > bestScore + 0.001) {
+              bestScore = score;
+              bestMoves = [moves[i]];
+            } else if (Math.abs(score - bestScore) <= 0.001) {
+              bestMoves.push(moves[i]);
+            }
+          }
+          return {
+            move: bestMoves.length ? bestMoves[Math.floor(Math.random() * bestMoves.length)] : null,
+            score: bestScore
+          };
+        }
+        function easyMove(gameState, rootPlayer) {
+          var moves = allLegalMoves(gameState, rootPlayer);
+          var ranked;
+          var poolSize;
+          if (!moves.length) { return null; }
+          ranked = moves.map(function (move) {
+            var child = advanceForSearch(gameState, move);
+            var instant = !crossFor(child, otherPlayer(rootPlayer));
+            var centre = 8 - (Math.abs(Number(move.toR) - 4) + Math.abs(Number(move.toC) - 4));
+            var checkBonus = !instant && isInCheck(child, otherPlayer(rootPlayer)) ? 180 : 0;
+            return {
+              move: move,
+              score: instant ? MATE : capturedMaterial(gameState, move) * 110 + checkBonus + centre * 6 + (Math.random() - 0.5) * 520
+            };
+          }).sort(function (a, b) { return b.score - a.score; });
+          if (ranked[0].score >= MATE / 2) { return ranked[0].move; }
+          poolSize = Math.max(3, Math.min(ranked.length, Math.ceil(ranked.length * 0.38)));
+          return ranked[Math.floor(Math.random() * poolSize)].move;
+        }
+        self.onmessage = function (event) {
+          var payload = event.data || {};
+          var gameState = payload.state;
+          var difficulty = payload.difficulty || "normal";
+          var rootPlayer = Number(payload.player || 2);
+          var started = clockNow();
+          var maxDepth = difficulty === "hard" ? 4 : 2;
+          var timeLimit = difficulty === "hard" ? 1350 : 430;
+          var depth;
+          var completedDepth = 0;
+          var best = null;
+          var result;
+          nodes = 0;
+          timeChecks = 0;
+          transposition = {};
+          if (!gameState || gameState.currentPlayer !== rootPlayer) {
+            self.postMessage({ requestId: payload.requestId, move: null, depth: 0, nodes: 0, elapsed: 0 });
+            return;
+          }
+          if (difficulty === "easy") {
+            best = easyMove(gameState, rootPlayer);
+            self.postMessage({ requestId: payload.requestId, move: best, depth: 1, nodes: nodes, elapsed: clockNow() - started });
+            return;
+          }
+          deadline = started + timeLimit;
+          try {
+            for (depth = 1; depth <= maxDepth; depth += 1) {
+              result = searchRoot(gameState, depth, rootPlayer);
+              if (result.move) { best = result.move; completedDepth = depth; }
+            }
+          } catch (error) {
+            if (!error || !error.aiTimeout) { throw error; }
+          }
+          if (!best) {
+            result = allLegalMoves(gameState, rootPlayer);
+            best = result.length ? result[0] : null;
+          }
+          self.postMessage({
+            requestId: payload.requestId,
+            move: best,
+            depth: completedDepth,
+            nodes: nodes,
+            elapsed: clockNow() - started
+          });
+        };
+      }
+      function buildAiWorkerSource() {
+        var source = '"use strict";\n';
+        var functions = [
+          inBounds, otherPlayer, mod4, isAdjacent, isForcefieldSquare, isEnemyForcefield,
+          isOwnForcefield, crossFieldBlocked, diamondCanCreateField, clonePieces, pieceAt,
+          pieceById, crossFor, moveObject, addCircleArrivalMoves, addCircleMove,
+          generateCircleMoves, generateDiamondMoves, addTriangleOption, generateTriangleMoves,
+          specialSquareDiamondCaptures, generateSquareMoves, generatePseudoMovesForPiece,
+          simulateMove, applyMoveMutable, isSquareAttacked, isInCheck, legalMovesForPiece,
+          allLegalMoves, positionKey
+        ];
+        var i;
+        source += "var SIZE = " + JSON.stringify(SIZE) + ";\n";
+        source += "var NO_CAPTURE_LIMIT = " + JSON.stringify(NO_CAPTURE_LIMIT) + ";\n";
+        source += "var DIRS = " + JSON.stringify(DIRS) + ";\n";
+        source += "var ALL_DIRS = " + JSON.stringify(ALL_DIRS) + ";\n";
+        for (i = 0; i < functions.length; i += 1) { source += functions[i].toString() + "\n"; }
+        source += "var specialCrossDiamondCaptures = " + specialCrossDiamondCaptures.toString() + ";\n";
+        source += "var generateCrossMoves = " + generateCrossMoves.toString() + ";\n";
+        source += "(" + aiWorkerRuntime.toString() + ")();\n";
+        return source;
+      }
+      function cancelAiSearch() {
+        aiRequestId += 1;
+        window.clearTimeout(aiStartTimer);
+        window.clearTimeout(aiDeferredTimer);
+        aiStartTimer = 0;
+        aiDeferredTimer = 0;
+        aiDeferredMove = null;
+        if (aiWorker) {
+          try { aiWorker.terminate(); } catch (error) { /* ignore */ }
+          aiWorker = null;
+        }
+        aiThinking = false;
+        boardShell.classList.remove("ai-thinking");
+      }
+      function fallbackAiMove() {
+        var moves = allLegalMoves(state, aiPlayer);
+        var values = { circle: 100, triangle: 325, square: 455, diamond: 525, cross: 1000000 };
+        var ranked;
+        if (!moves.length) { return null; }
+        ranked = moves.map(function (move) {
+          var score = Math.random() * 35;
+          move.captures.forEach(function (id) {
+            var captured = pieceById(state, id);
+            if (captured) { score += values[captured.type] || 0; }
+          });
+          return { move: move, score: score };
+        }).sort(function (a, b) { return b.score - a.score; });
+        return ranked[0].move;
+      }
+      function overlayBlocksAiMove() {
+        return modeOverlay.classList.contains("open") || helpOverlay.classList.contains("open") || tutorialOverlay.classList.contains("open");
+      }
+      function commitAiMoveWhenReady(move, requestId) {
+        if (requestId !== aiRequestId || playMode !== "ai" || !state || state.gameOver || state.currentPlayer !== aiPlayer) {
+          return;
+        }
+        if (overlayBlocksAiMove()) {
+          aiDeferredMove = move;
+          aiDeferredTimer = window.setTimeout(function () {
+            commitAiMoveWhenReady(aiDeferredMove, requestId);
+          }, 180);
+          return;
+        }
+        aiDeferredMove = null;
+        commitAiMove(move, requestId);
+      }
+      function commitAiMove(move, requestId) {
+        var piece;
+        var legal;
+        var canonical = null;
+        var signature;
+        var i;
+        var summary;
+        if (requestId !== aiRequestId || playMode !== "ai" || state.gameOver || state.currentPlayer !== aiPlayer) { return; }
+        piece = move ? pieceById(state, move.pieceId) : null;
+        if (piece && piece.alive && piece.player === aiPlayer) {
+          legal = legalMovesForPiece(state, piece);
+          signature = moveSignature(move);
+          for (i = 0; i < legal.length; i += 1) {
+            if (moveSignature(legal[i]) === signature) { canonical = legal[i]; break; }
+          }
+        }
+        if (!canonical) { canonical = fallbackAiMove(); }
+        aiThinking = false;
+        if (aiWorker) {
+          try { aiWorker.terminate(); } catch (error) { /* ignore */ }
+          aiWorker = null;
+        }
+        if (!canonical) { render(); return; }
+        summary = advanceStateMutable(state, canonical);
+        presentLastMove(state.lastMove);
+        if (state.gameOver) {
+          showResultOverlay(state.result);
+        } else if (summary.nextCheck) {
+          showToast("Check! Protect your cross.");
+          playTone(165, 0.12, "sawtooth", 0.06);
+        }
+        render();
+      }
+      function startAiWorker(requestId) {
+        var blob;
+        var url;
+        var worker;
+        var searchMoveNumber = state.moveNumber;
+        if (requestId !== aiRequestId || playMode !== "ai" || state.gameOver || state.currentPlayer !== aiPlayer) { return; }
+        try {
+          if (!aiWorkerSource) { aiWorkerSource = buildAiWorkerSource(); }
+          blob = new Blob([aiWorkerSource], { type: "application/javascript" });
+          url = URL.createObjectURL(blob);
+          worker = new Worker(url);
+          URL.revokeObjectURL(url);
+          aiWorker = worker;
+          worker.onmessage = function (event) {
+            var data = event.data || {};
+            if (data.requestId !== aiRequestId || state.moveNumber !== searchMoveNumber) { return; }
+            commitAiMoveWhenReady(data.move, data.requestId);
+          };
+          worker.onerror = function () {
+            if (requestId !== aiRequestId) { return; }
+            commitAiMoveWhenReady(fallbackAiMove(), requestId);
+          };
+          worker.postMessage({
+            requestId: requestId,
+            state: compactAiState(state),
+            difficulty: aiDifficulty,
+            player: aiPlayer
+          });
+        } catch (error) {
+          commitAiMoveWhenReady(fallbackAiMove(), requestId);
+        }
+      }
+      function scheduleAiTurn() {
+        var delay;
+        if (playMode !== "ai" || !state || state.gameOver || state.currentPlayer !== aiPlayer || aiThinking) { return; }
+        aiThinking = true;
+        selectedId = null;
+        selectedMoves = [];
+        pendingAnnihilationMoves = [];
+        closeDirectionPicker();
+        aiRequestId += 1;
+        delay = aiDifficulty === "easy" ? 260 : 340;
+        render();
+        (function (requestId) {
+          aiStartTimer = window.setTimeout(function () { startAiWorker(requestId); }, delay);
+        }(aiRequestId));
+      }
+      function registerCrossmateOffline() {
+        if (!("serviceWorker" in navigator) || !window.isSecureContext) { return; }
+        window.addEventListener("load", function () {
+          navigator.serviceWorker.register("sw.js", { scope: "./" }).catch(function () { return; });
+        });
+      }
+
+      var v14ShowModeChooser = showModeChooser;
+      showModeChooser = function () {
+        cancelAiSearch();
+        v14ShowModeChooser();
+        closeComputerSetup();
+      };
+      var v14CanLocalAct = canLocalAct;
+      canLocalAct = function () {
+        if (playMode === "ai") {
+          return !aiThinking && !state.gameOver && state.currentPlayer === humanPlayer;
+        }
+        return v14CanLocalAct();
+      };
+      var v14CommitMove = commitMove;
+      commitMove = function (move) {
+        var before = state ? Number(state.moveNumber || 0) : -1;
+        v14CommitMove(move);
+        if (playMode === "ai" && state && Number(state.moveNumber || 0) !== before && !state.gameOver) {
+          scheduleAiTurn();
+        }
+      };
+      var v14NewGame = newGame;
+      newGame = function (showIntro, silent) {
+        cancelAiSearch();
+        v14NewGame(showIntro, silent);
+        if (playMode === "ai") {
+          aiStartingPlayer = chosenOpeningPlayer();
+          state.currentPlayer = aiStartingPlayer || humanPlayer;
+          state.positionCounts = {};
+          state.positionCounts[positionKey(state)] = 1;
+          state.history = [packHistorySnapshot(state)];
+          render();
+          if (state.currentPlayer === aiPlayer) { scheduleAiTurn(); }
+        }
+      };
+      var v14Render = render;
+      render = function () {
+        var p1Name;
+        var p2Name;
+        var check;
+        v14Render();
+        p1Name = player1Card.querySelector(".player-name");
+        p2Name = player2Card.querySelector(".player-name");
+        if (playMode === "ai") {
+          p1Name.textContent = "You · Rose";
+          p2Name.textContent = "Computer · Cyan";
+          networkBadge.textContent = "Computer · " + aiTitle(aiDifficulty);
+          networkBadge.className = "network-pill ai" + (aiThinking ? " ai-thinking" : "");
+          boardShell.classList.toggle("ai-thinking", aiThinking);
+          check = isInCheck(state, state.currentPlayer);
+          if (!state.gameOver && state.currentPlayer === aiPlayer) {
+            statusText.textContent = aiThinking ? "Computer is thinking" : (check ? "Computer is in check" : "Computer to move");
+            actionTitle.textContent = aiThinking ? "Computer is choosing a move" : "Computer's turn";
+            actionSub.textContent = aiDifficulty === "hard" ? "Hard AI uses a deeper timed search." : (aiDifficulty === "easy" ? "Easy AI may deliberately overlook the strongest move." : "Normal AI looks ahead and weighs tactics.");
+            clearButton.hidden = true;
+          } else if (!state.gameOver) {
+            statusText.textContent = check ? "You are in check — escape or stop the threat" : "Your turn";
+            if (!selectedPiece()) { actionTitle.textContent = "Select one of your pieces"; }
+          }
+          if (!state.gameOver) {
+            player1Chip.textContent = state.currentPlayer === humanPlayer ? (check ? "Check" : "Your turn") : "Waiting";
+            player2Chip.textContent = state.currentPlayer === aiPlayer ? (check ? "Check" : (aiThinking ? "Thinking" : "Computer")) : "Waiting";
+          }
+        } else {
+          p1Name.textContent = "Player 1 · Rose";
+          p2Name.textContent = "Player 2 · Cyan";
+          boardShell.classList.remove("ai-thinking");
+        }
+      };
+
+      computerModeButton.addEventListener("click", openComputerSetup);
+      aiSetupBackButton.addEventListener("click", closeComputerSetup);
+      startComputerButton.addEventListener("click", startComputerMatch);
+      aiDifficultyChoices.addEventListener("click", function (event) {
+        var button = event.target.closest("[data-ai-difficulty]");
+        if (!button) { return; }
+        aiDifficulty = button.getAttribute("data-ai-difficulty");
+        setAiChoice(aiDifficultyChoices, "data-ai-difficulty", aiDifficulty);
+      });
+      aiOpeningChoices.addEventListener("click", function (event) {
+        var button = event.target.closest("[data-ai-opening]");
+        if (!button) { return; }
+        aiOpening = button.getAttribute("data-ai-opening");
+        setAiChoice(aiOpeningChoices, "data-ai-opening", aiOpening);
+      });
+      registerCrossmateOffline();
 
       function handleNewMatchButton() {
         if (playMode === "online") { leaveOnlineMatch(); }
