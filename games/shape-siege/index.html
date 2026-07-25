@@ -829,7 +829,7 @@
 
 
 
-    /* Shape Siege v1.2.2: online rooms and captured-material scoring */
+    /* Shape Siege v1.2.3: online rooms and captured-material scoring */
     .network-pill {
       flex: 0 0 auto;
       padding: 4px 7px;
@@ -964,7 +964,7 @@
       <a class="icon-button" href="../../" aria-label="Back to games">←</a>
       <div class="title-block">
         <p class="eyebrow">Local + online strategy</p>
-        <h1>Shape Siege <span class="version">v1.2.2</span></h1>
+        <h1>Shape Siege <span class="version">v1.2.3</span></h1>
       </div>
       <div class="top-actions">
         <button class="icon-button" id="soundButton" type="button" aria-label="Turn sound off" title="Sound">♪</button>
@@ -1131,7 +1131,7 @@
       ];
       var TYPE_NAMES = { circle: "Circle", diamond: "Diamond", square: "Square", triangle: "Triangle", cross: "Cross" };
       var POINT_VALUES = { circle: 1, triangle: 3, square: 5, diamond: 6, cross: 0 };
-      var VERSION = "1.2.2";
+      var VERSION = "1.2.3";
       var BACK_ROW = ["diamond", "square", "triangle", null, "cross", null, "triangle", "square", "diamond"];
 
       var boardEl = document.getElementById("board");
@@ -1470,7 +1470,11 @@
           var ref = firebase.database().ref("shapeSiegeRooms/" + code);
           return ref.once("value").then(function (initialSnapshot) {
             var initialRoom = initialSnapshot.val();
-            var assignedPlayer = 0;
+            var p1Uid;
+            var p2Uid;
+            var p2Ref;
+            var claim;
+
             if (!initialRoom || !initialRoom.players || !initialRoom.players.p1) {
               modeChoices.hidden = false;
               roomPanel.hidden = true;
@@ -1483,38 +1487,54 @@
               setOnlineError("This room has expired. Ask Player 1 to create a new room.");
               return;
             }
-            if (
-              initialRoom.players.p2 && initialRoom.players.p2.uid &&
-              initialRoom.players.p2.uid !== firebaseUser.uid &&
-              initialRoom.players.p1.uid !== firebaseUser.uid
-            ) {
+
+            p1Uid = initialRoom.players.p1.uid || "";
+            p2Uid = initialRoom.players.p2 && initialRoom.players.p2.uid ? initialRoom.players.p2.uid : "";
+
+            if (p1Uid === firebaseUser.uid) {
+              attachOnlineRoom(code, 1);
+              return;
+            }
+            if (p2Uid === firebaseUser.uid) {
+              attachOnlineRoom(code, 2);
+              return;
+            }
+            if (p2Uid) {
               modeChoices.hidden = false;
               roomPanel.hidden = true;
               setOnlineError("This room already has two players.");
               return;
             }
-            ref.transaction(function (room) {
-              if (!room || !room.players || !room.players.p1 || Number(room.expiresAt || 0) < Date.now()) { return; }
-              if (room.players.p1.uid === firebaseUser.uid) { assignedPlayer = 1; return room; }
-              if (room.players.p2 && room.players.p2.uid === firebaseUser.uid) { assignedPlayer = 2; return room; }
-              if (room.players.p2 && room.players.p2.uid) { return; }
-              room.players.p2 = { uid: firebaseUser.uid, joinedAt: Date.now() };
-              assignedPlayer = 2;
-              return room;
-            }, function (error, committed) {
+
+            p2Ref = ref.child("players/p2");
+            claim = { uid: firebaseUser.uid, joinedAt: Date.now() };
+            p2Ref.transaction(function (currentP2) {
+              if (!currentP2 || !currentP2.uid) { return claim; }
+              if (currentP2.uid === firebaseUser.uid) { return currentP2; }
+              return;
+            }, function (error, committed, snapshot) {
+              var finalP2 = snapshot && snapshot.val ? snapshot.val() : null;
               if (error) {
                 modeChoices.hidden = false;
                 roomPanel.hidden = true;
-                setOnlineError(error.message || "Could not join the room.");
+                if (error.code === "PERMISSION_DENIED") {
+                  setOnlineError("Could not claim this room. Check that the Firebase rules are published.");
+                } else {
+                  setOnlineError(error.message || "Could not join the room.");
+                }
                 return;
               }
-              if (!committed || !assignedPlayer) {
-                modeChoices.hidden = false;
-                roomPanel.hidden = true;
-                setOnlineError("The room changed while joining. Try again with a new room code.");
+              if (committed && finalP2 && finalP2.uid === firebaseUser.uid) {
+                attachOnlineRoom(code, 2);
                 return;
               }
-              attachOnlineRoom(code, assignedPlayer);
+              modeChoices.hidden = false;
+              roomPanel.hidden = true;
+              if (finalP2 && finalP2.uid && finalP2.uid !== firebaseUser.uid) {
+                setOnlineError("This room already has two players.");
+              } else {
+                setOnlineError("Could not join this room. Ask Player 1 to create a new code and try once more.");
+              }
             }, false);
           });
         }).catch(function (error) {
