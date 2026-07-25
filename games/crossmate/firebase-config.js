@@ -1,4 +1,4 @@
-window.SHAPE_SIEGE_FIREBASE_CONFIG = {
+window.CROSSMATE_FIREBASE_CONFIG = {
   apiKey: "AIzaSyDXv8NjiD11ONpspCy6qPxbZarS3VQNbSk",
   authDomain: "shape-siege-dc7ce.firebaseapp.com",
   databaseURL: "https://shape-siege-dc7ce-default-rtdb.europe-west1.firebasedatabase.app/",
