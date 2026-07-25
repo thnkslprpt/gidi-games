@@ -827,6 +827,111 @@
       .small-button { min-height: 31px; padding-inline: 7px; }
     }
 
+
+
+    /* Shape Siege v1.2.1: online rooms and captured-material scoring */
+    .network-pill {
+      flex: 0 0 auto;
+      padding: 4px 7px;
+      border-radius: 999px;
+      color: #aab8ce;
+      background: rgba(255,255,255,0.055);
+      font-size: 8px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .network-pill.online { color: var(--p2-soft); background: rgba(var(--p2-rgb),0.13); }
+    .network-pill.offline { color: #ffd4d8; background: rgba(255,95,109,0.16); }
+    .point-tag {
+      margin-left: auto;
+      padding: 3px 6px;
+      border-radius: 999px;
+      color: var(--gold);
+      background: rgba(255,209,102,0.09);
+      font-size: 8px;
+      font-weight: 950;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+    .online-modal { max-width: 430px; }
+    .online-modal h2 { margin-bottom: 7px; }
+    .mode-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 13px;
+    }
+    .mode-card {
+      min-height: 82px;
+      padding: 12px;
+      border: 1px solid rgba(151,174,219,0.16);
+      border-radius: 17px;
+      display: grid;
+      align-content: center;
+      gap: 4px;
+      text-align: left;
+      color: var(--ink);
+      background: linear-gradient(145deg, rgba(27,39,67,0.94), rgba(12,19,35,0.94));
+      cursor: pointer;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+    }
+    .mode-card:active { transform: scale(0.98); }
+    .mode-card strong { font-size: 13px; }
+    .mode-card span { color: var(--muted); font-size: 10px; line-height: 1.35; }
+    .mode-card.online-choice { border-color: rgba(var(--p2-rgb),0.28); }
+    .join-box {
+      margin-top: 9px;
+      padding: 10px;
+      border: 1px solid rgba(151,174,219,0.13);
+      border-radius: 16px;
+      background: rgba(255,255,255,0.03);
+    }
+    .join-label { display: block; margin-bottom: 6px; color: #cbd8ec; font-size: 10px; font-weight: 850; }
+    .join-row { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 7px; }
+    .room-input {
+      width: 100%;
+      min-width: 0;
+      height: 40px;
+      padding: 0 11px;
+      border: 1px solid rgba(151,174,219,0.22);
+      border-radius: 12px;
+      color: var(--ink);
+      background: rgba(6,11,23,0.8);
+      font-size: 16px;
+      font-weight: 900;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      outline: none;
+    }
+    .room-input:focus { border-color: rgba(var(--p2-rgb),0.65); box-shadow: 0 0 0 2px rgba(var(--p2-rgb),0.1); }
+    .room-panel { margin-top: 12px; text-align: center; }
+    .room-code {
+      margin: 7px 0 9px;
+      color: var(--gold);
+      font-size: clamp(30px, 11vw, 46px);
+      font-weight: 950;
+      letter-spacing: 0.15em;
+      text-indent: 0.15em;
+    }
+    .room-state { color: #cbd8ec; font-size: 11px; line-height: 1.45; }
+    .room-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 7px; margin-top: 11px; }
+    .online-error { min-height: 16px; margin-top: 8px; color: #ffafb8; font-size: 10px; text-align: center; }
+    .online-spinner {
+      width: 18px;
+      height: 18px;
+      margin: 11px auto 2px;
+      border: 2px solid rgba(255,255,255,0.12);
+      border-top-color: var(--p2);
+      border-radius: 50%;
+      animation: onlineSpin 700ms linear infinite;
+    }
+    @keyframes onlineSpin { to { transform: rotate(360deg); } }
+    @media (max-width: 360px) {
+      .mode-grid { grid-template-columns: 1fr; }
+      .mode-card { min-height: 64px; }
+    }
+
     @media (max-width: 350px) {
       :root { --board-size: min(calc(100vw - 16px), calc(100vh - 246px)); }
       .app { padding-left: 8px; padding-right: 8px; }
@@ -858,8 +963,8 @@
     <header class="topbar">
       <a class="icon-button" href="../../" aria-label="Back to games">←</a>
       <div class="title-block">
-        <p class="eyebrow">Two-player strategy</p>
-        <h1>Shape Siege <span class="version">v1.1.0</span></h1>
+        <p class="eyebrow">Local + online strategy</p>
+        <h1>Shape Siege <span class="version">v1.2.1</span></h1>
       </div>
       <div class="top-actions">
         <button class="icon-button" id="soundButton" type="button" aria-label="Turn sound off" title="Sound">♪</button>
@@ -872,7 +977,7 @@
       <div class="player-token">2</div>
       <div class="player-copy">
         <div class="player-name">Player 2 · Cyan</div>
-        <div class="player-detail" id="player2Detail">16 pieces · Cross safe</div>
+        <div class="player-detail" id="player2Detail">16 pieces · 0 pts · Cross safe</div>
       </div>
       <div class="turn-chip" id="player2Chip">Waiting</div>
     </section>
@@ -880,6 +985,7 @@
     <div class="status p1" id="status" aria-live="polite">
       <span class="status-dot"></span>
       <span id="statusText">Preparing the board…</span>
+      <span class="network-pill" id="networkBadge">Choose mode</span>
     </div>
 
     <section class="board-shell" id="boardShell" aria-label="9 by 9 Shape Siege board">
@@ -890,7 +996,7 @@
       <div class="player-token">1</div>
       <div class="player-copy">
         <div class="player-name">Player 1 · Rose</div>
-        <div class="player-detail" id="player1Detail">16 pieces · Cross safe</div>
+        <div class="player-detail" id="player1Detail">16 pieces · 0 pts · Cross safe</div>
       </div>
       <div class="turn-chip" id="player1Chip">Waiting</div>
     </section>
@@ -908,6 +1014,45 @@
   </main>
 
 
+
+  <div class="overlay open" id="modeOverlay" role="dialog" aria-modal="true" aria-labelledby="modeTitle">
+    <section class="modal online-modal">
+      <div class="modal-kicker">Choose how to play</div>
+      <h2 id="modeTitle">One phone or two?</h2>
+      <p class="modal-lead" id="modeLead">Play the original pass-and-play match, or connect two phones with a private room code.</p>
+      <div id="modeChoices">
+        <div class="mode-grid">
+          <button class="mode-card" id="localModeButton" type="button">
+            <strong>One phone</strong>
+            <span>Take turns on the same screen.</span>
+          </button>
+          <button class="mode-card online-choice" id="createOnlineButton" type="button">
+            <strong>Create online match</strong>
+            <span>Get a code to share with the other phone.</span>
+          </button>
+        </div>
+        <div class="join-box">
+          <label class="join-label" for="roomCodeInput">Join an existing match</label>
+          <div class="join-row">
+            <input class="room-input" id="roomCodeInput" inputmode="text" maxlength="5" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="CODE">
+            <button class="small-button" id="joinOnlineButton" type="button">Join</button>
+          </div>
+        </div>
+      </div>
+      <div class="room-panel" id="roomPanel" hidden>
+        <div class="modal-kicker" id="roomKicker">Online room</div>
+        <div class="room-code" id="roomCodeDisplay">-----</div>
+        <div class="room-state" id="roomStateText">Connecting…</div>
+        <div class="online-spinner" id="onlineSpinner"></div>
+        <div class="room-actions">
+          <button class="small-button" id="shareRoomButton" type="button">Share invite</button>
+          <button class="small-button" id="leaveRoomButton" type="button">Leave room</button>
+        </div>
+      </div>
+      <div class="online-error" id="onlineError" aria-live="polite"></div>
+    </section>
+  </div>
+
   <div class="overlay" id="helpOverlay" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
     <section class="modal">
       <div class="modal-kicker">How to play</div>
@@ -915,15 +1060,15 @@
       <p class="modal-lead">Shape Siege is a tactical duel on a 9×9 board. Each side starts with nine circles in front of two diamonds, two squares, two triangles, and one cross. Player 2 begins at the top; Player 1 begins at the bottom.</p>
       <div class="rules-grid">
         <article class="rule-card">
-          <div class="rule-head"><span class="rule-icon">○</span><strong>Circle</strong></div>
+          <div class="rule-head"><span class="rule-icon">○</span><strong>Circle</strong><span class="point-tag">1 point</span></div>
           <p>Move 1 or 2 squares straight forward or backward and capture exactly 1 square diagonally forward. On reaching the far edge, choose any enemy except the cross: that enemy and the arriving circle both disappear. If no legal target exists, the circle stays.</p>
         </article>
         <article class="rule-card">
-          <div class="rule-head"><span class="rule-icon">△</span><strong>Triangle</strong></div>
+          <div class="rule-head"><span class="rule-icon">△</span><strong>Triangle</strong><span class="point-tag">3 points</span></div>
           <p>Turn at most once per turn. It may turn 90° before moving 1 or 2 squares, or move straight first and optionally turn 90° afterward. It may also turn in place. An adjacent enemy in its final direction is captured automatically, unless it is a diamond.</p>
         </article>
         <article class="rule-card">
-          <div class="rule-head"><span class="rule-icon">□</span><strong>Square</strong></div>
+          <div class="rule-head"><span class="rule-icon">□</span><strong>Square</strong><span class="point-tag">5 points</span></div>
           <p>Move any distance horizontally or vertically. It may jump over one enemy, which survives, then land on an empty square or capture the next ordinary enemy. It may destroy a diamond only by landing directly on it, including after one legal jump.</p>
         </article>
         <article class="rule-card">
@@ -931,11 +1076,11 @@
           <p>Move up to 3 squares in any straight or diagonal direction and capture every enemy crossed. A cross may never enter either of its own diamonds’ forcefields. It may cross an enemy diamond’s field only to land on and destroy that diamond.</p>
         </article>
         <article class="rule-card forcefield-rule">
-          <div class="rule-head"><span class="rule-icon">◇</span><strong>Diamond forcefield</strong></div>
+          <div class="rule-head"><span class="rule-icon">◇</span><strong>Diamond forcefield</strong><span class="point-tag">6 points</span></div>
           <p>A diamond moves 1 square in any direction to an empty square. Its 8 surrounding squares form a forcefield: enemy pieces cannot enter, capture into, or pass through them. The diamond cannot move if its new field would contain any enemy or its own cross. Only a square, a cross, or a far-edge circle blast can destroy it.</p>
         </article>
       </div>
-      <div class="rule-note"><strong>Check and forcefields:</strong> you may not finish a move with your own cross threatened. Forcefield squares block enemy movement and attacks. Checkmate wins. Stalemate, a threefold repetition, or 60 consecutive player moves without a capture ends the game in a draw.</div>
+      <div class="rule-note"><strong>Points:</strong> captured circles are worth 1, triangles 3, squares 5, and diamonds 6. Points show material advantage but never replace the cross win condition.<br><br><strong>Check and forcefields:</strong> you may not finish a move with your own cross threatened. Forcefield squares block enemy movement and attacks. Checkmate wins. Stalemate, a threefold repetition, or 60 consecutive player moves without a capture ends the game in a draw.</div>
       <div class="modal-actions">
         <button class="primary-button" id="closeHelpButton" type="button">Start match</button>
       </div>
@@ -963,6 +1108,11 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <div class="rotate-notice"><div><strong>Turn the phone upright</strong><span>Shape Siege is designed for portrait play.</span></div></div>
 
+  <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-database-compat.js"></script>
+  <script src="firebase-config.js"></script>
+
   <script>
     (function () {
       "use strict";
@@ -980,6 +1130,8 @@
         { dr: -1, dc: -1 }, { dr: -1, dc: 1 }, { dr: 1, dc: -1 }, { dr: 1, dc: 1 }
       ];
       var TYPE_NAMES = { circle: "Circle", diamond: "Diamond", square: "Square", triangle: "Triangle", cross: "Cross" };
+      var POINT_VALUES = { circle: 1, triangle: 3, square: 5, diamond: 6, cross: 0 };
+      var VERSION = "1.2.1";
       var BACK_ROW = ["diamond", "square", "triangle", null, "cross", null, "triangle", "square", "diamond"];
 
       var boardEl = document.getElementById("board");
@@ -1012,6 +1164,22 @@
       var endEmblem = document.getElementById("endEmblem");
       var playAgainButton = document.getElementById("playAgainButton");
       var toastEl = document.getElementById("toast");
+      var modeOverlay = document.getElementById("modeOverlay");
+      var modeChoices = document.getElementById("modeChoices");
+      var modeLead = document.getElementById("modeLead");
+      var localModeButton = document.getElementById("localModeButton");
+      var createOnlineButton = document.getElementById("createOnlineButton");
+      var roomCodeInput = document.getElementById("roomCodeInput");
+      var joinOnlineButton = document.getElementById("joinOnlineButton");
+      var roomPanel = document.getElementById("roomPanel");
+      var roomCodeDisplay = document.getElementById("roomCodeDisplay");
+      var roomStateText = document.getElementById("roomStateText");
+      var onlineSpinner = document.getElementById("onlineSpinner");
+      var shareRoomButton = document.getElementById("shareRoomButton");
+      var leaveRoomButton = document.getElementById("leaveRoomButton");
+      var onlineError = document.getElementById("onlineError");
+      var networkBadge = document.getElementById("networkBadge");
+
 
       var state = null;
       var selectedId = null;
@@ -1024,6 +1192,21 @@
       var soundOn = safeGet("shape-siege-sound") !== "off";
       var pendingAnnihilationMoves = [];
       var layoutRefreshFrame = 0;
+      var playMode = "choosing";
+      var localPlayer = 0;
+      var onlineRoomCode = "";
+      var onlineRoomRef = null;
+      var onlineRoomListener = null;
+      var onlinePresenceRef = null;
+      var onlineHasOpponent = false;
+      var onlineOpponentConnected = false;
+      var onlineBusy = false;
+      var onlineInitialSnapshot = true;
+      var lastSeenOnlineMove = -1;
+      var lastShownResultMove = -1;
+      var firebaseUser = null;
+      var FIREBASE_CONFIG = window.SHAPE_SIEGE_FIREBASE_CONFIG || null;
+
 
       function safeGet(key) {
         try { return window.localStorage.getItem(key) || ""; }
@@ -1033,6 +1216,302 @@
       function safeSet(key, value) {
         try { window.localStorage.setItem(key, value); }
         catch (error) { return; }
+      }
+
+
+
+      function firebaseIsConfigured() {
+        var required = ["apiKey", "authDomain", "databaseURL", "projectId", "appId"];
+        var i;
+        if (!FIREBASE_CONFIG || !window.firebase) { return false; }
+        for (i = 0; i < required.length; i += 1) {
+          if (!FIREBASE_CONFIG[required[i]] || String(FIREBASE_CONFIG[required[i]]).indexOf("PASTE_") === 0) { return false; }
+        }
+        return true;
+      }
+      function setOnlineError(message) { onlineError.textContent = message || ""; }
+      function setRoomPanel(code, text, spinning) {
+        modeChoices.hidden = true;
+        roomPanel.hidden = false;
+        roomCodeDisplay.textContent = code || "-----";
+        roomStateText.textContent = text || "Connecting…";
+        onlineSpinner.hidden = !spinning;
+      }
+      function showModeChooser() {
+        playMode = "choosing";
+        localPlayer = 0;
+        onlineHasOpponent = false;
+        onlineOpponentConnected = false;
+        modeChoices.hidden = false;
+        roomPanel.hidden = true;
+        modeLead.textContent = "Play the original pass-and-play match, or connect two phones with a private room code.";
+        roomCodeInput.value = "";
+        setOnlineError("");
+        modeOverlay.classList.add("open");
+        endOverlay.classList.remove("open");
+        applyBoardPerspective();
+        render();
+      }
+      function initialiseFirebase() {
+        if (!firebaseIsConfigured()) {
+          return Promise.reject(new Error("Firebase is not configured yet. Add your project details to firebase-config.js."));
+        }
+        try {
+          if (!firebase.apps.length) { firebase.initializeApp(FIREBASE_CONFIG); }
+          return firebase.auth().signInAnonymously().then(function (credential) {
+            firebaseUser = credential.user;
+            return firebaseUser;
+          });
+        } catch (error) {
+          return Promise.reject(error);
+        }
+      }
+      function cleanRoomCode(value) {
+        return String(value || "").toUpperCase().replace(/[^A-Z2-9]/g, "").slice(0, 5);
+      }
+      function randomRoomCode() {
+        var alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+        var result = "";
+        var i;
+        for (i = 0; i < 5; i += 1) { result += alphabet.charAt(Math.floor(Math.random() * alphabet.length)); }
+        return result;
+      }
+      function freshState() {
+        var fresh = createInitialState();
+        fresh.positionCounts[positionKey(fresh)] = 1;
+        return fresh;
+      }
+      function normaliseState(value) {
+        if (!value || !value.pieces) { return null; }
+        value.scores = value.scores || { 1: 0, 2: 0 };
+        value.scores[1] = Number(value.scores[1] || 0);
+        value.scores[2] = Number(value.scores[2] || 0);
+        value.positionCounts = value.positionCounts || {};
+        value.moveNumber = Number(value.moveNumber || 0);
+        value.halfmoveClock = Number(value.halfmoveClock || 0);
+        value.gameOver = Boolean(value.gameOver);
+        return value;
+      }
+      function canLocalAct() {
+        if (playMode !== "online") { return true; }
+        return onlineHasOpponent && !onlineBusy && localPlayer === state.currentPlayer && !state.gameOver;
+      }
+      function applyBoardPerspective() {
+        var r;
+        var c;
+        if (!cellEls.length) { return; }
+        if (directionOverlay.parentNode === boardEl) { boardEl.removeChild(directionOverlay); }
+        if (playMode === "online" && localPlayer === 2) {
+          for (r = SIZE - 1; r >= 0; r -= 1) {
+            for (c = SIZE - 1; c >= 0; c -= 1) { boardEl.appendChild(cellEls[r][c]); }
+          }
+        } else {
+          for (r = 0; r < SIZE; r += 1) {
+            for (c = 0; c < SIZE; c += 1) { boardEl.appendChild(cellEls[r][c]); }
+          }
+        }
+        boardEl.appendChild(directionOverlay);
+      }
+      function clearOnlineConnection(removePresence) {
+        if (onlineRoomRef && onlineRoomListener) { onlineRoomRef.off("value", onlineRoomListener); }
+        if (removePresence && onlinePresenceRef) { onlinePresenceRef.remove(); }
+        onlineRoomRef = null;
+        onlineRoomListener = null;
+        onlinePresenceRef = null;
+        onlineRoomCode = "";
+        onlineBusy = false;
+        onlineInitialSnapshot = true;
+        lastSeenOnlineMove = -1;
+        lastShownResultMove = -1;
+        try { window.localStorage.removeItem("shape-siege-online-room"); } catch (error) { /* ignore */ }
+        if (window.history && window.history.replaceState) {
+          window.history.replaceState({}, "", window.location.pathname + window.location.hash);
+        }
+      }
+      function leaveOnlineMatch() {
+        clearOnlineConnection(true);
+        showModeChooser();
+      }
+      function inviteUrl() {
+        return window.location.origin + window.location.pathname + "?room=" + encodeURIComponent(onlineRoomCode);
+      }
+      function shareRoom() {
+        var url = inviteUrl();
+        if (navigator.share) {
+          navigator.share({ title: "Shape Siege", text: "Join my Shape Siege room " + onlineRoomCode, url: url }).catch(function () { return; });
+          return;
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(url).then(function () { showToast("Invite link copied"); }).catch(function () { showToast("Room code: " + onlineRoomCode); });
+          return;
+        }
+        showToast("Room code: " + onlineRoomCode);
+      }
+      function updateRoomPresence(roomData) {
+        var opponent;
+        onlineHasOpponent = Boolean(roomData.players && roomData.players.p2 && roomData.players.p2.uid);
+        opponent = localPlayer === 1 ? roomData.players && roomData.players.p2 : roomData.players && roomData.players.p1;
+        onlineOpponentConnected = Boolean(opponent && roomData.presence && roomData.presence[opponent.uid]);
+      }
+      function presentLastMove(lastMove) {
+        var ids;
+        var i;
+        var piece;
+        if (!lastMove) { return; }
+        lastMovePieceId = lastMove.pieceId || null;
+        lastCapturedSquares = [];
+        ids = (lastMove.captures || []).slice();
+        if (lastMove.selfDestructId) { ids.push(lastMove.selfDestructId); }
+        for (i = 0; i < ids.length; i += 1) {
+          piece = pieceById(state, ids[i]);
+          if (piece) { lastCapturedSquares.push({ r: piece.r, c: piece.c, player: piece.player }); }
+        }
+        if ((lastMove.captures || []).length) {
+          playCaptureSound(lastMove.captures.length);
+          if (navigator.vibrate) { navigator.vibrate(28); }
+          if (lastMove.pointsGained) { showToast("Player " + lastMove.mover + " scores +" + lastMove.pointsGained); }
+        } else {
+          playTone(300, 0.05, "triangle", 0.035);
+        }
+      }
+      function attachOnlineRoom(code, player) {
+        var uid = firebaseUser.uid;
+        clearOnlineConnection(false);
+        playMode = "online";
+        localPlayer = player;
+        onlineRoomCode = code;
+        onlineRoomRef = firebase.database().ref("shapeSiegeRooms/" + code);
+        onlinePresenceRef = onlineRoomRef.child("presence/" + uid);
+        onlinePresenceRef.set(true);
+        onlinePresenceRef.onDisconnect().remove();
+        try { window.localStorage.setItem("shape-siege-online-room", code + ":" + player); } catch (error) { /* ignore */ }
+        if (window.history && window.history.replaceState) {
+          window.history.replaceState({}, "", window.location.pathname + "?room=" + encodeURIComponent(code));
+        }
+        applyBoardPerspective();
+        setRoomPanel(code, player === 1 ? "Waiting for Player 2 to join…" : "Joining match…", true);
+        onlineRoomListener = function (snapshot) {
+          var roomData = snapshot.val();
+          var incoming;
+          var moved;
+          if (!roomData || !roomData.state) {
+            setOnlineError("This room no longer exists.");
+            return;
+          }
+          updateRoomPresence(roomData);
+          incoming = normaliseState(roomData.state);
+          moved = !onlineInitialSnapshot && incoming.moveNumber !== lastSeenOnlineMove;
+          state = incoming;
+          if (moved) { presentLastMove(state.lastMove); }
+          lastSeenOnlineMove = state.moveNumber;
+          onlineInitialSnapshot = false;
+          onlineBusy = false;
+          selectedId = null;
+          selectedMoves = [];
+          pendingAnnihilationMoves = [];
+          closeDirectionPicker();
+          if (!state.gameOver) { lastShownResultMove = -1; }
+          if (onlineHasOpponent) {
+            modeOverlay.classList.remove("open");
+            if (state.gameOver && lastShownResultMove !== state.moveNumber) {
+              lastShownResultMove = state.moveNumber;
+              showResultOverlay(state.result);
+            }
+          } else {
+            setRoomPanel(code, "Waiting for Player 2 to join…", true);
+          }
+          render();
+        };
+        onlineRoomRef.on("value", onlineRoomListener, function (error) {
+          setOnlineError(error.message || "Could not connect to this room.");
+        });
+      }
+      function createOnlineMatch() {
+        var attempts = 0;
+        setOnlineError("");
+        setRoomPanel("-----", "Creating a private room…", true);
+        initialiseFirebase().then(function () {
+          function attempt() {
+            var code = randomRoomCode();
+            var ref = firebase.database().ref("shapeSiegeRooms/" + code);
+            attempts += 1;
+            ref.transaction(function (current) {
+              if (current) { return; }
+              return {
+                version: VERSION,
+                createdAt: Date.now(),
+                expiresAt: Date.now() + 86400000,
+                players: { p1: { uid: firebaseUser.uid, joinedAt: Date.now() } },
+                state: freshState()
+              };
+            }, function (error, committed) {
+              if (error) { setOnlineError(error.message || "Could not create the room."); return; }
+              if (!committed) {
+                if (attempts < 8) { attempt(); }
+                else { setOnlineError("Could not find a free room code. Try again."); }
+                return;
+              }
+              attachOnlineRoom(code, 1);
+            }, false);
+          }
+          attempt();
+        }).catch(function (error) {
+          modeChoices.hidden = false;
+          roomPanel.hidden = true;
+          setOnlineError(error.message || "Firebase connection failed.");
+        });
+      }
+      function joinOnlineMatch(codeValue) {
+        var code = cleanRoomCode(codeValue);
+        if (code.length !== 5) { setOnlineError("Enter the five-character room code."); return; }
+        setOnlineError("");
+        setRoomPanel(code, "Finding room…", true);
+        initialiseFirebase().then(function () {
+          var ref = firebase.database().ref("shapeSiegeRooms/" + code);
+          var assignedPlayer = 0;
+          ref.transaction(function (room) {
+            if (!room || !room.players || !room.players.p1 || room.expiresAt < Date.now()) { return; }
+            if (room.players.p1.uid === firebaseUser.uid) { assignedPlayer = 1; return room; }
+            if (room.players.p2 && room.players.p2.uid === firebaseUser.uid) { assignedPlayer = 2; return room; }
+            if (room.players.p2 && room.players.p2.uid) { return; }
+            room.players.p2 = { uid: firebaseUser.uid, joinedAt: Date.now() };
+            assignedPlayer = 2;
+            return room;
+          }, function (error, committed) {
+            if (error) { setOnlineError(error.message || "Could not join the room."); return; }
+            if (!committed || !assignedPlayer) {
+              modeChoices.hidden = false;
+              roomPanel.hidden = true;
+              setOnlineError("Room not found, expired, or already full.");
+              return;
+            }
+            attachOnlineRoom(code, assignedPlayer);
+          }, false);
+        }).catch(function (error) {
+          modeChoices.hidden = false;
+          roomPanel.hidden = true;
+          setOnlineError(error.message || "Firebase connection failed.");
+        });
+      }
+      function restartOnlineMatch() {
+        if (!onlineRoomRef || onlineBusy) { return; }
+        onlineBusy = true;
+        endOverlay.classList.remove("open");
+        onlineRoomRef.child("state").transaction(function (current) {
+          if (!current) { return; }
+          return freshState();
+        }, function (error, committed) {
+          onlineBusy = false;
+          if (error || !committed) { showToast("Could not start the rematch"); }
+        }, false);
+      }
+      function startLocalMatch() {
+        clearOnlineConnection(true);
+        playMode = "local";
+        localPlayer = 0;
+        onlineHasOpponent = true;
+        modeOverlay.classList.remove("open");
+        newGame(safeGet("shape-siege-seen-rules") !== "yes", false);
       }
 
       function inBounds(r, c) { return r >= 0 && r < SIZE && c >= 0 && c < SIZE; }
@@ -1160,6 +1639,8 @@
           positionCounts: {},
           gameOver: false,
           result: null,
+          scores: { 1: 0, 2: 0 },
+          lastMove: null,
           moveNumber: 0
         };
       }
@@ -1526,6 +2007,8 @@
           positionCounts: gameState.positionCounts,
           gameOver: gameState.gameOver,
           result: gameState.result,
+          scores: { 1: Number(gameState.scores && gameState.scores[1] || 0), 2: Number(gameState.scores && gameState.scores[2] || 0) },
+          lastMove: gameState.lastMove,
           moveNumber: gameState.moveNumber
         };
         applyMoveMutable(simulated, move);
@@ -1653,7 +2136,7 @@
       function pieceMarkup(piece, inCheck) {
         var classes = "piece p" + piece.player + " type-" + piece.type;
         var glyph = piece.type;
-        if (piece.type === "triangle") { classes += " facing-" + piece.facing; }
+        if (piece.type === "triangle") { classes += " facing-" + (playMode === "online" && localPlayer === 2 ? mod4(piece.facing + 2) : piece.facing); }
         if (piece.id === lastMovePieceId) { classes += " last-moved"; }
         if (piece.type === "cross" && inCheck) { classes += " cross-in-check"; }
         return '<span class="' + classes + '"><span class="glyph ' + glyph + '"></span></span>';
@@ -1786,23 +2269,42 @@
         var currentCheck = isInCheck(state, state.currentPlayer);
         var p1Check = state.currentPlayer === 1 && currentCheck;
         var p2Check = state.currentPlayer === 2 && currentCheck;
+        function chipFor(player, inCheck) {
+          if (inCheck) { return "Check"; }
+          if (state.gameOver) { return "Finished"; }
+          if (state.currentPlayer !== player) { return "Waiting"; }
+          if (playMode === "online") { return localPlayer === player ? "Your turn" : "Opponent"; }
+          return "Your turn";
+        }
         player1Card.classList.toggle("active", state.currentPlayer === 1 && !state.gameOver);
         player2Card.classList.toggle("active", state.currentPlayer === 2 && !state.gameOver);
         player1Card.classList.toggle("check", p1Check);
         player2Card.classList.toggle("check", p2Check);
-        player1Chip.textContent = p1Check ? "Check" : (state.currentPlayer === 1 && !state.gameOver ? "Your turn" : "Waiting");
-        player2Chip.textContent = p2Check ? "Check" : (state.currentPlayer === 2 && !state.gameOver ? "Your turn" : "Waiting");
-        player1Detail.textContent = pieceCount(1) + " pieces · " + (p1Check ? "Cross threatened" : "Cross safe");
-        player2Detail.textContent = pieceCount(2) + " pieces · " + (p2Check ? "Cross threatened" : "Cross safe");
+        player1Chip.textContent = chipFor(1, p1Check);
+        player2Chip.textContent = chipFor(2, p2Check);
+        player1Detail.textContent = pieceCount(1) + " pieces · " + Number(state.scores[1] || 0) + " pts · " + (p1Check ? "Cross threatened" : "Cross safe");
+        player2Detail.textContent = pieceCount(2) + " pieces · " + Number(state.scores[2] || 0) + " pts · " + (p2Check ? "Cross threatened" : "Cross safe");
       }
-
       function renderStatus() {
         var check = isInCheck(state, state.currentPlayer);
         statusEl.className = "status p" + state.currentPlayer + (check ? " danger" : "");
+        networkBadge.className = "network-pill";
+        if (playMode === "online") {
+          networkBadge.textContent = onlineRoomCode || "Online";
+          networkBadge.classList.add(onlineOpponentConnected ? "online" : "offline");
+        } else if (playMode === "local") {
+          networkBadge.textContent = "One phone";
+        } else {
+          networkBadge.textContent = "Choose mode";
+        }
         if (state.gameOver) {
-          statusText.textContent = "Match complete";
+          statusText.textContent = "Match complete · " + Number(state.scores[1] || 0) + "–" + Number(state.scores[2] || 0);
+        } else if (playMode === "online" && !onlineHasOpponent) {
+          statusText.textContent = "Waiting for Player 2 to join";
         } else if (check) {
-          statusText.textContent = "Player " + state.currentPlayer + " is in check — escape or stop the threat";
+          statusText.textContent = (playMode === "online" && state.currentPlayer === localPlayer ? "You are" : "Player " + state.currentPlayer + " is") + " in check — escape or stop the threat";
+        } else if (playMode === "online") {
+          statusText.textContent = state.currentPlayer === localPlayer ? "Your turn" : "Opponent's turn";
         } else {
           statusText.textContent = "Player " + state.currentPlayer + " to move";
         }
@@ -1819,7 +2321,17 @@
         var oldDynamic = actionButtons.querySelectorAll("[data-dynamic='true']");
         var i;
         for (i = 0; i < oldDynamic.length; i += 1) { oldDynamic[i].remove(); }
-        clearButton.hidden = !piece;
+        clearButton.hidden = !piece || !canLocalAct();
+        if (playMode === "online" && !onlineHasOpponent) {
+          actionTitle.textContent = "Waiting for Player 2";
+          actionSub.textContent = "Share room " + onlineRoomCode + " with the other phone.";
+          return;
+        }
+        if (playMode === "online" && !canLocalAct()) {
+          actionTitle.textContent = onlineBusy ? "Sending move…" : "Opponent is choosing";
+          actionSub.textContent = "Captured material: " + Number(state.scores[1] || 0) + "–" + Number(state.scores[2] || 0);
+          return;
+        }
 
         if (pendingAnnihilationMoves.length) {
           actionTitle.textContent = "Choose an enemy piece to destroy";
@@ -1873,7 +2385,7 @@
       }
 
       function selectPiece(piece) {
-        if (!piece || !piece.alive || piece.player !== state.currentPlayer || state.gameOver) { return; }
+        if (!piece || !piece.alive || piece.player !== state.currentPlayer || state.gameOver || !canLocalAct()) { return; }
         pendingAnnihilationMoves = [];
         selectedId = piece.id;
         selectedMoves = legalMovesForPiece(state, piece);
@@ -1915,7 +2427,10 @@
         var blastMoves;
         var landingMoves;
         ensureAudio();
-        if (state.gameOver || directionOverlay.classList.contains("open")) { return; }
+        if (state.gameOver || directionOverlay.classList.contains("open") || !canLocalAct()) {
+          if (playMode === "online" && !state.gameOver) { showToast(onlineHasOpponent ? "Wait for your turn" : "Waiting for Player 2"); }
+          return;
+        }
 
         if (pendingAnnihilationMoves.length) {
           move = pendingAnnihilationTargetAt(r, c);
@@ -1969,7 +2484,7 @@
         var pickerRect;
         var x = cellRect.left - boardRect.left + cellRect.width / 2;
         var y = cellRect.top - boardRect.top + cellRect.height / 2;
-        var towardPlayer = state.currentPlayer === 1 ? 1 : -1;
+        var towardPlayer = playMode === "online" ? 1 : (state.currentPlayer === 1 ? 1 : -1);
 
         y += towardPlayer * cellRect.height * 1.15;
         directionOverlay.style.left = x + "px";
@@ -1985,7 +2500,7 @@
         var order = [-1, 0, 1];
         var anchorMove = moves[0];
         directionGrid.innerHTML = "";
-        directionOverlay.classList.toggle("player-two", state.currentPlayer === 2);
+        directionOverlay.classList.toggle("player-two", playMode !== "online" && state.currentPlayer === 2);
         order.forEach(function (turn) {
           var move = null;
           var i;
@@ -2026,102 +2541,142 @@
         if (anchor) { anchor.classList.remove("direction-anchor"); }
       }
 
-      function captureSquaresForMove(move) {
-        return move.captures.map(function (id) {
-          var captured = pieceById(state, id);
-          return captured ? { r: captured.r, c: captured.c, player: captured.player } : null;
-        }).filter(function (value) { return Boolean(value); });
-      }
 
-      function commitMove(move) {
-        var mover = state.currentPlayer;
-        var captureSquares = captureSquaresForMove(move);
+      function moveSignature(move) {
+        return [
+          move.pieceId, move.toR, move.toC, move.newFacing,
+          (move.captures || []).join(","), move.selfDestruct ? 1 : 0,
+          move.destroyTargetId || "", move.turn || 0, move.preTurn || 0
+        ].join("|");
+      }
+      function advanceStateMutable(gameState, move) {
+        var mover = gameState.currentPlayer;
         var capturedCross = false;
+        var points = 0;
         var i;
         var capturedPiece;
         var key;
         var nextMoves;
-        var nextCheck;
-
-        if (state.gameOver) { return; }
+        var nextCheck = false;
+        gameState.scores = gameState.scores || { 1: 0, 2: 0 };
+        gameState.positionCounts = gameState.positionCounts || {};
         for (i = 0; i < move.captures.length; i += 1) {
-          capturedPiece = pieceById(state, move.captures[i]);
+          capturedPiece = pieceById(gameState, move.captures[i]);
           if (capturedPiece && capturedPiece.type === "cross") { capturedCross = true; }
+          if (capturedPiece && capturedPiece.player !== mover) { points += POINT_VALUES[capturedPiece.type] || 0; }
         }
-
-        if (move.selfDestruct) { captureSquares.push({ r: move.toR, c: move.toC, player: mover }); }
-        applyMoveMutable(state, move);
-        state.moveNumber += 1;
-        state.halfmoveClock = move.captures.length ? 0 : state.halfmoveClock + 1;
-        lastMovePieceId = move.pieceId;
-        lastCapturedSquares = captureSquares;
+        applyMoveMutable(gameState, move);
+        gameState.scores[mover] = Number(gameState.scores[mover] || 0) + points;
+        gameState.moveNumber = Number(gameState.moveNumber || 0) + 1;
+        gameState.halfmoveClock = move.captures.length ? 0 : Number(gameState.halfmoveClock || 0) + 1;
+        gameState.lastMove = {
+          pieceId: move.pieceId,
+          mover: mover,
+          captures: move.captures.slice(),
+          selfDestructId: move.selfDestruct ? move.pieceId : null,
+          pointsGained: points
+        };
+        if (capturedCross) {
+          gameState.gameOver = true;
+          gameState.result = { type: "win", winner: mover, reason: "The opposing cross was captured." };
+          return { nextCheck: false };
+        }
+        gameState.currentPlayer = otherPlayer(mover);
+        key = positionKey(gameState);
+        gameState.positionCounts[key] = (gameState.positionCounts[key] || 0) + 1;
+        nextCheck = isInCheck(gameState, gameState.currentPlayer);
+        nextMoves = allLegalMoves(gameState, gameState.currentPlayer);
+        if (nextMoves.length === 0) {
+          gameState.gameOver = true;
+          gameState.result = nextCheck ?
+            { type: "win", winner: mover, reason: "Checkmate — the opposing cross has no legal escape." } :
+            { type: "draw", winner: 0, reason: "Stalemate — the player to move has no legal move." };
+        } else if (gameState.positionCounts[key] >= 3) {
+          gameState.gameOver = true;
+          gameState.result = { type: "draw", winner: 0, reason: "The same full position occurred three times." };
+        } else if (gameState.halfmoveClock >= NO_CAPTURE_LIMIT) {
+          gameState.gameOver = true;
+          gameState.result = { type: "draw", winner: 0, reason: "Thirty turns each passed without a capture." };
+        }
+        return { nextCheck: nextCheck };
+      }
+      function commitMove(move) {
+        var summary;
+        var expectedMoveNumber;
+        var signature;
+        if (state.gameOver || !canLocalAct()) {
+          if (playMode === "online" && !state.gameOver) { showToast("Wait for your turn"); }
+          return;
+        }
         selectedId = null;
         selectedMoves = [];
         pendingAnnihilationMoves = [];
         closeDirectionPicker();
-
-        if (move.captures.length) {
-          playCaptureSound(move.captures.length);
-          if (navigator.vibrate) { navigator.vibrate(28); }
-        } else {
-          playTone(300, 0.05, "triangle", 0.035);
-        }
-
-        if (capturedCross) {
-          finishGame("win", mover, "The opposing cross was captured.");
+        if (playMode === "online") {
+          expectedMoveNumber = state.moveNumber;
+          signature = moveSignature(move);
+          onlineBusy = true;
           render();
+          onlineRoomRef.child("state").transaction(function (remoteValue) {
+            var remote = normaliseState(remoteValue);
+            var piece;
+            var legal;
+            var canonical = null;
+            var i;
+            if (!remote || remote.gameOver || remote.currentPlayer !== localPlayer || remote.moveNumber !== expectedMoveNumber) { return; }
+            piece = pieceById(remote, move.pieceId);
+            if (!piece || !piece.alive || piece.player !== localPlayer) { return; }
+            legal = legalMovesForPiece(remote, piece);
+            for (i = 0; i < legal.length; i += 1) {
+              if (moveSignature(legal[i]) === signature) { canonical = legal[i]; break; }
+            }
+            if (!canonical) { return; }
+            advanceStateMutable(remote, canonical);
+            return remote;
+          }, function (error, committed) {
+            onlineBusy = false;
+            if (error || !committed) {
+              showToast("That move was not accepted — the board has refreshed");
+              render();
+            }
+          }, false);
           return;
         }
-
-        state.currentPlayer = otherPlayer(mover);
-        key = positionKey(state);
-        state.positionCounts[key] = (state.positionCounts[key] || 0) + 1;
-        nextCheck = isInCheck(state, state.currentPlayer);
-        nextMoves = allLegalMoves(state, state.currentPlayer);
-
-        if (nextMoves.length === 0) {
-          if (nextCheck) {
-            finishGame("win", mover, "Checkmate — the opposing cross has no legal escape.");
-          } else {
-            finishGame("draw", 0, "Stalemate — the player to move has no legal move.");
-          }
-        } else if (state.positionCounts[key] >= 3) {
-          finishGame("draw", 0, "The same full position occurred three times.");
-        } else if (state.halfmoveClock >= NO_CAPTURE_LIMIT) {
-          finishGame("draw", 0, "Thirty turns each passed without a capture.");
-        } else if (nextCheck) {
+        summary = advanceStateMutable(state, move);
+        presentLastMove(state.lastMove);
+        if (state.gameOver) { showResultOverlay(state.result); }
+        else if (summary.nextCheck) {
           showToast("Check! Player " + state.currentPlayer + " must protect the cross.");
           playTone(165, 0.12, "sawtooth", 0.06);
         }
-
         render();
       }
-
-      function finishGame(type, winner, reason) {
-        state.gameOver = true;
-        state.result = { type: type, winner: winner, reason: reason };
-        if (type === "win") {
+      function showResultOverlay(result) {
+        var scoreLine = " Final score: " + Number(state.scores[1] || 0) + "–" + Number(state.scores[2] || 0) + ".";
+        if (!result) { return; }
+        if (result.type === "win") {
           endKicker.textContent = "Match complete";
-          endTitle.textContent = "Player " + winner + " wins!";
-          endReason.textContent = reason;
+          endTitle.textContent = "Player " + result.winner + " wins!";
+          endReason.textContent = result.reason + scoreLine;
           endEmblem.textContent = "×";
-          endEmblem.style.background = winner === 1 ? "linear-gradient(145deg, var(--p1-soft), var(--p1))" : "linear-gradient(145deg, var(--p2-soft), var(--p2))";
+          endEmblem.style.background = result.winner === 1 ? "linear-gradient(145deg, var(--p1-soft), var(--p1))" : "linear-gradient(145deg, var(--p2-soft), var(--p2))";
           playWinSound();
         } else {
           endKicker.textContent = "Draw";
           endTitle.textContent = "The siege holds.";
-          endReason.textContent = reason;
+          endReason.textContent = result.reason + scoreLine;
           endEmblem.textContent = "=";
           endEmblem.style.background = "linear-gradient(145deg, #fff2ae, var(--gold))";
           playTone(240, 0.18, "sine", 0.05);
         }
+        playAgainButton.textContent = playMode === "online" ? "Rematch" : "Play again";
         window.setTimeout(function () { endOverlay.classList.add("open"); }, 420);
       }
 
       function newGame(showIntro, silent) {
         SIZE = 9;
         createCells();
-        boardEl.appendChild(directionOverlay);
+        applyBoardPerspective();
         state = createInitialState();
         selectedId = null;
         selectedMoves = [];
@@ -2224,10 +2779,27 @@
         render();
       }
 
+
+      function handleNewMatchButton() {
+        if (playMode === "online") { leaveOnlineMatch(); }
+        else { newGame(false, false); }
+      }
+      localModeButton.addEventListener("click", startLocalMatch);
+      createOnlineButton.addEventListener("click", createOnlineMatch);
+      joinOnlineButton.addEventListener("click", function () { joinOnlineMatch(roomCodeInput.value); });
+      roomCodeInput.addEventListener("input", function () { roomCodeInput.value = cleanRoomCode(roomCodeInput.value); });
+      roomCodeInput.addEventListener("keydown", function (event) {
+        if (event.key === "Enter") { joinOnlineMatch(roomCodeInput.value); }
+      });
+      shareRoomButton.addEventListener("click", shareRoom);
+      leaveRoomButton.addEventListener("click", leaveOnlineMatch);
       clearButton.addEventListener("click", cancelPendingAction);
-      newMatchButton.addEventListener("click", function () { newGame(false, false); });
-      resetButton.addEventListener("click", function () { newGame(false, false); });
-      playAgainButton.addEventListener("click", function () { newGame(false, false); });
+      newMatchButton.addEventListener("click", handleNewMatchButton);
+      resetButton.addEventListener("click", handleNewMatchButton);
+      playAgainButton.addEventListener("click", function () {
+        if (playMode === "online") { restartOnlineMatch(); }
+        else { newGame(false, false); }
+      });
       helpButton.addEventListener("click", function () { helpOverlay.classList.add("open"); });
       closeHelpButton.addEventListener("click", function () {
         helpOverlay.classList.remove("open");
@@ -2247,7 +2819,14 @@
         }
       });
 
-      newGame(safeGet("shape-siege-seen-rules") !== "yes", true);
+      newGame(false, true);
+      (function initialiseLaunchMode() {
+        var params;
+        var code = "";
+        try { params = new URLSearchParams(window.location.search); code = cleanRoomCode(params.get("room")); } catch (error) { code = ""; }
+        showModeChooser();
+        if (code.length === 5) { roomCodeInput.value = code; joinOnlineMatch(code); }
+      }());
       refreshInitialLayout();
       window.setTimeout(refreshInitialLayout, 120);
       window.setTimeout(refreshInitialLayout, 360);
