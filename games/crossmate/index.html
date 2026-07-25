@@ -23,7 +23,8 @@
       --danger: #ff5f6d;
       --cell-a: #18233c;
       --cell-b: #111a2e;
-      --board-size: min(calc(100vw - 20px), 560px, calc(100vh - 258px));
+      --viewport-height: 100vh;
+      --board-size: min(calc(100vw - 20px), 560px, calc(var(--viewport-height) - 262px));
     }
 
     * { box-sizing: border-box; }
@@ -829,7 +830,7 @@
 
 
 
-    /* Crossmate v1.3.0: online rooms and captured-material scoring */
+    /* Crossmate v1.4.0: online rooms, scoring, review navigation, and tactical previews */
     .network-pill {
       flex: 0 0 auto;
       padding: 4px 7px;
@@ -933,7 +934,7 @@
     }
 
     @media (max-width: 350px) {
-      :root { --board-size: min(calc(100vw - 16px), calc(100vh - 246px)); }
+      :root { --board-size: min(calc(100vw - 24px), calc(var(--viewport-height) - 270px)); }
       .app { padding-left: 8px; padding-right: 8px; }
       .version { display: none; }
       .top-actions { gap: 3px; }
@@ -946,6 +947,183 @@
 
     @media (orientation: landscape) and (max-height: 480px) {
       .rotate-notice { display: grid; }
+    }
+
+
+    /* Crossmate v1.4.0: review navigation, clearer tactics, tutorial, and mobile fit */
+    .action-buttons { flex-wrap: wrap; justify-content: flex-end; }
+    .history-controls {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      height: 31px;
+      padding: 2px;
+      border: 1px solid rgba(151,174,219,0.16);
+      border-radius: 11px;
+      background: rgba(5,10,21,0.56);
+    }
+    .history-controls[hidden] { display: none; }
+    .history-button {
+      width: 27px;
+      height: 27px;
+      padding: 0;
+      border: 0;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      color: #e9f2ff;
+      background: rgba(255,255,255,0.075);
+      font-weight: 950;
+      cursor: pointer;
+    }
+    .history-button:disabled { opacity: 0.28; cursor: default; }
+    .history-label {
+      min-width: 55px;
+      padding: 0 3px;
+      color: #b7c5d9;
+      font-size: 8px;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .field-outline {
+      position: absolute;
+      z-index: 1;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+    }
+    .field-outline.p1 { border-color: rgba(var(--p1-rgb),0.78); }
+    .field-outline.p2 { inset: 2px; border-color: rgba(var(--p2-rgb),0.82); border-radius: max(2px, calc(clamp(4px, 1.4vw, 8px) - 2px)); }
+    .cell.forcefield-p1.forcefield-p2::before {
+      opacity: 0.74;
+      background:
+        repeating-linear-gradient(45deg, rgba(var(--p1-rgb),0.18) 0 4px, rgba(var(--p2-rgb),0.18) 4px 8px),
+        radial-gradient(circle at 50% 50%, rgba(255,255,255,0.08), transparent 62%);
+    }
+    .cell.field-preview-p1,
+    .cell.field-preview-p2 { z-index: 2; }
+    .cell.field-preview-p1 { box-shadow: inset 0 0 0 2px rgba(var(--p1-rgb),0.63), inset 0 0 13px rgba(var(--p1-rgb),0.2); }
+    .cell.field-preview-p2 { box-shadow: inset 0 0 0 2px rgba(var(--p2-rgb),0.67), inset 0 0 13px rgba(var(--p2-rgb),0.2); }
+    .cell.diamond-preview-destination { box-shadow: inset 0 0 0 2px var(--gold), 0 0 16px rgba(255,209,102,0.3); z-index: 4; }
+    .cell.field-pulse-p1 { animation: fieldPulseP1 780ms ease-out both; }
+    .cell.field-pulse-p2 { animation: fieldPulseP2 780ms ease-out both; }
+    .cell.field-blocked { box-shadow: inset 0 0 0 3px var(--danger), 0 0 20px rgba(255,95,109,0.48); z-index: 6; }
+    .cell.field-source .piece { animation: sourcePulse 620ms ease-in-out infinite alternate; }
+    .cell.check-attacker { box-shadow: inset 0 0 0 2px var(--danger), 0 0 18px rgba(255,95,109,0.42); z-index: 5; }
+    .cell.check-path::after {
+      content: "";
+      position: absolute;
+      z-index: 6;
+      width: 24%;
+      height: 24%;
+      border-radius: 50%;
+      background: var(--danger);
+      box-shadow: 0 0 10px rgba(255,95,109,0.7);
+      pointer-events: none;
+    }
+    .cell.check-field { outline: 2px dashed rgba(255,209,102,0.86); outline-offset: -4px; }
+    .cell.triangle-preview-path { box-shadow: inset 0 0 0 2px rgba(255,209,102,0.48); z-index: 4; }
+    .cell.triangle-preview-landing { box-shadow: inset 0 0 0 3px var(--gold), 0 0 17px rgba(255,209,102,0.36); z-index: 7; }
+    .cell.triangle-preview-final { box-shadow: inset 0 0 0 3px rgba(255,255,255,0.92), 0 0 20px rgba(255,209,102,0.42); z-index: 8; }
+    .ghost-piece { opacity: 0.58; filter: saturate(0.8) brightness(1.25); transform: scale(0.84); }
+    .cell.review-origin { box-shadow: inset 0 0 0 2px rgba(255,209,102,0.52); }
+    .cell.review-destination { box-shadow: inset 0 0 0 2px var(--gold), 0 0 13px rgba(255,209,102,0.28); }
+    .direction-picker { --choice-size: clamp(42px, 12.5vw, 54px); }
+    .direction-choice {
+      width: var(--choice-size);
+      height: var(--choice-size);
+      padding: 4px 2px 3px;
+      gap: 2px;
+    }
+    .choice-preview {
+      width: 24px;
+      height: 24px;
+      position: relative;
+      display: grid;
+      place-items: center;
+    }
+    .choice-preview::before {
+      content: "";
+      width: 13px;
+      height: 15px;
+      background: currentColor;
+      clip-path: polygon(50% 3%, 96% 92%, 50% 73%, 4% 92%);
+      transform: rotate(var(--preview-turn,0deg));
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.38));
+    }
+    .choice-preview.capture-preview::after {
+      content: "×";
+      position: absolute;
+      right: -3px;
+      top: -5px;
+      color: #ffd5da;
+      font-size: 11px;
+      font-weight: 950;
+    }
+    .direction-choice .choice-label { font-size: 7px; }
+    .tutorial-modal { width: min(100%, 450px); text-align: center; }
+    .tutorial-board {
+      width: min(72vw, 250px);
+      aspect-ratio: 1 / 1;
+      margin: 12px auto;
+      padding: 5px;
+      border: 1px solid rgba(151,174,219,0.2);
+      border-radius: 20px;
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0,1fr));
+      gap: 3px;
+      background: #090f1d;
+    }
+    .tutorial-cell {
+      position: relative;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      color: #dfe9f8;
+      background: var(--cell-a);
+      font-size: clamp(18px, 7vw, 31px);
+      font-weight: 950;
+    }
+    .tutorial-cell.alt { background: var(--cell-b); }
+    .tutorial-cell.p1 { color: var(--p1); }
+    .tutorial-cell.p2 { color: var(--p2); }
+    .tutorial-cell.path { box-shadow: inset 0 0 0 2px rgba(255,209,102,0.56); }
+    .tutorial-cell.target { box-shadow: inset 0 0 0 2px var(--danger), 0 0 12px rgba(255,95,109,0.28); }
+    .tutorial-cell.field-p1 { background: rgba(var(--p1-rgb),0.2); outline: 1px solid rgba(var(--p1-rgb),0.58); }
+    .tutorial-cell.field-p2 { background: rgba(var(--p2-rgb),0.2); outline: 1px solid rgba(var(--p2-rgb),0.58); }
+    .tutorial-cell.attacker { box-shadow: inset 0 0 0 2px var(--danger), 0 0 14px rgba(255,95,109,0.4); }
+    .tutorial-copy { min-height: 70px; }
+    .tutorial-copy h3 { margin: 0 0 5px; font-size: 20px; letter-spacing: -0.035em; }
+    .tutorial-copy p { margin: 0; color: #aebbd0; font-size: 11px; line-height: 1.5; }
+    .tutorial-progress { display: flex; justify-content: center; gap: 5px; margin: 10px 0 13px; }
+    .tutorial-dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,0.14); }
+    .tutorial-dot.active { background: var(--gold); box-shadow: 0 0 8px rgba(255,209,102,0.5); }
+    @keyframes fieldPulseP1 {
+      0% { box-shadow: inset 0 0 0 4px rgba(var(--p1-rgb),0.92), 0 0 20px rgba(var(--p1-rgb),0.52); }
+      100% { box-shadow: inset 0 0 0 1px rgba(var(--p1-rgb),0.16); }
+    }
+    @keyframes fieldPulseP2 {
+      0% { box-shadow: inset 0 0 0 4px rgba(var(--p2-rgb),0.92), 0 0 20px rgba(var(--p2-rgb),0.52); }
+      100% { box-shadow: inset 0 0 0 1px rgba(var(--p2-rgb),0.16); }
+    }
+    @keyframes sourcePulse {
+      from { filter: brightness(1); transform: scale(1); }
+      to { filter: brightness(1.48) drop-shadow(0 0 7px currentColor); transform: scale(1.08); }
+    }
+    @media (max-width: 390px) {
+      .app { gap: 4px; }
+      .history-label { min-width: 48px; font-size: 7px; }
+      .history-button { width: 25px; height: 25px; }
+      .history-controls { height: 29px; }
+    }
+    @media (max-width: 350px) {
+      :root { --board-size: min(calc(100vw - 24px), calc(var(--viewport-height) - 270px)); }
+      .action-sub { display: none; }
+      .action-bar { min-height: 39px; }
+      .action-buttons { gap: 4px; }
+      .small-button { min-height: 29px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -964,7 +1142,7 @@
       <a class="icon-button" href="../../" aria-label="Back to games">←</a>
       <div class="title-block">
         <p class="eyebrow">Local + online strategy</p>
-        <h1>Crossmate <span class="version">v1.3.0</span></h1>
+        <h1>Crossmate <span class="version">v1.4.0</span></h1>
       </div>
       <div class="top-actions">
         <button class="icon-button" id="soundButton" type="button" aria-label="Turn sound off" title="Sound">♪</button>
@@ -1007,6 +1185,11 @@
         <div class="action-sub" id="actionSub">Captures are optional. Keep your cross out of danger.</div>
       </div>
       <div class="action-buttons" id="actionButtons">
+        <div class="history-controls" id="historyControls" hidden aria-label="Online move history">
+          <button class="history-button" id="historyBackButton" type="button" aria-label="Previous move">‹</button>
+          <span class="history-label" id="historyLabel">Live</span>
+          <button class="history-button" id="historyForwardButton" type="button" aria-label="Next move">›</button>
+        </div>
         <button class="small-button" id="clearButton" type="button" hidden>Cancel</button>
         <button class="small-button" id="newMatchButton" type="button">New match</button>
       </div>
@@ -1065,24 +1248,46 @@
         </article>
         <article class="rule-card">
           <div class="rule-head"><span class="rule-icon">△</span><strong>Triangle</strong><span class="point-tag">3 points</span></div>
-          <p>Turn at most once per turn. It may turn 90° before moving 1 or 2 squares, or move straight first and optionally turn 90° afterward. It may also turn in place. An adjacent enemy in its final direction is captured automatically, unless it is a diamond.</p>
+          <p>Move 1 or 2 empty squares forward. It may turn 90° before moving, or move straight and turn 90° afterward, but never both. It may also turn in place. If an ordinary enemy is directly ahead after its final turn, the triangle lunges into that square and captures it. The move preview shows the route, landing square, final facing, and lunge.</p>
         </article>
         <article class="rule-card">
           <div class="rule-head"><span class="rule-icon">□</span><strong>Square</strong><span class="point-tag">5 points</span></div>
-          <p>Move any distance horizontally or vertically. It may jump over one enemy, which survives, then land on an empty square or capture the next ordinary enemy. It may destroy a diamond only by landing directly on it, including after one legal jump.</p>
+          <p>Move any distance horizontally or vertically. On meeting the first ordinary enemy, either capture it or jump over it without capturing. After one jump, continue through empty squares and optionally capture one further ordinary enemy. A diamond is destroyed only by landing directly on it, including after one legal jump.</p>
         </article>
         <article class="rule-card">
           <div class="rule-head"><span class="rule-icon">×</span><strong>Cross</strong></div>
-          <p>Move up to 3 squares in any straight or diagonal direction and capture every enemy crossed. A cross may never enter either of its own diamonds’ forcefields. It may cross an enemy diamond’s field only to land on and destroy that diamond.</p>
+          <p>Move up to 3 squares in any straight or diagonal direction. On capturing an enemy, the cross stops immediately on that square. A cross may never enter either of its own diamonds’ forcefields. It may enter an enemy diamond’s field only along a clear path to land on and destroy that diamond.</p>
         </article>
         <article class="rule-card forcefield-rule">
           <div class="rule-head"><span class="rule-icon">◇</span><strong>Diamond forcefield</strong><span class="point-tag">6 points</span></div>
           <p>A diamond moves 1 square in any direction to an empty square. Its 8 surrounding squares form a forcefield: enemy pieces cannot enter, capture into, or pass through them. The diamond cannot move if its new field would contain any enemy or its own cross. Only a square, a cross, or a far-edge circle blast can destroy it.</p>
         </article>
       </div>
-      <div class="rule-note"><strong>Points:</strong> captured circles are worth 1, triangles 3, squares 5, and diamonds 6. Points show material advantage but never replace the cross win condition.<br><br><strong>Check and forcefields:</strong> you may not finish a move with your own cross threatened. Forcefield squares block enemy movement and attacks. Checkmate wins. Stalemate, a threefold repetition, or 60 consecutive player moves without a capture ends the game in a draw.</div>
+      <div class="rule-note"><strong>Points:</strong> captured circles are worth 1, triangles 3, squares 5, and diamonds 6. Points show material advantage but never replace the cross win condition.<br><br><strong>Check and forcefields:</strong> you may not finish a move with your own cross threatened. The board highlights the attacker, attack path, and relevant forcefield. Forcefield squares block enemy movement and attacks. Checkmate wins. Stalemate, only the two crosses remaining, a threefold repetition, or 60 consecutive player moves without a capture ends the game in a draw.</div>
       <div class="modal-actions">
-        <button class="primary-button" id="closeHelpButton" type="button">Start match</button>
+        <button class="small-button" id="tutorialFromHelpButton" type="button">Tutorial</button>
+        <button class="primary-button" id="closeHelpButton" type="button">Close</button>
+      </div>
+    </section>
+  </div>
+
+
+  <div class="overlay" id="tutorialOverlay" role="dialog" aria-modal="true" aria-labelledby="tutorialTitle">
+    <section class="modal tutorial-modal">
+      <div class="modal-kicker" id="tutorialKicker">Lesson 1 of 5</div>
+      <h2 id="tutorialTitle">Circle pressure</h2>
+      <div class="tutorial-board" id="tutorialBoard" aria-label="Rules illustration"></div>
+      <div class="tutorial-copy">
+        <h3 id="tutorialStepTitle">Move and capture</h3>
+        <p id="tutorialText"></p>
+      </div>
+      <div class="tutorial-progress" id="tutorialProgress" aria-hidden="true"></div>
+      <div class="modal-actions" style="justify-content:space-between">
+        <button class="small-button" id="tutorialSkipButton" type="button">Skip</button>
+        <div style="display:flex;gap:7px">
+          <button class="small-button" id="tutorialBackButton" type="button">Back</button>
+          <button class="primary-button" id="tutorialNextButton" type="button">Next</button>
+        </div>
       </div>
     </section>
   </div>
@@ -1099,6 +1304,7 @@
       <h2 id="endTitle">Player 1 wins!</h2>
       <p class="modal-lead" id="endReason">The opposing cross has been trapped.</p>
       <div class="modal-actions">
+        <button class="small-button" id="reviewGameButton" type="button" hidden>Review game</button>
         <a class="small-button" href="../../" style="display:inline-grid;place-items:center;text-decoration:none;padding:0 13px">Games</a>
         <button class="primary-button" id="playAgainButton" type="button">Play again</button>
       </div>
@@ -1131,7 +1337,7 @@
       ];
       var TYPE_NAMES = { circle: "Circle", diamond: "Diamond", square: "Square", triangle: "Triangle", cross: "Cross" };
       var POINT_VALUES = { circle: 1, triangle: 3, square: 5, diamond: 6, cross: 0 };
-      var VERSION = "1.3.0";
+      var VERSION = "1.4.0";
       var ROOM_LIFETIME_MS = 10 * 24 * 60 * 60 * 1000;
       var BACK_ROW = ["diamond", "square", "triangle", null, "cross", null, "triangle", "square", "diamond"];
 
@@ -1180,6 +1386,22 @@
       var leaveRoomButton = document.getElementById("leaveRoomButton");
       var onlineError = document.getElementById("onlineError");
       var networkBadge = document.getElementById("networkBadge");
+      var historyControls = document.getElementById("historyControls");
+      var historyBackButton = document.getElementById("historyBackButton");
+      var historyForwardButton = document.getElementById("historyForwardButton");
+      var historyLabel = document.getElementById("historyLabel");
+      var tutorialFromHelpButton = document.getElementById("tutorialFromHelpButton");
+      var tutorialOverlay = document.getElementById("tutorialOverlay");
+      var tutorialBoard = document.getElementById("tutorialBoard");
+      var tutorialKicker = document.getElementById("tutorialKicker");
+      var tutorialTitle = document.getElementById("tutorialTitle");
+      var tutorialStepTitle = document.getElementById("tutorialStepTitle");
+      var tutorialText = document.getElementById("tutorialText");
+      var tutorialProgress = document.getElementById("tutorialProgress");
+      var tutorialBackButton = document.getElementById("tutorialBackButton");
+      var tutorialNextButton = document.getElementById("tutorialNextButton");
+      var tutorialSkipButton = document.getElementById("tutorialSkipButton");
+      var reviewGameButton = document.getElementById("reviewGameButton");
 
 
       var state = null;
@@ -1207,6 +1429,17 @@
       var lastShownResultMove = -1;
       var firebaseUser = null;
       var FIREBASE_CONFIG = window.CROSSMATE_FIREBASE_CONFIG || null;
+      var reviewIndex = -1;
+      var trianglePreviewMove = null;
+      var diamondPreviewMove = null;
+      var fieldPulseKeys = {};
+      var fieldPulsePlayer = 0;
+      var fieldPulseTimer = 0;
+      var blockedFieldKey = "";
+      var blockedDiamondIds = {};
+      var blockedFieldTimer = 0;
+      var tutorialStepIndex = 0;
+      var tutorialPromptedThisSession = false;
 
 
       function safeGet(key) {
@@ -1388,13 +1621,13 @@
           playTone(300, 0.05, "triangle", 0.035);
         }
       }
-      function attachOnlineRoom(code, player) {
+      function attachOnlineRoom(code, player, roomRoot) {
         var uid = firebaseUser.uid;
         clearOnlineConnection(false);
         playMode = "online";
         localPlayer = player;
         onlineRoomCode = code;
-        onlineRoomRef = firebase.database().ref("shapeSiegeRooms/" + code);
+        onlineRoomRef = firebase.database().ref((roomRoot || "crossmateRooms") + "/" + code);
         onlinePresenceRef = onlineRoomRef.child("presence/" + uid);
         onlinePresenceRef.set(true);
         onlinePresenceRef.onDisconnect().remove();
@@ -1448,7 +1681,7 @@
         initialiseFirebase().then(function () {
           function attempt() {
             var code = randomRoomCode();
-            var ref = firebase.database().ref("shapeSiegeRooms/" + code);
+            var ref = firebase.database().ref("crossmateRooms/" + code);
             attempts += 1;
             ref.transaction(function (current) {
               if (current) { return; }
@@ -1482,14 +1715,22 @@
         setOnlineError("");
         setRoomPanel(code, "Finding room…", true);
         initialiseFirebase().then(function () {
-          var ref = firebase.database().ref("shapeSiegeRooms/" + code);
-          return ref.once("value").then(function (initialSnapshot) {
-            var initialRoom = initialSnapshot.val();
+          var modernRef = firebase.database().ref("crossmateRooms/" + code);
+          var legacyRef = firebase.database().ref("shapeSiegeRooms/" + code);
+          return modernRef.once("value").then(function (modernSnapshot) {
+            if (modernSnapshot.val()) {
+              return { ref: modernRef, root: "crossmateRooms", snapshot: modernSnapshot };
+            }
+            return legacyRef.once("value").then(function (legacySnapshot) {
+              return { ref: legacyRef, root: "shapeSiegeRooms", snapshot: legacySnapshot };
+            });
+          }).then(function (located) {
+            var ref = located.ref;
+            var initialRoom = located.snapshot.val();
             var p1Uid;
             var p2Uid;
             var p2Ref;
             var claim;
-
             if (!initialRoom || !initialRoom.players || !initialRoom.players.p1) {
               modeChoices.hidden = false;
               roomPanel.hidden = true;
@@ -1503,16 +1744,14 @@
               return;
             }
             upgradeRoomExpiry(ref, initialRoom);
-
             p1Uid = initialRoom.players.p1.uid || "";
             p2Uid = initialRoom.players.p2 && initialRoom.players.p2.uid ? initialRoom.players.p2.uid : "";
-
             if (p1Uid === firebaseUser.uid) {
-              attachOnlineRoom(code, 1);
+              attachOnlineRoom(code, 1, located.root);
               return;
             }
             if (p2Uid === firebaseUser.uid) {
-              attachOnlineRoom(code, 2);
+              attachOnlineRoom(code, 2, located.root);
               return;
             }
             if (p2Uid) {
@@ -1521,7 +1760,6 @@
               setOnlineError("This room already has two players.");
               return;
             }
-
             p2Ref = ref.child("players/p2");
             claim = { uid: firebaseUser.uid, joinedAt: Date.now() };
             p2Ref.transaction(function (currentP2) {
@@ -1541,7 +1779,7 @@
                 return;
               }
               if (committed && finalP2 && finalP2.uid === firebaseUser.uid) {
-                attachOnlineRoom(code, 2);
+                attachOnlineRoom(code, 2, located.root);
                 return;
               }
               modeChoices.hidden = false;
@@ -1577,7 +1815,7 @@
         localPlayer = 0;
         onlineHasOpponent = true;
         modeOverlay.classList.remove("open");
-        newGame(safeGet("crossmate-seen-rules") !== "yes", false);
+        newGame(safeGet("crossmate-seen-tutorial") !== "yes", false);
       }
 
       function inBounds(r, c) { return r >= 0 && r < SIZE && c >= 0 && c < SIZE; }
@@ -2729,7 +2967,7 @@
           playWinSound();
         } else {
           endKicker.textContent = "Draw";
-          endTitle.textContent = "The siege holds.";
+          endTitle.textContent = "Crossmate drawn.";
           endReason.textContent = result.reason + scoreLine;
           endEmblem.textContent = "=";
           endEmblem.style.background = "linear-gradient(145deg, #fff2ae, var(--gold))";
@@ -2846,6 +3084,687 @@
       }
 
 
+
+      /* Crossmate v1.4.0 enhancements */
+      function clonePlain(value) {
+        if (value === null || typeof value === "undefined") { return value; }
+        return JSON.parse(JSON.stringify(value));
+      }
+      function packHistorySnapshot(gameState) {
+        return {
+          m: Number(gameState.moveNumber || 0),
+          t: Number(gameState.currentPlayer || 1),
+          h: Number(gameState.halfmoveClock || 0),
+          s: [Number(gameState.scores && gameState.scores[1] || 0), Number(gameState.scores && gameState.scores[2] || 0)],
+          g: gameState.gameOver ? 1 : 0,
+          r: clonePlain(gameState.result || null),
+          l: clonePlain(gameState.lastMove || null),
+          p: gameState.pieces.map(function (piece) {
+            return [piece.r, piece.c, Number(piece.facing || 0), piece.alive ? 1 : 0];
+          })
+        };
+      }
+      function ensureHistoryBase(gameState) {
+        if (!Array.isArray(gameState.history) || !gameState.history.length) {
+          gameState.history = [packHistorySnapshot(gameState)];
+        }
+      }
+      function historyStateAt(index) {
+        var snapshot;
+        var pieces;
+        if (!state || !Array.isArray(state.history) || index < 0 || index >= state.history.length) { return null; }
+        snapshot = state.history[index];
+        pieces = state.pieces.map(function (piece, pieceIndex) {
+          var packed = snapshot.p && snapshot.p[pieceIndex] ? snapshot.p[pieceIndex] : [piece.r, piece.c, piece.facing, piece.alive ? 1 : 0];
+          return {
+            id: piece.id,
+            type: piece.type,
+            player: piece.player,
+            r: Number(packed[0]),
+            c: Number(packed[1]),
+            facing: Number(packed[2] || 0),
+            alive: Boolean(packed[3])
+          };
+        });
+        return {
+          pieces: pieces,
+          currentPlayer: Number(snapshot.t || 1),
+          halfmoveClock: Number(snapshot.h || 0),
+          positionCounts: {},
+          gameOver: Boolean(snapshot.g),
+          result: clonePlain(snapshot.r || null),
+          scores: { 1: Number(snapshot.s && snapshot.s[0] || 0), 2: Number(snapshot.s && snapshot.s[1] || 0) },
+          lastMove: clonePlain(snapshot.l || null),
+          moveNumber: Number(snapshot.m || 0),
+          history: state.history
+        };
+      }
+      function historyCount() {
+        return state && Array.isArray(state.history) ? state.history.length : 0;
+      }
+      function reviewingHistory() { return playMode === "online" && reviewIndex >= 0; }
+      function updateHistoryControls() {
+        var count = historyCount();
+        var currentMove;
+        historyControls.hidden = playMode !== "online" || !onlineHasOpponent || count < 2;
+        if (historyControls.hidden) { return; }
+        if (reviewIndex < 0) {
+          currentMove = Number(state.moveNumber || 0);
+          historyLabel.textContent = "Live · " + currentMove;
+          historyBackButton.disabled = count < 2;
+          historyForwardButton.disabled = true;
+        } else {
+          reviewIndex = Math.max(0, Math.min(reviewIndex, count - 1));
+          currentMove = Number(state.history[reviewIndex].m || 0);
+          historyLabel.textContent = "Move " + currentMove + " / " + Number(state.moveNumber || 0);
+          historyBackButton.disabled = reviewIndex <= 0;
+          historyForwardButton.disabled = false;
+        }
+      }
+      function reviewBack() {
+        var count = historyCount();
+        if (playMode !== "online" || count < 2) { return; }
+        if (reviewIndex < 0) { reviewIndex = count - 2; }
+        else { reviewIndex = Math.max(0, reviewIndex - 1); }
+        selectedId = null;
+        selectedMoves = [];
+        pendingAnnihilationMoves = [];
+        closeDirectionPicker();
+        render();
+      }
+      function reviewForward() {
+        var count = historyCount();
+        if (reviewIndex < 0 || count < 2) { return; }
+        if (reviewIndex >= count - 2) { reviewIndex = -1; }
+        else { reviewIndex += 1; }
+        render();
+      }
+      function syncViewportHeight() {
+        var height = window.visualViewport && window.visualViewport.height ? window.visualViewport.height : window.innerHeight;
+        document.documentElement.style.setProperty("--viewport-height", Math.round(height) + "px");
+      }
+      function stepLine(fromR, fromC, toR, toC, callback) {
+        var dr = toR === fromR ? 0 : (toR > fromR ? 1 : -1);
+        var dc = toC === fromC ? 0 : (toC > fromC ? 1 : -1);
+        var r = fromR + dr;
+        var c = fromC + dc;
+        if (!(fromR === toR || fromC === toC || Math.abs(toR - fromR) === Math.abs(toC - fromC))) { return; }
+        while (r !== toR || c !== toC) {
+          callback(r, c);
+          r += dr;
+          c += dc;
+        }
+        callback(toR, toC);
+      }
+      function fieldDiamondIds(gameState, owner, r, c) {
+        return gameState.pieces.filter(function (piece) {
+          return piece.alive && piece.player === owner && piece.type === "diamond" && isAdjacent(piece.r, piece.c, r, c);
+        }).map(function (piece) { return piece.id; });
+      }
+      function addFieldOutline(gameState, player, r, c, cell) {
+        var span;
+        var colorWidth = player === 1 ? "2px" : "1px";
+        if (!isForcefieldSquare(gameState, player, r, c, null)) { return; }
+        span = document.createElement("span");
+        span.className = "field-outline p" + player;
+        span.style.borderStyle = "solid";
+        span.style.borderWidth = "0";
+        if (!inBounds(r - 1, c) || !isForcefieldSquare(gameState, player, r - 1, c, null)) { span.style.borderTopWidth = colorWidth; }
+        if (!inBounds(r + 1, c) || !isForcefieldSquare(gameState, player, r + 1, c, null)) { span.style.borderBottomWidth = colorWidth; }
+        if (!inBounds(r, c - 1) || !isForcefieldSquare(gameState, player, r, c - 1, null)) { span.style.borderLeftWidth = colorWidth; }
+        if (!inBounds(r, c + 1) || !isForcefieldSquare(gameState, player, r, c + 1, null)) { span.style.borderRightWidth = colorWidth; }
+        cell.appendChild(span);
+      }
+      function pathKeysForMove(gameState, piece, move) {
+        var keys = {};
+        function add(r, c) { keys[r + ":" + c] = true; }
+        if (move.type === "triangle") {
+          if (typeof move.landingR === "number") { stepLine(piece.r, piece.c, move.landingR, move.landingC, add); }
+          if (move.toR !== move.landingR || move.toC !== move.landingC) { add(move.toR, move.toC); }
+        } else {
+          stepLine(piece.r, piece.c, move.toR, move.toC, add);
+        }
+        return keys;
+      }
+      function checkVisualData(gameState, player) {
+        var cross = crossFor(gameState, player);
+        var attackers = {};
+        var paths = {};
+        var fields = {};
+        var sources = {};
+        var i;
+        var j;
+        var piece;
+        var moves;
+        var keys;
+        if (!cross) { return { attackers: attackers, paths: paths, fields: fields, sources: sources }; }
+        for (i = 0; i < gameState.pieces.length; i += 1) {
+          piece = gameState.pieces[i];
+          if (!piece.alive || piece.player !== otherPlayer(player)) { continue; }
+          moves = generatePseudoMovesForPiece(gameState, piece);
+          for (j = 0; j < moves.length; j += 1) {
+            if (moves[j].captures.indexOf(cross.id) === -1) { continue; }
+            attackers[piece.id] = true;
+            keys = pathKeysForMove(gameState, piece, moves[j]);
+            Object.keys(keys).forEach(function (key) { paths[key] = true; });
+          }
+        }
+        gameState.pieces.forEach(function (diamond) {
+          var rr;
+          var cc;
+          var key;
+          if (!diamond.alive || diamond.type !== "diamond") { return; }
+          for (rr = diamond.r - 1; rr <= diamond.r + 1; rr += 1) {
+            for (cc = diamond.c - 1; cc <= diamond.c + 1; cc += 1) {
+              if (!inBounds(rr, cc) || (rr === diamond.r && cc === diamond.c)) { continue; }
+              key = rr + ":" + cc;
+              if (paths[key] || isAdjacent(cross.r, cross.c, rr, cc)) {
+                fields[key] = true;
+                sources[diamond.id] = true;
+              }
+            }
+          }
+        });
+        return { attackers: attackers, paths: paths, fields: fields, sources: sources };
+      }
+      function addGhostTriangle(move, player) {
+        var cell = cellEls[move.toR] && cellEls[move.toR][move.toC];
+        var facing;
+        var ghost;
+        if (!cell) { return; }
+        facing = playMode === "online" && localPlayer === 2 ? mod4(move.newFacing + 2) : move.newFacing;
+        ghost = document.createElement("span");
+        ghost.className = "piece p" + player + " type-triangle facing-" + facing + " ghost-piece";
+        ghost.innerHTML = '<span class="glyph triangle"></span>';
+        cell.appendChild(ghost);
+      }
+      function decorateBoard(gameState) {
+        var r;
+        var c;
+        var cell;
+        var piece;
+        var checkData = isInCheck(gameState, gameState.currentPlayer) ? checkVisualData(gameState, gameState.currentPlayer) : null;
+        var previewPlayer;
+        var rr;
+        var cc;
+        for (r = 0; r < SIZE; r += 1) {
+          for (c = 0; c < SIZE; c += 1) {
+            cell = cellEls[r][c];
+            addFieldOutline(gameState, 1, r, c, cell);
+            addFieldOutline(gameState, 2, r, c, cell);
+            piece = pieceAt(gameState, r, c);
+            if (checkData) {
+              if (piece && checkData.attackers[piece.id]) { cell.classList.add("check-attacker"); }
+              if (checkData.paths[r + ":" + c]) { cell.classList.add("check-path"); }
+              if (checkData.fields[r + ":" + c]) { cell.classList.add("check-field"); }
+              if (piece && checkData.sources[piece.id]) { cell.classList.add("field-source"); }
+            }
+            if (fieldPulseKeys[r + ":" + c]) { cell.classList.add("field-pulse-p" + fieldPulsePlayer); }
+            if (blockedFieldKey === r + ":" + c) { cell.classList.add("field-blocked"); }
+            if (piece && blockedDiamondIds[piece.id]) { cell.classList.add("field-source"); }
+          }
+        }
+        if (diamondPreviewMove && !reviewingHistory()) {
+          previewPlayer = pieceById(gameState, diamondPreviewMove.pieceId);
+          if (previewPlayer) {
+            for (rr = diamondPreviewMove.toR - 1; rr <= diamondPreviewMove.toR + 1; rr += 1) {
+              for (cc = diamondPreviewMove.toC - 1; cc <= diamondPreviewMove.toC + 1; cc += 1) {
+                if (inBounds(rr, cc) && !(rr === diamondPreviewMove.toR && cc === diamondPreviewMove.toC)) {
+                  cellEls[rr][cc].classList.add("field-preview-p" + previewPlayer.player);
+                }
+              }
+            }
+            cellEls[diamondPreviewMove.toR][diamondPreviewMove.toC].classList.add("diamond-preview-destination");
+          }
+        }
+        if (trianglePreviewMove && !reviewingHistory()) {
+          piece = pieceById(gameState, trianglePreviewMove.pieceId);
+          if (piece) {
+            stepLine(piece.r, piece.c, trianglePreviewMove.landingR, trianglePreviewMove.landingC, function (pathR, pathC) {
+              cellEls[pathR][pathC].classList.add("triangle-preview-path");
+            });
+            cellEls[trianglePreviewMove.landingR][trianglePreviewMove.landingC].classList.add("triangle-preview-landing", "direction-anchor");
+            cellEls[trianglePreviewMove.toR][trianglePreviewMove.toC].classList.add("triangle-preview-final");
+            addGhostTriangle(trianglePreviewMove, piece.player);
+          }
+        }
+        if (reviewingHistory() && gameState.lastMove && typeof gameState.lastMove.fromR === "number") {
+          cellEls[gameState.lastMove.fromR][gameState.lastMove.fromC].classList.add("review-origin");
+          cellEls[gameState.lastMove.toR][gameState.lastMove.toC].classList.add("review-destination");
+        }
+      }
+      function pulseDiamondField(lastMove) {
+        var oldKeys = {};
+        var newKeys = {};
+        var r;
+        var c;
+        if (!lastMove || lastMove.type !== "diamond" || typeof lastMove.fromR !== "number") { return; }
+        for (r = lastMove.fromR - 1; r <= lastMove.fromR + 1; r += 1) {
+          for (c = lastMove.fromC - 1; c <= lastMove.fromC + 1; c += 1) {
+            if (inBounds(r, c) && !(r === lastMove.fromR && c === lastMove.fromC)) { oldKeys[r + ":" + c] = true; }
+          }
+        }
+        for (r = lastMove.toR - 1; r <= lastMove.toR + 1; r += 1) {
+          for (c = lastMove.toC - 1; c <= lastMove.toC + 1; c += 1) {
+            if (inBounds(r, c) && !(r === lastMove.toR && c === lastMove.toC) && !oldKeys[r + ":" + c]) {
+              newKeys[r + ":" + c] = true;
+            }
+          }
+        }
+        fieldPulseKeys = newKeys;
+        fieldPulsePlayer = Number(lastMove.mover || 1);
+        window.clearTimeout(fieldPulseTimer);
+        fieldPulseTimer = window.setTimeout(function () {
+          fieldPulseKeys = {};
+          render();
+        }, 840);
+      }
+      function showBlockedField(r, c, movingPlayer) {
+        var owner = otherPlayer(movingPlayer);
+        blockedFieldKey = r + ":" + c;
+        blockedDiamondIds = {};
+        fieldDiamondIds(state, owner, r, c).forEach(function (id) { blockedDiamondIds[id] = true; });
+        window.clearTimeout(blockedFieldTimer);
+        blockedFieldTimer = window.setTimeout(function () {
+          blockedFieldKey = "";
+          blockedDiamondIds = {};
+          render();
+        }, 850);
+        render();
+      }
+      function previewDiamondAt(event) {
+        var selected = selectedPiece();
+        var r;
+        var c;
+        var moves;
+        if (!selected || selected.type !== "diamond" || reviewingHistory() || !canLocalAct()) { return; }
+        r = Number(event.currentTarget.getAttribute("data-r"));
+        c = Number(event.currentTarget.getAttribute("data-c"));
+        moves = movesForDestination(r, c);
+        if (!moves.length) { return; }
+        diamondPreviewMove = moves[0];
+        render();
+      }
+      function triangleChoiceMarkup(move, label) {
+        var facing = playMode === "online" && localPlayer === 2 ? mod4(move.newFacing + 2) : move.newFacing;
+        return '<span class="choice-preview' + (move.captures.length ? ' capture-preview' : '') + '" style="--preview-turn:' + (facing * 90) + 'deg"></span>' +
+          '<span class="choice-label">' + label + (move.captures.length ? " · Lunge" : "") + '</span>';
+      }
+      function setTrianglePreview(move) {
+        trianglePreviewMove = move;
+        render();
+        positionDirectionPicker(move);
+      }
+
+      var tutorialSteps = [
+        {
+          title: "Circle pressure",
+          stepTitle: "Move, capture, and sacrifice",
+          text: "Circles move one or two empty squares straight forward or backward and capture one square diagonally forward. A circle reaching the far edge may sacrifice itself to remove any enemy except the cross.",
+          pieces: [{ r: 3, c: 2, text: "○", cls: "p1" }, { r: 2, c: 3, text: "△", cls: "p2 target" }],
+          marks: [{ r: 2, c: 2, cls: "path" }, { r: 1, c: 2, cls: "path" }]
+        },
+        {
+          title: "Square jump",
+          stepTitle: "Capture or jump the first enemy",
+          text: "A square moves horizontally or vertically. It may capture the first ordinary enemy, or jump over that one enemy without capturing it and continue to an empty square or a second ordinary enemy.",
+          pieces: [{ r: 4, c: 2, text: "□", cls: "p1" }, { r: 2, c: 2, text: "○", cls: "p2" }, { r: 0, c: 2, text: "△", cls: "p2 target" }],
+          marks: [{ r: 3, c: 2, cls: "path" }, { r: 1, c: 2, cls: "path" }]
+        },
+        {
+          title: "Triangle lunge",
+          stepTitle: "One turn, then an automatic capture",
+          text: "A triangle may turn once before moving, or move straight and turn once afterward. The preview shows its route, landing square, final facing, and lunge. If an ordinary enemy is directly ahead after the turn, the triangle moves into that square and captures it.",
+          pieces: [{ r: 4, c: 1, text: "△", cls: "p1" }, { r: 2, c: 3, text: "□", cls: "p2 target" }],
+          marks: [{ r: 3, c: 1, cls: "path" }, { r: 2, c: 1, cls: "path" }, { r: 2, c: 2, cls: "path" }]
+        },
+        {
+          title: "Diamond forcefield",
+          stepTitle: "Control the eight surrounding squares",
+          text: "A diamond moves one square. Its eight neighbouring squares block enemy movement and attacks. The new field is previewed before the move, newly blocked squares pulse, and tapping a blocked square highlights the diamond responsible.",
+          pieces: [{ r: 2, c: 2, text: "◇", cls: "p1" }, { r: 0, c: 2, text: "×", cls: "p2" }],
+          fields: [{ r: 1, c: 1 }, { r: 1, c: 2 }, { r: 1, c: 3 }, { r: 2, c: 1 }, { r: 2, c: 3 }, { r: 3, c: 1 }, { r: 3, c: 2 }, { r: 3, c: 3 }]
+        },
+        {
+          title: "Check and victory",
+          stepTitle: "Read the threat on the board",
+          text: "When a cross is in check, the attacker, attack path, and relevant forcefield are highlighted. Move, block, or capture to make the cross safe. A cross stops after its first capture. Capture or checkmate the enemy cross to win; only two crosses remaining is an immediate draw.",
+          pieces: [{ r: 4, c: 2, text: "×", cls: "p1" }, { r: 0, c: 2, text: "□", cls: "p2 attacker" }],
+          marks: [{ r: 1, c: 2, cls: "path" }, { r: 2, c: 2, cls: "path" }, { r: 3, c: 2, cls: "target" }]
+        }
+      ];
+      function renderTutorial() {
+        var step = tutorialSteps[tutorialStepIndex];
+        var html = "";
+        var cells = {};
+        var r;
+        var c;
+        (step.marks || []).forEach(function (mark) { cells[mark.r + ":" + mark.c] = { cls: mark.cls, text: "" }; });
+        (step.fields || []).forEach(function (field) { cells[field.r + ":" + field.c] = { cls: "field-p1", text: "" }; });
+        (step.pieces || []).forEach(function (piece) {
+          var existing = cells[piece.r + ":" + piece.c] || { cls: "", text: "" };
+          existing.cls += " " + piece.cls;
+          existing.text = piece.text;
+          cells[piece.r + ":" + piece.c] = existing;
+        });
+        for (r = 0; r < 5; r += 1) {
+          for (c = 0; c < 5; c += 1) {
+            var data = cells[r + ":" + c] || { cls: "", text: "" };
+            html += '<div class="tutorial-cell ' + ((r + c) % 2 ? "alt " : "") + data.cls + '">' + data.text + '</div>';
+          }
+        }
+        tutorialBoard.innerHTML = html;
+        tutorialKicker.textContent = "Lesson " + (tutorialStepIndex + 1) + " of " + tutorialSteps.length;
+        tutorialTitle.textContent = step.title;
+        tutorialStepTitle.textContent = step.stepTitle;
+        tutorialText.textContent = step.text;
+        tutorialBackButton.disabled = tutorialStepIndex === 0;
+        tutorialNextButton.textContent = tutorialStepIndex === tutorialSteps.length - 1 ? "Play" : "Next";
+        tutorialProgress.innerHTML = tutorialSteps.map(function (_, index) {
+          return '<span class="tutorial-dot' + (index === tutorialStepIndex ? " active" : "") + '"></span>';
+        }).join("");
+      }
+      function openTutorial() {
+        tutorialStepIndex = 0;
+        tutorialPromptedThisSession = true;
+        renderTutorial();
+        helpOverlay.classList.remove("open");
+        tutorialOverlay.classList.add("open");
+      }
+      function closeTutorial(markSeen) {
+        tutorialOverlay.classList.remove("open");
+        if (markSeen) { safeSet("crossmate-seen-tutorial", "yes"); }
+        ensureAudio();
+      }
+
+      var v13NormaliseState = normaliseState;
+      normaliseState = function (value) {
+        value = v13NormaliseState(value);
+        if (value && !Array.isArray(value.history)) { value.history = []; }
+        return value;
+      };
+      var v13FreshState = freshState;
+      freshState = function () {
+        var fresh = v13FreshState();
+        fresh.history = [packHistorySnapshot(fresh)];
+        return fresh;
+      };
+      var v13AdvanceStateMutable = advanceStateMutable;
+      advanceStateMutable = function (gameState, move) {
+        var summary;
+        var alive;
+        ensureHistoryBase(gameState);
+        summary = v13AdvanceStateMutable(gameState, move);
+        if (gameState.lastMove) {
+          gameState.lastMove.type = move.type;
+          gameState.lastMove.fromR = move.fromR;
+          gameState.lastMove.fromC = move.fromC;
+          gameState.lastMove.toR = move.toR;
+          gameState.lastMove.toC = move.toC;
+          gameState.lastMove.landingR = typeof move.landingR === "number" ? move.landingR : move.toR;
+          gameState.lastMove.landingC = typeof move.landingC === "number" ? move.landingC : move.toC;
+          gameState.lastMove.newFacing = move.newFacing;
+        }
+        alive = gameState.pieces.filter(function (piece) { return piece.alive; });
+        if (alive.length === 2 && alive[0].type === "cross" && alive[1].type === "cross" && alive[0].player !== alive[1].player) {
+          gameState.gameOver = true;
+          gameState.result = { type: "draw", winner: 0, reason: "Only the two crosses remain." };
+        }
+        gameState.history.push(packHistorySnapshot(gameState));
+        return summary;
+      };
+
+      specialCrossDiamondCaptures = function (gameState, piece) {
+        var moves = [];
+        var i;
+        var target;
+        var dr;
+        var dc;
+        var distance;
+        var step;
+        var r;
+        var c;
+        var blocked;
+        for (i = 0; i < gameState.pieces.length; i += 1) {
+          target = gameState.pieces[i];
+          if (!target.alive || target.player === piece.player || target.type !== "diamond") { continue; }
+          dr = target.r - piece.r;
+          dc = target.c - piece.c;
+          distance = Math.max(Math.abs(dr), Math.abs(dc));
+          if (distance < 1 || distance > 3) { continue; }
+          if (!(dr === 0 || dc === 0 || Math.abs(dr) === Math.abs(dc))) { continue; }
+          dr = dr === 0 ? 0 : (dr > 0 ? 1 : -1);
+          dc = dc === 0 ? 0 : (dc > 0 ? 1 : -1);
+          blocked = isOwnForcefield(gameState, piece.player, target.r, target.c) ||
+            isEnemyForcefield(gameState, piece.player, target.r, target.c, target.id);
+          for (step = 1; !blocked && step < distance; step += 1) {
+            r = piece.r + dr * step;
+            c = piece.c + dc * step;
+            if (isOwnForcefield(gameState, piece.player, r, c) ||
+                isEnemyForcefield(gameState, piece.player, r, c, target.id) ||
+                pieceAt(gameState, r, c)) {
+              blocked = true;
+            }
+          }
+          if (!blocked) {
+            moves.push(moveObject(piece, target.r, target.c, [target.id], {
+              distance: distance,
+              diamondCapture: true
+            }));
+          }
+        }
+        return moves;
+      };
+      generateCrossMoves = function (gameState, piece) {
+        var moves = [];
+        var d;
+        var distance;
+        var r;
+        var c;
+        var occupant;
+        for (d = 0; d < ALL_DIRS.length; d += 1) {
+          for (distance = 1; distance <= 3; distance += 1) {
+            r = piece.r + ALL_DIRS[d].dr * distance;
+            c = piece.c + ALL_DIRS[d].dc * distance;
+            if (!inBounds(r, c) || crossFieldBlocked(gameState, piece.player, r, c, null)) { break; }
+            occupant = pieceAt(gameState, r, c);
+            if (occupant && occupant.player === piece.player) { break; }
+            if (occupant && occupant.type === "diamond") { break; }
+            if (occupant) {
+              moves.push(moveObject(piece, r, c, [occupant.id], { distance: distance }));
+              break;
+            }
+            moves.push(moveObject(piece, r, c, [], { distance: distance }));
+          }
+        }
+        return moves.concat(specialCrossDiamondCaptures(gameState, piece));
+      };
+
+      var v13CanLocalAct = canLocalAct;
+      canLocalAct = function () {
+        if (reviewingHistory()) { return false; }
+        return v13CanLocalAct();
+      };
+      var v13PresentLastMove = presentLastMove;
+      presentLastMove = function (lastMove) {
+        v13PresentLastMove(lastMove);
+        pulseDiamondField(lastMove);
+      };
+      var v13CreateCells = createCells;
+      createCells = function () {
+        var r;
+        var c;
+        v13CreateCells();
+        for (r = 0; r < SIZE; r += 1) {
+          for (c = 0; c < SIZE; c += 1) {
+            cellEls[r][c].addEventListener("pointerenter", previewDiamondAt);
+            cellEls[r][c].addEventListener("focus", previewDiamondAt);
+            cellEls[r][c].addEventListener("touchstart", previewDiamondAt, { passive: true });
+          }
+        }
+      };
+      var v13OnCellClick = onCellClick;
+      onCellClick = function (event) {
+        var selected = selectedPiece();
+        var r = Number(event.currentTarget.getAttribute("data-r"));
+        var c = Number(event.currentTarget.getAttribute("data-c"));
+        if (selected && !reviewingHistory() && isEnemyForcefield(state, selected.player, r, c, null)) {
+          showBlockedField(r, c, selected.player);
+          return;
+        }
+        v13OnCellClick(event);
+      };
+      var v13CommitMove = commitMove;
+      commitMove = function (move) {
+        diamondPreviewMove = null;
+        trianglePreviewMove = null;
+        reviewIndex = -1;
+        v13CommitMove(move);
+      };
+      var v13RenderBoard = renderBoard;
+      renderBoard = function () {
+        v13RenderBoard();
+        decorateBoard(state);
+      };
+      var v13Render = render;
+      render = function () {
+        var liveState = state;
+        var displayState = reviewingHistory() ? historyStateAt(reviewIndex) : null;
+        var savedSelectedId = selectedId;
+        var savedSelectedMoves = selectedMoves;
+        var savedPending = pendingAnnihilationMoves;
+        var savedLastMovePieceId = lastMovePieceId;
+        var savedCaptured = lastCapturedSquares;
+        if (displayState) {
+          state = displayState;
+          selectedId = null;
+          selectedMoves = [];
+          pendingAnnihilationMoves = [];
+          lastMovePieceId = displayState.lastMove ? displayState.lastMove.pieceId : null;
+          lastCapturedSquares = [];
+        }
+        v13Render();
+        if (displayState) {
+          state = liveState;
+          selectedId = savedSelectedId;
+          selectedMoves = savedSelectedMoves;
+          pendingAnnihilationMoves = savedPending;
+          lastMovePieceId = savedLastMovePieceId;
+          lastCapturedSquares = savedCaptured;
+          statusText.textContent = "Reviewing move " + Number(displayState.moveNumber || 0) + " of " + Number(liveState.moveNumber || 0);
+          actionTitle.textContent = "Reviewing online history";
+          actionSub.textContent = "Use the arrows to move backward or return to the live board.";
+          clearButton.hidden = true;
+        }
+        updateHistoryControls();
+        if (
+          playMode === "online" && onlineHasOpponent && !modeOverlay.classList.contains("open") &&
+          safeGet("crossmate-seen-tutorial") !== "yes" && !tutorialPromptedThisSession
+        ) {
+          tutorialPromptedThisSession = true;
+          window.setTimeout(openTutorial, 100);
+        }
+      };
+      var v13OpenDirectionPicker = openDirectionPicker;
+      openDirectionPicker = function (moves) {
+        var order = [-1, 0, 1];
+        var anchorMove = moves[0];
+        var preferred = null;
+        directionGrid.innerHTML = "";
+        directionOverlay.classList.toggle("player-two", playMode !== "online" && state.currentPlayer === 2);
+        order.forEach(function (turn) {
+          var move = null;
+          var i;
+          var button;
+          var label;
+          for (i = 0; i < moves.length; i += 1) {
+            if (moves[i].turn === turn) { move = moves[i]; break; }
+          }
+          if (!move) { return; }
+          if (turn === 0 || !preferred) { preferred = move; }
+          button = document.createElement("button");
+          button.type = "button";
+          button.className = "direction-choice" + (move.captures.length ? " capture-action" : "");
+          label = turn === -1 ? "Left" : (turn === 1 ? "Right" : "Straight");
+          button.innerHTML = triangleChoiceMarkup(move, label);
+          button.setAttribute("aria-label", turnLabel(turn) + (move.captures.length ? " and lunge to capture" : ""));
+          button.addEventListener("pointerenter", function () { setTrianglePreview(move); });
+          button.addEventListener("focus", function () { setTrianglePreview(move); });
+          button.addEventListener("touchstart", function () { setTrianglePreview(move); }, { passive: true });
+          button.addEventListener("click", function (event) {
+            event.stopPropagation();
+            trianglePreviewMove = null;
+            closeDirectionPicker();
+            commitMove(move);
+          });
+          directionGrid.appendChild(button);
+        });
+        directionGrid.style.gridTemplateColumns = "repeat(" + directionGrid.children.length + ", var(--choice-size))";
+        boardEl.classList.add("direction-picking");
+        directionOverlay.classList.add("open");
+        trianglePreviewMove = preferred || anchorMove;
+        actionTitle.textContent = "Preview the triangle's final direction";
+        actionSub.textContent = "The gold route ends at the landing square; the ghost shows the final lunge and facing.";
+        render();
+        positionDirectionPicker(trianglePreviewMove);
+      };
+      var v13CloseDirectionPicker = closeDirectionPicker;
+      closeDirectionPicker = function () {
+        var wasOpen = directionOverlay.classList.contains("open");
+        trianglePreviewMove = null;
+        v13CloseDirectionPicker();
+        if (wasOpen) { render(); }
+      };
+      var v13NewGame = newGame;
+      newGame = function (showIntro, silent) {
+        reviewIndex = -1;
+        fieldPulseKeys = {};
+        blockedFieldKey = "";
+        blockedDiamondIds = {};
+        diamondPreviewMove = null;
+        trianglePreviewMove = null;
+        v13NewGame(false, silent);
+        state.history = [packHistorySnapshot(state)];
+        render();
+        if (showIntro) { openTutorial(); }
+      };
+      var v13ShowResultOverlay = showResultOverlay;
+      showResultOverlay = function (result) {
+        v13ShowResultOverlay(result);
+        if (result && result.type === "draw") { endTitle.textContent = "Crossmate drawn."; }
+        playAgainButton.textContent = playMode === "online" ? "New online game" : "Play again";
+        reviewGameButton.hidden = playMode !== "online";
+      };
+
+      historyBackButton.addEventListener("click", reviewBack);
+      historyForwardButton.addEventListener("click", reviewForward);
+      tutorialFromHelpButton.addEventListener("click", openTutorial);
+      tutorialBackButton.addEventListener("click", function () {
+        if (tutorialStepIndex > 0) { tutorialStepIndex -= 1; renderTutorial(); }
+      });
+      tutorialNextButton.addEventListener("click", function () {
+        if (tutorialStepIndex < tutorialSteps.length - 1) {
+          tutorialStepIndex += 1;
+          renderTutorial();
+        } else {
+          closeTutorial(true);
+        }
+      });
+      tutorialSkipButton.addEventListener("click", function () { closeTutorial(true); });
+      tutorialOverlay.addEventListener("click", function (event) {
+        if (event.target === tutorialOverlay) { closeTutorial(true); }
+      });
+      reviewGameButton.addEventListener("click", function () {
+        endOverlay.classList.remove("open");
+        reviewIndex = -1;
+        render();
+      });
+      syncViewportHeight();
+      window.addEventListener("resize", syncViewportHeight);
+      window.addEventListener("orientationchange", syncViewportHeight);
+      if (window.visualViewport) { window.visualViewport.addEventListener("resize", syncViewportHeight); }
+
+
       function handleNewMatchButton() {
         if (playMode === "online") { leaveOnlineMatch(); }
         else { newGame(false, false); }
@@ -2863,7 +3782,7 @@
       newMatchButton.addEventListener("click", handleNewMatchButton);
       resetButton.addEventListener("click", handleNewMatchButton);
       playAgainButton.addEventListener("click", function () {
-        if (playMode === "online") { restartOnlineMatch(); }
+        if (playMode === "online") { endOverlay.classList.remove("open"); leaveOnlineMatch(); }
         else { newGame(false, false); }
       });
       helpButton.addEventListener("click", function () { helpOverlay.classList.add("open"); });
@@ -2880,6 +3799,7 @@
       document.addEventListener("keydown", function (event) {
         if (event.key === "Escape") {
           if (directionOverlay.classList.contains("open")) { closeDirectionPicker(); }
+          else if (tutorialOverlay.classList.contains("open")) { closeTutorial(true); }
           else if (helpOverlay.classList.contains("open")) { helpOverlay.classList.remove("open"); }
           else if (pendingAnnihilationMoves.length || selectedId) { cancelPendingAction(); }
         }
