@@ -1127,6 +1127,105 @@
     }
 
 
+
+    /* Crossmate v1.5.1: persistent last-move trail */
+    .last-move-marker {
+      --last-rgb: 255, 209, 102;
+      position: absolute;
+      z-index: 11;
+      pointer-events: none;
+    }
+    .last-move-marker.p1 { --last-rgb: var(--p1-rgb); }
+    .last-move-marker.p2 { --last-rgb: var(--p2-rgb); }
+    .last-move-origin-ring {
+      inset: 7%;
+      border: 2px dashed rgba(255,209,102,0.72);
+      border-radius: inherit;
+      box-shadow: inset 0 0 8px rgba(255,209,102,0.13);
+    }
+    .last-move-destination-ring {
+      inset: 2px;
+      border: 3px solid rgba(var(--last-rgb),0.94);
+      border-radius: inherit;
+      box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,0.46),
+        0 0 13px rgba(var(--last-rgb),0.48);
+    }
+    .last-move-same-square .last-move-destination-ring {
+      inset: 1px;
+      border-style: double;
+      border-width: 4px;
+    }
+    .last-move-path-dot {
+      left: 50%;
+      top: 50%;
+      width: clamp(5px, 22%, 9px);
+      aspect-ratio: 1 / 1;
+      border: 1px solid rgba(255,255,255,0.58);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(var(--last-rgb),0.92);
+      box-shadow: 0 0 7px rgba(var(--last-rgb),0.56);
+    }
+    .last-move-landing-dot {
+      left: 50%;
+      top: 50%;
+      width: 34%;
+      aspect-ratio: 1 / 1;
+      border: 2px solid rgba(255,209,102,0.92);
+      border-radius: 5px;
+      transform: translate(-50%, -50%) rotate(45deg);
+      background: rgba(255,209,102,0.08);
+      box-shadow: 0 0 8px rgba(255,209,102,0.34);
+    }
+    .last-move-capture-mark {
+      right: 2px;
+      bottom: 2px;
+      width: clamp(13px, 42%, 19px);
+      aspect-ratio: 1 / 1;
+      border: 1px solid rgba(255,255,255,0.55);
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: #fff4f5;
+      background: rgba(151,25,43,0.9);
+      box-shadow: 0 0 8px rgba(255,95,109,0.56);
+      font-size: clamp(9px, 3vw, 13px);
+      font-weight: 950;
+      line-height: 1;
+    }
+    .last-move-turn-badge {
+      right: -2px;
+      top: -3px;
+      width: clamp(17px, 48%, 23px);
+      aspect-ratio: 1 / 1;
+      border: 1px solid rgba(255,255,255,0.66);
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: #171105;
+      background: var(--gold);
+      box-shadow: 0 0 0 2px rgba(7,11,24,0.75), 0 0 10px rgba(255,209,102,0.55);
+      font-size: clamp(11px, 3.5vw, 16px);
+      font-weight: 950;
+      line-height: 1;
+    }
+    .last-move-turn-only .piece {
+      filter: brightness(1.22) drop-shadow(0 0 7px rgba(255,209,102,0.55));
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .last-move-destination-ring { animation: lastMoveSettle 420ms ease-out both; }
+      .last-move-turn-badge { animation: lastTurnSettle 460ms cubic-bezier(.2,.8,.25,1.3) both; }
+    }
+    @keyframes lastMoveSettle {
+      from { opacity: 0; transform: scale(1.18); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    @keyframes lastTurnSettle {
+      from { opacity: 0; transform: rotate(-80deg) scale(0.55); }
+      to { opacity: 1; transform: rotate(0deg) scale(1); }
+    }
+
     /* Crossmate v1.5.0: offline computer opponent */
     .mode-grid.three-modes { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .mode-card.computer-choice {
@@ -1259,7 +1358,7 @@
       <a class="icon-button" href="../../" aria-label="Back to games">←</a>
       <div class="title-block">
         <p class="eyebrow">Local + AI + online strategy</p>
-        <h1>Crossmate <span class="version">v1.5.0</span></h1>
+        <h1>Crossmate <span class="version">v1.5.1</span></h1>
       </div>
       <div class="top-actions">
         <button class="icon-button" id="soundButton" type="button" aria-label="Turn sound off" title="Sound">♪</button>
@@ -1487,7 +1586,7 @@
       ];
       var TYPE_NAMES = { circle: "Circle", diamond: "Diamond", square: "Square", triangle: "Triangle", cross: "Cross" };
       var POINT_VALUES = { circle: 1, triangle: 3, square: 5, diamond: 6, cross: 0 };
-      var VERSION = "1.5.0";
+      var VERSION = "1.5.1";
       var ROOM_LIFETIME_MS = 10 * 24 * 60 * 60 * 1000;
       var BACK_ROW = ["diamond", "square", "triangle", null, "cross", null, "triangle", "square", "diamond"];
 
@@ -2814,7 +2913,8 @@
         }
         if (!piece) {
           actionTitle.textContent = "Select one of your pieces";
-          actionSub.textContent = "No-capture draw: " + state.halfmoveClock + "/" + NO_CAPTURE_LIMIT + " moves";
+          actionSub.textContent = (describeLastMove(state.lastMove) ? describeLastMove(state.lastMove) + " · " : "") +
+            "No-capture draw: " + state.halfmoveClock + "/" + NO_CAPTURE_LIMIT + " moves";
           return;
         }
 
@@ -3448,6 +3548,115 @@
         ghost.innerHTML = '<span class="glyph triangle"></span>';
         cell.appendChild(ghost);
       }
+
+      /* Crossmate v1.5.1: persistent last-move trail */
+      function addLastMoveMarker(cell, className, player, text) {
+        var marker = document.createElement("span");
+        marker.className = "last-move-marker " + className + " p" + Number(player || 1);
+        marker.setAttribute("aria-hidden", "true");
+        if (typeof text === "string") { marker.textContent = text; }
+        cell.appendChild(marker);
+        return marker;
+      }
+      function lastMoveTurnAmount(lastMove) {
+        var pre = Number(lastMove && lastMove.preTurn || 0);
+        var post = Number(lastMove && lastMove.turn || 0);
+        return pre || post;
+      }
+      function lastMoveOwnerLabel(lastMove) {
+        var mover = Number(lastMove && lastMove.mover || 0);
+        if (!mover) { return "Last"; }
+        if (playMode === "ai") { return mover === aiPlayer ? "Computer's" : "Your"; }
+        if (playMode === "online" && localPlayer) { return mover === localPlayer ? "Your" : "Opponent's"; }
+        return "Player " + mover + "'s";
+      }
+      function describeLastMove(lastMove) {
+        var type;
+        var turn;
+        var moved;
+        var captured;
+        var action;
+        if (!lastMove || typeof lastMove.fromR !== "number") { return ""; }
+        type = TYPE_NAMES[lastMove.type] || "Piece";
+        turn = lastMoveTurnAmount(lastMove);
+        moved = lastMove.fromR !== lastMove.toR || lastMove.fromC !== lastMove.toC;
+        captured = Array.isArray(lastMove.captures) ? lastMove.captures.length : 0;
+        if (type === "Triangle" && !moved && turn) {
+          action = "turned " + (turn < 0 ? "left" : "right") + " in place";
+        } else if (type === "Triangle" && turn) {
+          action = "moved and turned " + (turn < 0 ? "left" : "right");
+        } else {
+          action = moved ? "moved" : "acted";
+        }
+        if (captured === 1) { action += " and captured a piece"; }
+        else if (captured > 1) { action += " and captured " + captured + " pieces"; }
+        return "Last: " + lastMoveOwnerLabel(lastMove) + " " + type.toLowerCase() + " " + action;
+      }
+      function decoratePersistentLastMove(gameState, reviewMode) {
+        var lastMove = gameState && gameState.lastMove;
+        var mover;
+        var origin;
+        var destination;
+        var sameSquare;
+        var landingR;
+        var landingC;
+        var turn;
+        var captureSquares;
+        var summary;
+        function addPath(r, c) {
+          if ((r === lastMove.fromR && c === lastMove.fromC) || (r === lastMove.toR && c === lastMove.toC)) { return; }
+          addLastMoveMarker(cellEls[r][c], "last-move-path-dot", mover, "");
+        }
+        if (!lastMove || typeof lastMove.fromR !== "number" || typeof lastMove.toR !== "number") { return; }
+        if (!inBounds(lastMove.fromR, lastMove.fromC) || !inBounds(lastMove.toR, lastMove.toC)) { return; }
+        mover = Number(lastMove.mover || 1);
+        origin = cellEls[lastMove.fromR][lastMove.fromC];
+        destination = cellEls[lastMove.toR][lastMove.toC];
+        sameSquare = lastMove.fromR === lastMove.toR && lastMove.fromC === lastMove.toC;
+        landingR = typeof lastMove.landingR === "number" ? lastMove.landingR : lastMove.toR;
+        landingC = typeof lastMove.landingC === "number" ? lastMove.landingC : lastMove.toC;
+        turn = lastMoveTurnAmount(lastMove);
+        summary = describeLastMove(lastMove);
+
+        origin.classList.add("last-move-origin");
+        destination.classList.add("last-move-destination");
+        if (sameSquare) { destination.classList.add("last-move-same-square"); }
+        if (reviewMode) {
+          origin.classList.add("review-origin");
+          destination.classList.add("review-destination");
+        }
+        addLastMoveMarker(origin, "last-move-origin-ring", mover, "");
+        addLastMoveMarker(destination, "last-move-destination-ring", mover, "");
+
+        if (lastMove.type === "triangle") {
+          if (inBounds(landingR, landingC)) {
+            stepLine(lastMove.fromR, lastMove.fromC, landingR, landingC, addPath);
+            if ((landingR !== lastMove.fromR || landingC !== lastMove.fromC) &&
+                (landingR !== lastMove.toR || landingC !== lastMove.toC)) {
+              addLastMoveMarker(cellEls[landingR][landingC], "last-move-landing-dot", mover, "");
+            }
+          }
+          if (landingR !== lastMove.toR || landingC !== lastMove.toC) {
+            stepLine(landingR, landingC, lastMove.toR, lastMove.toC, addPath);
+          }
+        } else {
+          stepLine(lastMove.fromR, lastMove.fromC, lastMove.toR, lastMove.toC, addPath);
+        }
+
+        if (turn) {
+          destination.classList.add(sameSquare ? "last-move-turn-only" : "last-move-turned");
+          addLastMoveMarker(destination, "last-move-turn-badge", mover, turn < 0 ? "↶" : "↷");
+        }
+        captureSquares = Array.isArray(lastMove.captureSquares) ? lastMove.captureSquares : [];
+        captureSquares.forEach(function (square) {
+          if (!square || !inBounds(Number(square.r), Number(square.c))) { return; }
+          addLastMoveMarker(cellEls[Number(square.r)][Number(square.c)], "last-move-capture-mark", mover, "×");
+        });
+        if (summary) {
+          destination.setAttribute("aria-label", destination.getAttribute("aria-label") + ". " + summary);
+        }
+      }
+
       function decorateBoard(gameState) {
         var r;
         var c;
@@ -3498,10 +3707,7 @@
             addGhostTriangle(trianglePreviewMove, piece.player);
           }
         }
-        if (reviewingHistory() && gameState.lastMove && typeof gameState.lastMove.fromR === "number") {
-          cellEls[gameState.lastMove.fromR][gameState.lastMove.fromC].classList.add("review-origin");
-          cellEls[gameState.lastMove.toR][gameState.lastMove.toC].classList.add("review-destination");
-        }
+        decoratePersistentLastMove(gameState, reviewingHistory());
       }
       function pulseDiamondField(lastMove) {
         var oldKeys = {};
@@ -3663,7 +3869,16 @@
       advanceStateMutable = function (gameState, move) {
         var summary;
         var alive;
+        var movingPiece;
+        var oldFacing;
+        var captureSquares;
         ensureHistoryBase(gameState);
+        movingPiece = pieceById(gameState, move.pieceId);
+        oldFacing = movingPiece ? Number(movingPiece.facing || 0) : null;
+        captureSquares = (move.captures || []).map(function (id) {
+          var captured = pieceById(gameState, id);
+          return captured ? { r: captured.r, c: captured.c, player: captured.player, type: captured.type } : null;
+        }).filter(function (square) { return Boolean(square); });
         summary = v13AdvanceStateMutable(gameState, move);
         if (gameState.lastMove) {
           gameState.lastMove.type = move.type;
@@ -3674,6 +3889,11 @@
           gameState.lastMove.landingR = typeof move.landingR === "number" ? move.landingR : move.toR;
           gameState.lastMove.landingC = typeof move.landingC === "number" ? move.landingC : move.toC;
           gameState.lastMove.newFacing = move.newFacing;
+          gameState.lastMove.oldFacing = oldFacing;
+          gameState.lastMove.turn = Number(move.turn || 0);
+          gameState.lastMove.preTurn = Number(move.preTurn || 0);
+          gameState.lastMove.distance = Number(move.distance || 0);
+          gameState.lastMove.captureSquares = captureSquares;
         }
         alive = gameState.pieces.filter(function (piece) { return piece.alive; });
         if (alive.length === 2 && alive[0].type === "cross" && alive[1].type === "cross" && alive[0].player !== alive[1].player) {
