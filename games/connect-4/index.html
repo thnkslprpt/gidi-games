@@ -445,13 +445,16 @@
   <link rel="stylesheet" href="../shared/gidi-suite.css?v=3.0.1">
   <script defer src="../shared/gidi-suite.js?v=3.0.1"></script>
   <!-- GIDI-SUITE:END -->
+<!-- GIDI-AI-OPPONENT-STYLE:START -->
+  <link rel="stylesheet" href="../shared/gidi-ai-opponents.css?v=1.0.0">
+  <!-- GIDI-AI-OPPONENT-STYLE:END -->
 </head>
 <body>
   <main class="app">
     <header class="topbar">
       <a class="back" href="../../" aria-label="Back to game room">‹</a>
       <div class="title-wrap">
-        <h1>Connect 4 <span class="version">v1.0</span></h1>
+        <h1>Connect 4 <span class="version">v1.1.0</span></h1>
         <p class="subtitle">Two players · one phone</p>
       </div>
       <button class="icon-button" id="newMatchTop" type="button" aria-label="Start a new match">↻</button>
@@ -718,7 +721,11 @@
       function resetRound() {
         roundOver = false;
         locked = false;
-        startingPlayer = startingPlayer === 1 ? 2 : 1;
+        if (window.GidiAIOpponent && window.GidiAIOpponent.isComputerMode()) {
+          startingPlayer = 1;
+        } else {
+          startingPlayer = startingPlayer === 1 ? 2 : 1;
+        }
         currentPlayer = startingPlayer;
         emptyBoard();
         updateTurnUI();
@@ -788,5 +795,8 @@
       updateColumnButtons();
     }());
   </script>
+<!-- GIDI-AI-OPPONENT-SCRIPT:START -->
+  <script src="../shared/gidi-ai-opponents.js?v=1.0.0" data-gidi-ai-game="connect-4"></script>
+  <!-- GIDI-AI-OPPONENT-SCRIPT:END -->
 </body>
 </html>

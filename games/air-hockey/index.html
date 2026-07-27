@@ -429,6 +429,9 @@
   <link rel="stylesheet" href="../shared/gidi-suite.css?v=3.0.1">
   <script defer src="../shared/gidi-suite.js?v=3.0.1"></script>
   <!-- GIDI-SUITE:END -->
+<!-- GIDI-AI-OPPONENT-STYLE:START -->
+  <link rel="stylesheet" href="../shared/gidi-ai-opponents.css?v=1.0.0">
+  <!-- GIDI-AI-OPPONENT-STYLE:END -->
 </head>
 <body>
   <main id="game" aria-label="Two-player air hockey game">
@@ -447,7 +450,7 @@
     <section class="overlay" id="startOverlay">
       <div class="panel">
         <div class="puck-logo" aria-hidden="true"></div>
-        <h1>Air Hockey <span class="version">v1.0.0</span></h1>
+        <h1>Air Hockey <span class="version">v1.1.0</span></h1>
         <p class="subtitle">Two players. One phone. Drag your paddle and defend your goal.</p>
         <div class="rules" aria-label="How to play">
           <div class="rule"><strong>1</strong>Turn the phone sideways</div>
@@ -784,6 +787,7 @@
           var point = getPoint(touch.clientX, touch.clientY);
           var record = activeTouches[touch.identifier];
           var paddle = record ? record.paddle : playerForX(point.x);
+          if (computerModeEnabled() && paddle === red) { continue; }
           var previousTime = record ? record.time : now - 16;
           activeTouches[touch.identifier] = {
             paddle: paddle,
@@ -806,6 +810,7 @@
         var point = getPoint(event.clientX, event.clientY);
         mouseDown = true;
         mousePlayer = playerForX(point.x);
+        if (computerModeEnabled() && mousePlayer === red) { mouseDown = false; mousePlayer = null; return; }
         movePaddle(mousePlayer, point.x, point.y, 0.016);
       }
 
@@ -817,6 +822,65 @@
         movePaddle(mousePlayer, point.x, point.y, 0.016);
       }
 
+      /* GIDI-AI-AIR-HOCKEY:START */
+      var computerTargetX = 0;
+      var computerTargetY = 0;
+      var computerThinkTime = 0;
+
+      function computerModeEnabled() {
+        return Boolean(window.GidiAIOpponent && window.GidiAIOpponent.isComputerMode());
+      }
+
+      function reflectedY(startY, velocityY, seconds, minimumY, maximumY) {
+        var span = Math.max(1, maximumY - minimumY);
+        var value = startY + velocityY * seconds - minimumY;
+        var period = span * 2;
+        value = ((value % period) + period) % period;
+        if (value > span) value = period - value;
+        return minimumY + value;
+      }
+
+      function updateComputerPaddle(dt) {
+        if (!computerModeEnabled()) return;
+
+        var difficulty = window.GidiAIOpponent.getDifficulty();
+        var speed = difficulty === "easy" ? 245 : difficulty === "hard" ? 475 : 355;
+        var reaction = difficulty === "easy" ? 0.20 : difficulty === "hard" ? 0.07 : 0.12;
+        var error = difficulty === "easy" ? 46 : difficulty === "hard" ? 10 : 24;
+        var defensiveX = width * (difficulty === "easy" ? 0.82 : 0.79);
+        var inset = rink.margin + rink.wall + red.r;
+        var minY = inset;
+        var maxY = height - inset;
+
+        computerThinkTime -= dt;
+        if (computerThinkTime <= 0) {
+          computerThinkTime = reaction + Math.random() * reaction * 0.65;
+          computerTargetX = defensiveX;
+          computerTargetY = height * 0.5;
+
+          if (puck.vx > 45 && puck.x > width * 0.38) {
+            var interceptX = clamp(red.x - red.r - puck.r - 7, width * 0.54, width * 0.88);
+            var seconds = Math.max(0, (interceptX - puck.x) / Math.max(45, puck.vx));
+            computerTargetX = interceptX;
+            computerTargetY = reflectedY(puck.y, puck.vy, seconds, minY, maxY);
+          } else if (puck.x > width * 0.56) {
+            computerTargetX = clamp(puck.x + 18, width * 0.57, width * 0.87);
+            computerTargetY = puck.y;
+          }
+
+          computerTargetY += (Math.random() * 2 - 1) * error;
+          computerTargetY = clamp(computerTargetY, minY, maxY);
+        }
+
+        var dx = computerTargetX - red.x;
+        var dy = computerTargetY - red.y;
+        var distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance < 0.5) return;
+        var step = Math.min(distance, speed * dt);
+        movePaddle(red, red.x + dx / distance * step, red.y + dy / distance * step, dt);
+      }
+      /* GIDI-AI-AIR-HOCKEY:END */
+
       function update(dt) {
         if (phase !== "playing") {
           decayEffects(dt);
@@ -824,6 +888,7 @@
           return;
         }
 
+        updateComputerPaddle(dt);
         blue.vx *= Math.pow(0.04, dt);
         blue.vy *= Math.pow(0.04, dt);
         red.vx *= Math.pow(0.04, dt);
@@ -1343,5 +1408,8 @@
       window.requestAnimationFrame(loop);
     }());
   </script>
+<!-- GIDI-AI-OPPONENT-SCRIPT:START -->
+  <script src="../shared/gidi-ai-opponents.js?v=1.0.0" data-gidi-ai-game="air-hockey"></script>
+  <!-- GIDI-AI-OPPONENT-SCRIPT:END -->
 </body>
 </html>

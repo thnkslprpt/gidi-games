@@ -477,13 +477,16 @@
   <link rel="stylesheet" href="../shared/gidi-suite.css?v=3.0.1">
   <script defer src="../shared/gidi-suite.js?v=3.0.1"></script>
   <!-- GIDI-SUITE:END -->
+<!-- GIDI-AI-OPPONENT-STYLE:START -->
+  <link rel="stylesheet" href="../shared/gidi-ai-opponents.css?v=1.0.0">
+  <!-- GIDI-AI-OPPONENT-STYLE:END -->
 </head>
 <body>
   <main class="app">
     <header class="topbar">
       <a class="back-link" href="../../" aria-label="Back to games">‹</a>
       <div class="game-heading">
-        <h1 class="game-title">Word Duel <span class="version">v1.0.1</span></h1>
+        <h1 class="game-title">Word Duel <span class="version">v1.1.0</span></h1>
       </div>
       <div class="player-chip" id="playerChip">P1</div>
     </header>
@@ -15726,6 +15729,9 @@ jalap`.trim().split(/\s+/));
       window.setTimeout(function () { secretInput.focus(); }, 180);
     }());
   </script>
+<!-- GIDI-AI-OPPONENT-SCRIPT:START -->
+  <script src="../shared/gidi-ai-opponents.js?v=1.0.0" data-gidi-ai-game="word-duel"></script>
+  <!-- GIDI-AI-OPPONENT-SCRIPT:END -->
 </body>
 
 <!--

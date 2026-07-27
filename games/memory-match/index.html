@@ -388,6 +388,9 @@
   <link rel="stylesheet" href="../shared/gidi-suite.css?v=3.0.1">
   <script defer src="../shared/gidi-suite.js?v=3.0.1"></script>
   <!-- GIDI-SUITE:END -->
+<!-- GIDI-AI-OPPONENT-STYLE:START -->
+  <link rel="stylesheet" href="../shared/gidi-ai-opponents.css?v=1.0.0">
+  <!-- GIDI-AI-OPPONENT-STYLE:END -->
 </head>
 <body>
   <main class="app">
@@ -395,7 +398,7 @@
 
     <div class="title-row">
       <h1>Memory Match</h1>
-      <span class="version">v1.0.2</span>
+      <span class="version">v1.1.0</span>
     </div>
 
     <p class="instructions">
@@ -439,7 +442,7 @@
     (function () {
       "use strict";
 
-      var VERSION = "1.0.2";
+      var VERSION = "1.1.0";
       var LEVELS = [
         { pairs: 2, columns: 2, symbols: "numbers" },
         { pairs: 4, columns: 4, symbols: "numbers" },
@@ -592,7 +595,9 @@
         secondCard = null;
         matchesRemaining = level.pairs;
         streak = 0;
-        currentPlayer = levelIndex % 2;
+        currentPlayer = (window.GidiAIOpponent && window.GidiAIOpponent.isComputerMode())
+          ? 0
+          : levelIndex % 2;
         locked = false;
 
         board.innerHTML = "";
@@ -822,5 +827,8 @@
     }
     }());
   </script>
+<!-- GIDI-AI-OPPONENT-SCRIPT:START -->
+  <script src="../shared/gidi-ai-opponents.js?v=1.0.0" data-gidi-ai-game="memory-match"></script>
+  <!-- GIDI-AI-OPPONENT-SCRIPT:END -->
 </body>
 </html>

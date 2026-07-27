@@ -269,6 +269,9 @@
   <link rel="stylesheet" href="../shared/gidi-suite.css?v=3.0.1">
   <script defer src="../shared/gidi-suite.js?v=3.0.1"></script>
   <!-- GIDI-SUITE:END -->
+<!-- GIDI-AI-OPPONENT-STYLE:START -->
+  <link rel="stylesheet" href="../shared/gidi-ai-opponents.css?v=1.0.0">
+  <!-- GIDI-AI-OPPONENT-STYLE:END -->
 </head>
 <body>
   <main class="game" id="game" aria-label="Reaction Duel game">
@@ -299,7 +302,7 @@
   </main>
 
   <a class="home-link" href="../../">← Games</a>
-  <span class="version">Reaction Duel v1.0.0</span>
+  <span class="version">Reaction Duel v1.1.0</span>
 
   <div class="overlay" id="overlay">
     <section class="card" aria-labelledby="gameTitle">
@@ -517,5 +520,8 @@
       window.addEventListener("pagehide", clearTimers);
     }());
   </script>
+<!-- GIDI-AI-OPPONENT-SCRIPT:START -->
+  <script src="../shared/gidi-ai-opponents.js?v=1.0.0" data-gidi-ai-game="reaction-duel"></script>
+  <!-- GIDI-AI-OPPONENT-SCRIPT:END -->
 </body>
 </html>

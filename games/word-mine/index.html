@@ -20,12 +20,15 @@
   <link rel="stylesheet" href="../shared/gidi-suite.css?v=3.0.1">
   <script defer src="../shared/gidi-suite.js?v=3.0.1"></script>
   <!-- GIDI-SUITE:END -->
+<!-- GIDI-AI-OPPONENT-STYLE:START -->
+  <link rel="stylesheet" href="../shared/gidi-ai-opponents.css?v=1.0.0">
+  <!-- GIDI-AI-OPPONENT-STYLE:END -->
 </head>
 <body>
 <div class="app stack">
   <header class="topbar">
     <a class="back" href="../../" aria-label="Back to game room">←</a>
-    <div class="top-title"><strong>Word Mine</strong><small>revision 1.0.0</small></div>
+    <div class="top-title"><strong>Word Mine</strong><small>revision 1.1.0</small></div>
     <button class="icon-button" id="rulesBtn" type="button" aria-label="Rules">?</button>
   </header>
 
@@ -79,7 +82,7 @@
     p1Box.classList.toggle('active',mode==='solo'||current===1); p2Box.classList.toggle('active',mode==='duel'&&current===2);
   }
   function buildKeys(){ keypad.innerHTML=''; 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(function(ch){ var b=document.createElement('button'); b.className='key'; b.type='button'; b.textContent=ch; b.addEventListener('click',function(){guess(ch.toLowerCase(),b);}); keypad.appendChild(b); }); }
-  function startRound(){ word=C.random(candidates())||'planet'; guessed=new Set(); lives=6; current=Math.random()<.5?1:2; over=false; buildKeys(); C.setStatus(status, mode==='solo'?'Find the hidden word.':('Player '+current+' starts.')); render(); }
+  function startRound(){ word=C.random(candidates())||'planet'; guessed=new Set(); lives=6; current=(window.GidiAIOpponent&&window.GidiAIOpponent.isComputerMode())?1:(Math.random()<.5?1:2); over=false; buildKeys(); C.setStatus(status, mode==='solo'?'Find the hidden word.':('Player '+current+' starts.')); render(); }
   function finish(winner){ over=true; Array.prototype.forEach.call(keypad.children,function(b){b.disabled=true;});
     if(mode==='solo'){
       if(winner){ scores[0]++; C.setStatus(status,'You found '+word.toUpperCase()+'!','good'); C.confetti(document.body,24); }
@@ -102,5 +105,8 @@
   buildKeys(); render();
 }());
 </script>
+<!-- GIDI-AI-OPPONENT-SCRIPT:START -->
+  <script src="../shared/gidi-ai-opponents.js?v=1.0.0" data-gidi-ai-game="word-mine"></script>
+  <!-- GIDI-AI-OPPONENT-SCRIPT:END -->
 </body>
 </html>
