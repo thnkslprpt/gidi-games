@@ -115,3 +115,11 @@ html[data-gidi-ai-game="word-duel"] .gidi-ai-segment button.selected {
   box-shadow: inset 0 0 0 1px rgba(107, 36, 199, .12);
 }
 .gidi-ai-word-mine-controls { margin-top: 10px; }
+
+/* GIDI-AI-DIFFICULTY-VISIBILITY:START */
+/* Author-level display rules can override the browser's default [hidden] rule. */
+.gidi-ai-difficulty[hidden] {
+  display: none !important;
+}
+/* GIDI-AI-DIFFICULTY-VISIBILITY:END */
+
