@@ -1064,6 +1064,7 @@
     }
     .direction-choice .choice-label { font-size: 7px; }
     .tutorial-modal { width: min(100%, 450px); text-align: center; }
+    /* Crossmate v1.5.2: force five equal tutorial rows as well as columns. */
     .tutorial-board {
       width: min(72vw, 250px);
       aspect-ratio: 1 / 1;
@@ -1073,10 +1074,13 @@
       border-radius: 20px;
       display: grid;
       grid-template-columns: repeat(5, minmax(0,1fr));
+      grid-template-rows: repeat(5, minmax(0,1fr));
       gap: 3px;
       background: #090f1d;
     }
     .tutorial-cell {
+      min-width: 0;
+      min-height: 0;
       position: relative;
       border-radius: 8px;
       display: grid;
@@ -1358,7 +1362,7 @@
       <a class="icon-button" href="../../" aria-label="Back to games">←</a>
       <div class="title-block">
         <p class="eyebrow">Local + AI + online strategy</p>
-        <h1>Crossmate <span class="version">v1.5.1</span></h1>
+        <h1>Crossmate <span class="version">v1.5.2</span></h1>
       </div>
       <div class="top-actions">
         <button class="icon-button" id="soundButton" type="button" aria-label="Turn sound off" title="Sound">♪</button>
@@ -1586,7 +1590,7 @@
       ];
       var TYPE_NAMES = { circle: "Circle", diamond: "Diamond", square: "Square", triangle: "Triangle", cross: "Cross" };
       var POINT_VALUES = { circle: 1, triangle: 3, square: 5, diamond: 6, cross: 0 };
-      var VERSION = "1.5.1";
+      var VERSION = "1.5.2";
       var ROOM_LIFETIME_MS = 10 * 24 * 60 * 60 * 1000;
       var BACK_ROW = ["diamond", "square", "triangle", null, "cross", null, "triangle", "square", "diamond"];
 
