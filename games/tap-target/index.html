@@ -4,379 +4,2292 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#071426">
-  <title>Tap Target · Gidi's Game Room</title>
-
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="format-detection" content="telephone=no">
+  <title>Tap the Target · Gidi's Game Room</title>
   <style>
-    * {
-      box-sizing: border-box;
+    :root {
+      --night: #050a1b;
+      --night-2: #071426;
+      --panel: rgba(10, 22, 48, 0.9);
+      --panel-soft: rgba(17, 34, 69, 0.76);
+      --line: rgba(151, 190, 255, 0.2);
+      --ink: #f8fbff;
+      --muted: #a9b8d4;
+      --cyan: #55d8ff;
+      --violet: #8b7cff;
+      --pink: #ff5f9e;
+      --gold: #ffd66b;
+      --danger: #ff4d65;
+      --success: #65edb0;
+      color-scheme: dark;
+      font-family: ui-rounded, "SF Pro Rounded", "SF Pro Display", -apple-system,
+        BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
+
+    * { box-sizing: border-box; }
 
     html {
       min-width: 320px;
+      min-height: 100%;
+      background: var(--night);
       -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
     }
 
     body {
       min-width: 320px;
+      min-height: 100vh;
       margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-      background: #f4f7ff;
-      color: #172033;
+      overflow-x: hidden;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% -5%, rgba(82, 214, 255, 0.22), transparent 30rem),
+        radial-gradient(circle at 104% 20%, rgba(255, 84, 157, 0.18), transparent 32rem),
+        linear-gradient(180deg, #071126 0%, #050916 58%, #070a18 100%);
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
     }
 
-    .shell {
-      width: 100%;
-      max-width: 680px;
-      margin: auto;
-      padding-left: max(14px, env(safe-area-inset-left));
-      padding-right: max(14px, env(safe-area-inset-right));
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      opacity: 0.4;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(112, 165, 255, 0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(112, 165, 255, 0.045) 1px, transparent 1px);
+      background-size: 40px 40px;
+      -webkit-mask-image: linear-gradient(to bottom, black, transparent 80%);
+      mask-image: linear-gradient(to bottom, black, transparent 80%);
     }
 
-    header {
-      padding-top: calc(16px + env(safe-area-inset-top));
-      padding-bottom: 18px;
-      background: #172554;
-      color: white;
-    }
-
-    header a {
-      display: inline-flex;
-      min-height: 44px;
-      align-items: center;
-      color: white;
-      font-weight: 700;
-      text-decoration: none;
-      touch-action: manipulation;
-    }
-
-    h1 {
-      margin: 4px 0;
-      font-size: clamp(1.9rem, 9vw, 3rem);
-    }
-
-    header p {
-      margin: 0;
-    }
-
-    main {
-      padding-top: 14px;
-      padding-bottom: calc(24px + env(safe-area-inset-bottom));
-    }
-
-    .scores {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-    }
-
-    .score-box {
-      padding: 10px 6px;
-      border: 1px solid #cbd5e1;
-      border-radius: 13px;
-      background: white;
-      text-align: center;
-    }
-
-    .score-box span {
-      display: block;
-      color: #566176;
-      font-size: 0.75rem;
-      font-weight: 800;
-      text-transform: uppercase;
-    }
-
-    .score-box strong {
-      font-size: 1.5rem;
-    }
-
-    button {
-      font: inherit;
-      touch-action: manipulation;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    button:focus,
-    a:focus {
-      outline: 3px solid #f59e0b;
+    button, a { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+    button { font: inherit; }
+    button:focus-visible, a:focus-visible {
+      outline: 3px solid #ffd15a;
       outline-offset: 3px;
     }
 
-    #start {
-      width: 100%;
-      min-height: 52px;
-      margin-top: 12px;
-      border: 0;
+    .shell {
+      width: min(720px, calc(100% - 28px));
+      margin: 0 auto;
+    }
+
+    .app-header {
+      position: relative;
+      overflow: hidden;
+      padding: max(14px, env(safe-area-inset-top)) 0 18px;
+      border-bottom: 1px solid rgba(148, 190, 255, 0.16);
+      background:
+        radial-gradient(circle at 86% 24%, rgba(255, 91, 158, 0.18), transparent 17rem),
+        linear-gradient(145deg, rgba(10, 28, 62, 0.98), rgba(8, 17, 40, 0.96));
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.24);
+    }
+
+    .header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .back-link {
+      display: inline-flex;
+      min-height: 42px;
+      align-items: center;
+      gap: 7px;
+      color: #dce8ff;
+      font-size: 14px;
+      font-weight: 850;
+      text-decoration: none;
+    }
+
+    .icon-button {
+      display: inline-grid;
+      width: 42px;
+      height: 42px;
+      place-items: center;
+      border: 1px solid rgba(151, 190, 255, 0.22);
       border-radius: 13px;
-      background: #1d4ed8;
-      color: white;
-      font-weight: 800;
+      color: #eef6ff;
+      background: rgba(18, 36, 73, 0.72);
+      box-shadow: inset 0 1px rgba(255, 255, 255, 0.08);
+      cursor: pointer;
     }
 
-    #start:disabled {
-      opacity: 0.55;
+    h1 {
+      margin: 8px 0 3px;
+      font-size: clamp(31px, 9vw, 50px);
+      line-height: 0.98;
+      letter-spacing: -0.055em;
     }
 
-    #message {
-      min-height: 24px;
-      margin: 10px 0;
-      color: #566176;
+    .title-gradient {
+      color: transparent;
+      background: linear-gradient(100deg, #ffffff 5%, #73dcff 42%, #b4a3ff 68%, #ff8cbd 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      filter: drop-shadow(0 8px 22px rgba(77, 194, 255, 0.14));
+    }
+
+    .game-version {
+      display: inline-block;
+      margin-left: 0.42rem;
+      color: #b9c7de;
+      font-size: 0.31em;
+      font-weight: 750;
+      letter-spacing: 0;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+
+    .subtitle {
+      max-width: 620px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    main {
+      padding: 14px 0 calc(28px + env(safe-area-inset-bottom));
+    }
+
+    .scoreboard {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .metric {
+      min-width: 0;
+      padding: 10px 7px 9px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: linear-gradient(145deg, rgba(19, 38, 77, 0.88), rgba(8, 18, 42, 0.88));
+      box-shadow: inset 0 1px rgba(255, 255, 255, 0.065), 0 12px 34px rgba(0, 0, 0, 0.16);
       text-align: center;
     }
 
-    #field {
-      position: relative;
-      height: 360px;
+    .metric span {
+      display: block;
       overflow: hidden;
-      border: 2px solid #cbd5e1;
-      border-radius: 18px;
-      background: white;
+      color: #8fa5c8;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 0.11em;
+      text-overflow: ellipsis;
+      text-transform: uppercase;
+      white-space: nowrap;
     }
 
-    #target {
+    .metric strong {
+      display: block;
+      margin-top: 3px;
+      overflow: hidden;
+      font-size: clamp(20px, 6vw, 28px);
+      font-weight: 950;
+      line-height: 1;
+      letter-spacing: -0.045em;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .game-panel {
+      margin-top: 10px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(9, 20, 46, 0.76);
+      box-shadow: inset 0 1px rgba(255, 255, 255, 0.055);
+      -webkit-backdrop-filter: blur(16px);
+      backdrop-filter: blur(16px);
+    }
+
+    .progress-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 9px;
+    }
+
+    .stage-copy { min-width: 0; }
+    .stage-copy strong {
+      display: block;
+      overflow: hidden;
+      font-size: 15px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .stage-copy span {
+      display: block;
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .strikes {
+      display: flex;
+      flex: 0 0 auto;
+      gap: 5px;
+      align-items: center;
+    }
+
+    .strike-dot {
+      width: 17px;
+      height: 17px;
+      border: 2px solid rgba(255, 111, 132, 0.75);
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #ff9bad, #ff506a 58%, #a91d39 100%);
+      box-shadow: 0 0 12px rgba(255, 67, 97, 0.34);
+      transition: transform 180ms ease, opacity 180ms ease, filter 180ms ease;
+    }
+
+    .strike-dot.lost {
+      opacity: 0.24;
+      filter: grayscale(1);
+      transform: scale(0.78);
+    }
+
+    .progress-track {
+      height: 8px;
+      overflow: hidden;
+      border: 1px solid rgba(144, 183, 245, 0.13);
+      border-radius: 999px;
+      background: rgba(3, 9, 24, 0.75);
+    }
+
+    .progress-fill {
+      width: 0;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--cyan), var(--violet), var(--pink));
+      box-shadow: 0 0 15px rgba(90, 207, 255, 0.42);
+      transition: width 220ms ease;
+    }
+
+    .mode-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .mode-button {
+      min-height: 46px;
+      padding: 9px 10px;
+      border: 1px solid rgba(151, 190, 255, 0.18);
+      border-radius: 14px;
+      color: #aebbd2;
+      background: rgba(15, 29, 59, 0.64);
+      font-size: 13px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: transform 150ms ease, border-color 150ms ease, color 150ms ease, background 150ms ease;
+    }
+
+    .mode-button:active { transform: scale(0.97); }
+    .mode-button[aria-pressed="true"] {
+      border-color: rgba(87, 216, 255, 0.48);
+      color: #ffffff;
+      background: linear-gradient(135deg, rgba(57, 184, 255, 0.25), rgba(135, 103, 255, 0.25));
+      box-shadow: inset 0 1px rgba(255, 255, 255, 0.1), 0 9px 24px rgba(45, 163, 255, 0.11);
+    }
+
+    .action-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .primary-button, .secondary-button, .result-button {
+      min-height: 50px;
+      border-radius: 14px;
+      font-weight: 950;
+      cursor: pointer;
+    }
+
+    .primary-button {
+      border: 0;
+      color: #071426;
+      background: linear-gradient(135deg, #69e4ff, #8fa2ff 58%, #ff81b6);
+      box-shadow: 0 13px 30px rgba(70, 180, 255, 0.2), inset 0 1px rgba(255, 255, 255, 0.55);
+    }
+
+    .primary-button:active, .secondary-button:active, .result-button:active { transform: scale(0.98); }
+    .primary-button:disabled, .secondary-button:disabled { opacity: 0.5; cursor: default; }
+
+    .secondary-button {
+      min-width: 106px;
+      padding: 0 13px;
+      border: 1px solid rgba(151, 190, 255, 0.22);
+      color: #dbe7fb;
+      background: rgba(17, 32, 64, 0.74);
+    }
+
+    .message {
+      min-height: 22px;
+      margin: 9px 0 7px;
+      color: #b8c6dc;
+      font-size: 13px;
+      font-weight: 750;
+      text-align: center;
+    }
+
+    .field {
+      position: relative;
+      height: clamp(290px, 50vh, 430px);
+      min-height: 290px;
+      overflow: hidden;
+      border: 1px solid rgba(136, 181, 255, 0.28);
+      border-radius: 22px;
+      background:
+        radial-gradient(circle at 50% 48%, rgba(81, 201, 255, 0.08), transparent 42%),
+        linear-gradient(180deg, rgba(11, 29, 61, 0.98), rgba(4, 12, 30, 0.98));
+      box-shadow: inset 0 1px rgba(255, 255, 255, 0.07), 0 22px 60px rgba(0, 0, 0, 0.28);
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .field::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.28;
+      background-image:
+        linear-gradient(rgba(108, 172, 255, 0.11) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(108, 172, 255, 0.11) 1px, transparent 1px);
+      background-size: 34px 34px;
+      -webkit-mask-image: radial-gradient(circle, black, transparent 82%);
+      mask-image: radial-gradient(circle, black, transparent 82%);
+    }
+
+    .field.shake { animation: field-shake 360ms ease; }
+    @keyframes field-shake {
+      0%, 100% { transform: translate3d(0, 0, 0); }
+      18% { transform: translate3d(-7px, 2px, 0); }
+      38% { transform: translate3d(6px, -3px, 0); }
+      58% { transform: translate3d(-4px, -2px, 0); }
+      78% { transform: translate3d(3px, 2px, 0); }
+    }
+
+    .field-intro, .countdown, .result-card {
+      position: absolute;
+      z-index: 20;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .field-intro {
+      pointer-events: none;
+      background: radial-gradient(circle at center, rgba(42, 111, 181, 0.13), transparent 62%);
+    }
+
+    .intro-mark {
+      position: relative;
+      width: 104px;
+      height: 104px;
+      margin: 0 auto 16px;
+      border: 10px solid #f8fbff;
+      border-radius: 50%;
+      background: #ff5c80;
+      box-shadow:
+        inset 0 0 0 12px #ff5c80,
+        inset 0 0 0 24px #ffffff,
+        inset 0 0 0 36px #ff5c80,
+        0 0 40px rgba(255, 77, 124, 0.34);
+    }
+
+    .intro-mark::after {
+      content: "";
       position: absolute;
       top: 50%;
       left: 50%;
-      width: 72px;
-      height: 72px;
-      padding: 0;
+      width: 18px;
+      height: 18px;
       transform: translate(-50%, -50%);
-      border: 0;
       border-radius: 50%;
-      background: #fee2e2;
-      font-size: 2.4rem;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+      background: #ffffff;
     }
 
-    #target:disabled {
-      filter: grayscale(1);
-      opacity: 0.5;
+    .field-intro h2, .result-card h2 {
+      margin: 0;
+      font-size: clamp(24px, 8vw, 34px);
+      letter-spacing: -0.045em;
     }
 
-    @media (max-height: 620px) {
-      #field {
-        height: 280px;
+    .field-intro p, .result-card p {
+      max-width: 360px;
+      margin: 8px auto 0;
+      color: #aebed7;
+      font-size: 14px;
+      line-height: 1.48;
+    }
+
+    .countdown {
+      pointer-events: none;
+      background: rgba(3, 9, 25, 0.34);
+      -webkit-backdrop-filter: blur(4px);
+      backdrop-filter: blur(4px);
+    }
+
+    .countdown[hidden], .field-intro[hidden], .result-card[hidden] { display: none; }
+
+    .countdown strong {
+      font-size: clamp(72px, 25vw, 126px);
+      line-height: 1;
+      letter-spacing: -0.09em;
+      text-shadow: 0 0 38px rgba(97, 214, 255, 0.45);
+      animation: countdown-pop 680ms cubic-bezier(.2,.85,.25,1);
+    }
+
+    @keyframes countdown-pop {
+      0% { opacity: 0; transform: scale(0.55); }
+      42% { opacity: 1; transform: scale(1.12); }
+      100% { opacity: 0.92; transform: scale(1); }
+    }
+
+    .result-card {
+      background: rgba(3, 9, 24, 0.82);
+      -webkit-backdrop-filter: blur(14px);
+      backdrop-filter: blur(14px);
+    }
+
+    .result-inner {
+      width: min(390px, 100%);
+      padding: 22px;
+      border: 1px solid rgba(151, 190, 255, 0.25);
+      border-radius: 22px;
+      background: linear-gradient(145deg, rgba(18, 38, 78, 0.97), rgba(8, 17, 39, 0.97));
+      box-shadow: 0 22px 70px rgba(0, 0, 0, 0.38), inset 0 1px rgba(255, 255, 255, 0.08);
+    }
+
+    .result-stars {
+      min-height: 38px;
+      margin-bottom: 7px;
+      color: #ffd86a;
+      font-size: 31px;
+      letter-spacing: 3px;
+      text-shadow: 0 0 18px rgba(255, 211, 94, 0.35);
+    }
+
+    .result-score {
+      display: block;
+      margin: 10px 0 2px;
+      font-size: 40px;
+      font-weight: 950;
+      letter-spacing: -0.06em;
+    }
+
+    .result-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 17px;
+    }
+
+    .result-button {
+      border: 1px solid rgba(151, 190, 255, 0.22);
+      color: #edf5ff;
+      background: rgba(16, 31, 63, 0.82);
+    }
+
+    .result-button.primary {
+      border: 0;
+      color: #071426;
+      background: linear-gradient(135deg, #6ae4ff, #a395ff 63%, #ff84b7);
+    }
+
+    .entity {
+      position: absolute;
+      z-index: 8;
+      display: block;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      cursor: pointer;
+      -webkit-appearance: none;
+      appearance: none;
+      touch-action: manipulation;
+    }
+
+    .target {
+      border-radius: 50%;
+      background: transparent;
+      filter: drop-shadow(0 9px 14px rgba(0, 0, 0, 0.28));
+      animation: target-arrive 210ms cubic-bezier(.2,.9,.25,1.2);
+    }
+
+    @keyframes target-arrive {
+      from { opacity: 0; transform: scale(0.38) rotate(-18deg); }
+      to { opacity: 1; transform: scale(1) rotate(0); }
+    }
+
+    .target.moving {
+      animation:
+        target-arrive 210ms cubic-bezier(.2,.9,.25,1.2),
+        target-drift var(--move-duration, 1.4s) ease-in-out 210ms infinite alternate;
+    }
+
+    @keyframes target-drift {
+      from { margin-left: 0; margin-top: 0; }
+      to { margin-left: var(--move-x, 0px); margin-top: var(--move-y, 0px); }
+    }
+
+    .target-face {
+      position: absolute;
+      inset: 7%;
+      overflow: hidden;
+      border: max(3px, calc(var(--target-size) * 0.06)) solid #ffffff;
+      border-radius: 50%;
+      background: #ff5578;
+      box-shadow:
+        inset 0 0 0 calc(var(--target-size) * 0.115) #ff5578,
+        inset 0 0 0 calc(var(--target-size) * 0.23) #ffffff,
+        inset 0 0 0 calc(var(--target-size) * 0.34) #ff5578,
+        0 0 22px rgba(255, 74, 119, 0.42);
+    }
+
+    .target-face::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 20%;
+      height: 20%;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: #ffffff;
+    }
+
+    .target.gold .target-face {
+      border-color: #fff8cb;
+      background: #ffbd39;
+      box-shadow:
+        inset 0 0 0 calc(var(--target-size) * 0.115) #ffbd39,
+        inset 0 0 0 calc(var(--target-size) * 0.23) #fff8cb,
+        inset 0 0 0 calc(var(--target-size) * 0.34) #ffbd39,
+        0 0 26px rgba(255, 207, 83, 0.64);
+    }
+
+    .target.small .target-face, .target.mini .target-face {
+      border-color: #eaffff;
+      background: #28c7e9;
+      box-shadow:
+        inset 0 0 0 calc(var(--target-size) * 0.115) #28c7e9,
+        inset 0 0 0 calc(var(--target-size) * 0.23) #eaffff,
+        inset 0 0 0 calc(var(--target-size) * 0.34) #28c7e9,
+        0 0 22px rgba(62, 218, 255, 0.52);
+    }
+
+    .target.armor .target-face {
+      border-color: #edf2ff;
+      background: #7c6cf0;
+      box-shadow:
+        inset 0 0 0 calc(var(--target-size) * 0.115) #7c6cf0,
+        inset 0 0 0 calc(var(--target-size) * 0.23) #edf2ff,
+        inset 0 0 0 calc(var(--target-size) * 0.34) #7c6cf0,
+        0 0 24px rgba(134, 116, 255, 0.54);
+    }
+
+    .target.split .target-face {
+      border-color: #efffe8;
+      background: #59d992;
+      box-shadow:
+        inset 0 0 0 calc(var(--target-size) * 0.115) #59d992,
+        inset 0 0 0 calc(var(--target-size) * 0.23) #efffe8,
+        inset 0 0 0 calc(var(--target-size) * 0.34) #59d992,
+        0 0 24px rgba(93, 232, 159, 0.52);
+    }
+
+    .target-badge {
+      position: absolute;
+      z-index: 4;
+      top: -4px;
+      right: -3px;
+      display: grid;
+      min-width: 23px;
+      height: 23px;
+      place-items: center;
+      padding: 0 5px;
+      border: 2px solid #071426;
+      border-radius: 999px;
+      color: #071426;
+      background: #ffffff;
+      font-size: 12px;
+      font-weight: 950;
+      box-shadow: 0 4px 10px rgba(0,0,0,.25);
+    }
+
+    .target.cracked .target-face { filter: saturate(1.35) brightness(1.18); transform: scale(0.94); }
+
+    .life-ring {
+      position: absolute;
+      z-index: 5;
+      inset: -2px;
+      width: calc(100% + 4px);
+      height: calc(100% + 4px);
+      overflow: visible;
+      pointer-events: none;
+      transform: rotate(-90deg);
+    }
+
+    .life-ring circle {
+      fill: none;
+      stroke: #ffffff;
+      stroke-width: 4;
+      stroke-linecap: round;
+      stroke-dasharray: 100;
+      stroke-dashoffset: 0;
+      filter: drop-shadow(0 0 4px rgba(255,255,255,.55));
+      animation: life-drain linear forwards;
+    }
+
+    @keyframes life-drain { to { stroke-dashoffset: 100; } }
+
+    .bomb {
+      border-radius: 50%;
+      background: transparent;
+      filter: drop-shadow(0 10px 15px rgba(0,0,0,.38));
+      animation: bomb-arrive 260ms cubic-bezier(.2,.9,.25,1.15), bomb-pulse 700ms ease-in-out 260ms infinite alternate;
+    }
+
+    @keyframes bomb-arrive {
+      from { opacity: 0; transform: scale(0.4) rotate(24deg); }
+      to { opacity: 1; transform: scale(1) rotate(0); }
+    }
+
+    @keyframes bomb-pulse {
+      from { filter: drop-shadow(0 10px 15px rgba(0,0,0,.38)) brightness(0.93); }
+      to { filter: drop-shadow(0 0 18px rgba(255,68,89,.48)) brightness(1.12); }
+    }
+
+    .bomb-shell {
+      position: absolute;
+      inset: 12%;
+      border: 3px solid #59647a;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 34% 28%, #69758e 0 9%, #252d3e 20%, #111726 68%, #060a12 100%);
+      box-shadow: inset -6px -7px 12px rgba(0,0,0,.45), 0 0 0 4px rgba(255,71,91,.08);
+    }
+
+    .bomb-shell::after {
+      content: "!";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #ff6479;
+      font-size: 23px;
+      font-weight: 950;
+      text-shadow: 0 0 10px rgba(255,72,96,.75);
+    }
+
+    .bomb-fuse {
+      position: absolute;
+      z-index: 2;
+      top: 1%;
+      right: 7%;
+      width: 30%;
+      height: 28%;
+      border-top: 4px solid #a9784f;
+      border-right: 4px solid #a9784f;
+      border-radius: 0 14px 0 0;
+      transform: rotate(-10deg);
+    }
+
+    .bomb-fuse::after {
+      content: "";
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #ffd95c;
+      box-shadow: 0 0 6px #ffd95c, 0 0 14px #ff6b4e;
+      animation: fuse-flicker 160ms steps(2, end) infinite alternate;
+    }
+
+    @keyframes fuse-flicker { to { transform: scale(1.45); opacity: .62; } }
+
+    .entity.hit { animation: target-hit 180ms ease forwards !important; }
+    @keyframes target-hit { to { opacity: 0; transform: scale(1.42); } }
+
+    .entity.explode { animation: bomb-explode 420ms ease-out forwards !important; }
+    @keyframes bomb-explode {
+      0% { opacity: 1; transform: scale(1); }
+      45% { opacity: 1; transform: scale(1.8); filter: brightness(3) drop-shadow(0 0 32px #ff5c49); }
+      100% { opacity: 0; transform: scale(4.2); filter: brightness(4); }
+    }
+
+    .particle {
+      position: absolute;
+      z-index: 12;
+      width: 7px;
+      height: 7px;
+      margin: -3px;
+      border-radius: 50%;
+      background: var(--particle-color, #ffffff);
+      pointer-events: none;
+      animation: particle-fly 520ms ease-out forwards;
+    }
+
+    @keyframes particle-fly {
+      to {
+        opacity: 0;
+        transform: translate(var(--px), var(--py)) scale(0.4);
       }
     }
-  
-  .game-version {
-    display: inline-block;
-    margin-left: 0.45rem;
-    font-size: 0.42em;
-    font-weight: 400;
-    line-height: 1;
-    opacity: 0.65;
-    vertical-align: middle;
-    white-space: nowrap;
-  }
-</style>
 
+    .floating-score {
+      position: absolute;
+      z-index: 13;
+      pointer-events: none;
+      color: #ffffff;
+      font-size: 18px;
+      font-weight: 950;
+      text-shadow: 0 2px 8px rgba(0,0,0,.65), 0 0 12px rgba(88,215,255,.7);
+      animation: score-float 700ms ease-out forwards;
+    }
+
+    @keyframes score-float {
+      from { opacity: 0; transform: translate(-50%, -20%) scale(.72); }
+      22% { opacity: 1; transform: translate(-50%, -50%) scale(1.12); }
+      to { opacity: 0; transform: translate(-50%, -125%) scale(1); }
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px 13px;
+      margin-top: 10px;
+      color: #97a9c6;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .legend span { display: inline-flex; align-items: center; gap: 5px; }
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #ff5a7b;
+      box-shadow: 0 0 8px rgba(255,90,123,.45);
+    }
+    .legend-dot.gold { background: #ffd15e; }
+    .legend-dot.bomb { background: #242c3b; border: 2px solid #ff576c; }
+
+    .records {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .record {
+      min-width: 0;
+      padding: 10px 6px;
+      border: 1px solid rgba(151, 190, 255, 0.14);
+      border-radius: 13px;
+      background: rgba(11, 24, 51, 0.62);
+      text-align: center;
+    }
+
+    .record span {
+      display: block;
+      overflow: hidden;
+      color: #8296b8;
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-overflow: ellipsis;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .record strong {
+      display: block;
+      margin-top: 3px;
+      font-size: 16px;
+    }
+
+    .modal {
+      position: fixed;
+      z-index: 1000;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: max(16px, env(safe-area-inset-top)) 14px max(16px, env(safe-area-inset-bottom));
+      background: rgba(2, 6, 18, 0.82);
+      -webkit-backdrop-filter: blur(14px);
+      backdrop-filter: blur(14px);
+    }
+
+    .modal[hidden] { display: none; }
+
+    .modal-card {
+      width: min(520px, 100%);
+      max-height: min(86vh, 720px);
+      overflow: auto;
+      padding: 18px;
+      border: 1px solid rgba(151, 190, 255, 0.25);
+      border-radius: 22px;
+      background: linear-gradient(145deg, #12264d, #071126 76%);
+      box-shadow: 0 28px 90px rgba(0, 0, 0, 0.46), inset 0 1px rgba(255, 255, 255, 0.08);
+    }
+
+    .modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .modal-head h2 { margin: 0; font-size: 24px; letter-spacing: -0.04em; }
+
+    .level-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .level-button {
+      position: relative;
+      min-height: 62px;
+      padding: 6px 3px 17px;
+      border: 1px solid rgba(151, 190, 255, 0.18);
+      border-radius: 13px;
+      color: #eef5ff;
+      background: rgba(16, 33, 68, 0.75);
+      font-weight: 950;
+      cursor: pointer;
+    }
+
+    .level-button[disabled] {
+      color: #667793;
+      background: rgba(9, 18, 39, 0.58);
+      cursor: default;
+    }
+
+    .level-button.selected {
+      border-color: rgba(92, 220, 255, 0.66);
+      background: linear-gradient(145deg, rgba(58, 190, 255, 0.25), rgba(130, 101, 255, 0.25));
+      box-shadow: 0 0 0 3px rgba(84, 214, 255, 0.1);
+    }
+
+    .level-stars {
+      position: absolute;
+      right: 2px;
+      bottom: 5px;
+      left: 2px;
+      min-height: 12px;
+      color: #ffd45f;
+      font-size: 10px;
+      letter-spacing: 0;
+    }
+
+    .modal-note {
+      margin: 14px 2px 0;
+      color: #97aac8;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 430px) {
+      .scoreboard, .records { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .metric { padding-top: 8px; padding-bottom: 8px; }
+      .action-row { grid-template-columns: minmax(0, 1fr) 96px; }
+      .secondary-button { min-width: 0; padding: 0 8px; font-size: 12px; }
+      .level-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+      .level-button { min-height: 55px; }
+    }
+
+    @media (max-height: 700px) {
+      .app-header { padding-bottom: 12px; }
+      h1 { margin-top: 4px; font-size: clamp(29px, 8vw, 42px); }
+      .subtitle { font-size: 12px; }
+      main { padding-top: 10px; }
+      .field { height: 300px; min-height: 270px; }
+      .message { margin-top: 7px; margin-bottom: 5px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 1ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 1ms !important;
+      }
+    }
+  </style>
   <!-- GIDI-SUITE:START -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="format-detection" content="telephone=no">
   <link rel="stylesheet" href="../shared/gidi-suite.css?v=3.0.2">
   <script defer src="../shared/gidi-suite.js?v=3.0.2"></script>
   <!-- GIDI-SUITE:END -->
-<!-- GIDI-HOME-SAFETY-STYLE:START -->
+  <!-- GIDI-HOME-SAFETY-STYLE:START -->
   <link rel="stylesheet" href="../shared/gidi-home-safety.css?v=1.0.0">
   <!-- GIDI-HOME-SAFETY-STYLE:END -->
 </head>
-
 <body>
-  <header>
+  <header class="app-header">
     <div class="shell">
-      <a href="../../">← All games</a>
-      <h1>Tap the Target <small class="game-version" data-game-version>v1.1.0</small></h1>
-      <p>Hit as many targets as possible in 20 seconds. A miss costs 3 seconds. Miss the target and lose 3 seconds.</p>
+      <div class="header-row">
+        <a class="back-link" href="../../" aria-label="Back to all games">← <span>All games</span></a>
+        <button class="icon-button" id="soundButton" type="button" aria-label="Mute sound" aria-pressed="false">🔊</button>
+      </div>
+      <h1><span class="title-gradient">Tap the Target</span><small class="game-version" data-game-version>v2.0.0</small></h1>
+      <p class="subtitle">Clear 30 escalating levels, dodge instant-loss bombs, build combos, and chase a new high score.</p>
     </div>
   </header>
 
   <main class="shell">
-    <section class="scores" aria-label="Score board">
-      <div class="score-box">
-        <span>Score</span>
-        <strong id="score">0</strong>
+    <section class="scoreboard" aria-label="Game score">
+      <div class="metric"><span>Score</span><strong id="scoreValue">0</strong></div>
+      <div class="metric"><span id="modeMetricLabel">Level</span><strong id="modeMetricValue">1</strong></div>
+      <div class="metric"><span>Combo</span><strong id="comboValue">×1</strong></div>
+      <div class="metric"><span>Best</span><strong id="bestValue">0</strong></div>
+    </section>
+
+    <section class="game-panel" aria-label="Game controls">
+      <div class="progress-top">
+        <div class="stage-copy">
+          <strong id="stageTitle">Level 1 · First Contact</strong>
+          <span id="progressText">0 of 8 targets</span>
+        </div>
+        <div class="strikes" id="strikes" aria-label="Three strikes remaining">
+          <span class="strike-dot"></span><span class="strike-dot"></span><span class="strike-dot"></span>
+        </div>
+      </div>
+      <div class="progress-track" aria-hidden="true"><div class="progress-fill" id="progressFill"></div></div>
+
+      <div class="mode-row" role="group" aria-label="Choose game mode">
+        <button class="mode-button" id="levelsMode" type="button" aria-pressed="true">30 Levels</button>
+        <button class="mode-button" id="rushMode" type="button" aria-pressed="false">20-Second Rush</button>
       </div>
 
-      <div class="score-box">
-        <span>Time</span>
-        <strong><b id="time">20</b>s</strong>
-      </div>
-
-      <div class="score-box">
-        <span>Best</span>
-        <strong id="best">0</strong>
+      <div class="action-row">
+        <button class="primary-button" id="startButton" type="button">Start Level 1</button>
+        <button class="secondary-button" id="levelButton" type="button">Levels</button>
       </div>
     </section>
 
-    <button id="start" type="button">Start game</button>
+    <p class="message" id="message" aria-live="polite">Hit every target before its ring runs out. Never tap a bomb.</p>
 
-    <p id="message" aria-live="polite">
-      Press Start game when ready.
-    </p>
+    <section class="field" id="field" aria-label="Tap the Target game area">
+      <div class="field-intro" id="fieldIntro">
+        <div>
+          <div class="intro-mark" aria-hidden="true"></div>
+          <h2 id="introTitle">Ready for Level 1?</h2>
+          <p id="introText">You have three strikes. Targets speed up, multiply, move, and transform as you advance.</p>
+        </div>
+      </div>
 
-    <section id="field" aria-label="Game area">
-      <button
-        id="target"
-        type="button"
-        aria-label="Tap the target"
-        disabled
-      >🎯</button>
+      <div class="countdown" id="countdown" hidden aria-live="assertive"><strong id="countdownValue">3</strong></div>
+
+      <div class="result-card" id="resultCard" hidden>
+        <div class="result-inner">
+          <div class="result-stars" id="resultStars" aria-label="No stars"></div>
+          <h2 id="resultTitle">Level complete</h2>
+          <strong class="result-score" id="resultScore">0</strong>
+          <p id="resultText"></p>
+          <div class="result-actions">
+            <button class="result-button" id="resultSecondary" type="button">Retry</button>
+            <button class="result-button primary" id="resultPrimary" type="button">Continue</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="legend" aria-label="Target guide">
+      <span><i class="legend-dot"></i> Target</span>
+      <span><i class="legend-dot gold"></i> Bonus target</span>
+      <span><i class="legend-dot bomb"></i> Bomb: instant loss</span>
+    </div>
+
+    <section class="records" aria-label="Saved records">
+      <div class="record"><span>Best run</span><strong id="recordRun">0</strong></div>
+      <div class="record"><span>Rush best</span><strong id="recordRush">0</strong></div>
+      <div class="record"><span>Longest combo</span><strong id="recordCombo">0</strong></div>
+      <div class="record"><span>Targets hit</span><strong id="recordHits">0</strong></div>
     </section>
   </main>
 
-   <script>
- (function () {
- "use strict";
+  <div class="modal" id="levelModal" hidden role="dialog" aria-modal="true" aria-labelledby="levelModalTitle">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2 id="levelModalTitle">Choose a level</h2>
+        <button class="icon-button" id="closeLevels" type="button" aria-label="Close level selection">×</button>
+      </div>
+      <div class="level-grid" id="levelGrid"></div>
+      <p class="modal-note">Complete a level to unlock the next. Earn one star for finishing, a second for reaching the score target, and a third for a perfect three-strike clear.</p>
+    </div>
+  </div>
 
- var duration = 20;
- var storageKey = "gidi-tap-target-best";
- var field = document.getElementById("field");
- var target = document.getElementById("target");
- var start = document.getElementById("start");
- var scoreNode = document.getElementById("score");
- var timeNode = document.getElementById("time");
- var bestNode = document.getElementById("best");
- var message = document.getElementById("message");
- var score = 0;
- var running = false;
- var finishAt = 0;
- var timer = 0;
+  <script>
+  (function () {
+    "use strict";
 
- function getBest() {
- try {
- return Number(localStorage.getItem(storageKey)) || 0;
- } catch (error) {
- return 0;
- }
- }
+    var STORAGE_KEY = "gidi-tap-target-v2";
+    var OLD_BEST_KEY = "gidi-tap-target-best";
+    var MAX_LEVEL = 30;
+    var RUSH_DURATION = 20000;
+    var PERFECT_BONUS = 100;
+    var STRIKE_BONUS = 2;
 
- function saveBest(value) {
- try {
- localStorage.setItem(storageKey, String(value));
- } catch (error) {
- return;
- }
- }
+    var field = document.getElementById("field");
+    var fieldIntro = document.getElementById("fieldIntro");
+    var introTitle = document.getElementById("introTitle");
+    var introText = document.getElementById("introText");
+    var countdown = document.getElementById("countdown");
+    var countdownValue = document.getElementById("countdownValue");
+    var resultCard = document.getElementById("resultCard");
+    var resultStars = document.getElementById("resultStars");
+    var resultTitle = document.getElementById("resultTitle");
+    var resultScore = document.getElementById("resultScore");
+    var resultText = document.getElementById("resultText");
+    var resultPrimary = document.getElementById("resultPrimary");
+    var resultSecondary = document.getElementById("resultSecondary");
+    var scoreValue = document.getElementById("scoreValue");
+    var modeMetricLabel = document.getElementById("modeMetricLabel");
+    var modeMetricValue = document.getElementById("modeMetricValue");
+    var comboValue = document.getElementById("comboValue");
+    var bestValue = document.getElementById("bestValue");
+    var stageTitle = document.getElementById("stageTitle");
+    var progressText = document.getElementById("progressText");
+    var progressFill = document.getElementById("progressFill");
+    var strikesNode = document.getElementById("strikes");
+    var message = document.getElementById("message");
+    var levelsMode = document.getElementById("levelsMode");
+    var rushMode = document.getElementById("rushMode");
+    var startButton = document.getElementById("startButton");
+    var levelButton = document.getElementById("levelButton");
+    var levelModal = document.getElementById("levelModal");
+    var closeLevels = document.getElementById("closeLevels");
+    var levelGrid = document.getElementById("levelGrid");
+    var soundButton = document.getElementById("soundButton");
+    var recordRun = document.getElementById("recordRun");
+    var recordRush = document.getElementById("recordRush");
+    var recordCombo = document.getElementById("recordCombo");
+    var recordHits = document.getElementById("recordHits");
 
- function moveTarget() {
- var availableX =
- Math.max(0, field.clientWidth - target.offsetWidth - 16);
- var availableY =
- Math.max(0, field.clientHeight - target.offsetHeight - 16);
+    var levels = buildLevels();
+    var saved = loadSaved();
+    var mode = "levels";
+    var phase = "idle";
+    var selectedLevel = Math.min(MAX_LEVEL, Math.max(1, saved.unlockedLevel));
+    var currentLevel = selectedLevel;
+    var score = 0;
+    var levelStartScore = 0;
+    var levelScore = 0;
+    var combo = 0;
+    var runBestCombo = 0;
+    var strikes = 3;
+    var hits = 0;
+    var entities = {};
+    var splitGroups = {};
+    var entitySequence = 0;
+    var splitSequence = 0;
+    var timerSequence = [];
+    var rushEndsAt = 0;
+    var rushTimer = 0;
+    var soundMuted = saved.muted;
+    var audioContext = null;
+    var resultAction = "";
 
- target.style.transform = "none";
- target.style.left =
- 8 + Math.floor(Math.random() * (availableX + 1)) + "px";
- target.style.top =
- 8 + Math.floor(Math.random() * (availableY + 1)) + "px";
- }
+    function buildLevels() {
+      var names = [
+        "First Contact", "Quick Hands", "Red Alert", "Double Vision", "Precision Test",
+        "Crossfire", "Fast Pair", "Twin Rush", "Crowded Sky", "Double Trouble",
+        "Moving Day", "Side Step", "Drift Zone", "Chasing Lights", "Motion Master",
+        "Tight Spaces", "Gold Fever", "Rapid Fire", "Danger Close", "Bomb Alley",
+        "Heavy Armor", "Two-Tap Trial", "Split Decision", "Mixed Signals", "Special Delivery",
+        "Expert Reflex", "Triple Threat", "Final Approach", "Target Storm", "Bullseye Legend"
+      ];
+      var list = [];
+      var i;
+      for (i = 1; i <= MAX_LEVEL; i += 1) {
+        var challenge = i % 5 === 0;
+        list.push({
+          number: i,
+          name: names[i - 1],
+          goal: 8 + Math.floor((i - 1) / 2) + (challenge ? 2 : 0),
+          life: Math.max(930, 2350 - (i - 1) * 47 - (challenge ? 120 : 0)),
+          size: Math.max(46, 74 - Math.floor((i - 1) * 0.9) - (challenge ? 2 : 0)),
+          maxTargets: i < 4 ? 1 : (i < 13 ? 2 : 3),
+          bombChance: i < 3 ? 0 : Math.min(0.92, 0.23 + (i - 3) * 0.029),
+          bombMax: i < 10 ? 1 : 2,
+          movingChance: i < 11 ? 0 : Math.min(0.62, 0.13 + (i - 11) * 0.027),
+          smallChance: i < 8 ? 0 : Math.min(0.28, 0.08 + (i - 8) * 0.01),
+          goldChance: i < 17 ? 0 : Math.min(0.16, 0.06 + (i - 17) * 0.008),
+          armorChance: i < 21 ? 0 : Math.min(0.18, 0.07 + (i - 21) * 0.012),
+          splitChance: i < 23 ? 0 : Math.min(0.17, 0.06 + (i - 23) * 0.014)
+        });
+      }
+      return list;
+    }
 
- function finishGame() {
- var best = getBest();
+    function defaultSaved() {
+      return {
+        unlockedLevel: 1,
+        bestRun: 0,
+        rushBest: 0,
+        longestCombo: 0,
+        totalHits: 0,
+        levelBest: {},
+        stars: {},
+        muted: false
+      };
+    }
 
- running = false;
- clearTimeout(timer);
- target.disabled = true;
- start.disabled = false;
- start.textContent = "Play again";
- timeNode.textContent = "0";
+    function loadSaved() {
+      var data = defaultSaved();
+      try {
+        var raw = localStorage.getItem(STORAGE_KEY);
+        var parsed;
+        var oldBest;
+        if (raw) {
+          parsed = JSON.parse(raw);
+          if (parsed && typeof parsed === "object") {
+            data.unlockedLevel = Math.min(MAX_LEVEL, Math.max(1, Number(parsed.unlockedLevel) || 1));
+            data.bestRun = Math.max(0, Number(parsed.bestRun) || 0);
+            data.rushBest = Math.max(0, Number(parsed.rushBest) || 0);
+            data.longestCombo = Math.max(0, Number(parsed.longestCombo) || 0);
+            data.totalHits = Math.max(0, Number(parsed.totalHits) || 0);
+            data.levelBest = parsed.levelBest && typeof parsed.levelBest === "object" ? parsed.levelBest : {};
+            data.stars = parsed.stars && typeof parsed.stars === "object" ? parsed.stars : {};
+            data.muted = Boolean(parsed.muted);
+          }
+        }
+        oldBest = Number(localStorage.getItem(OLD_BEST_KEY)) || 0;
+        if (oldBest > data.rushBest) {
+          data.rushBest = oldBest;
+        }
+      } catch (error) {
+        return data;
+      }
+      return data;
+    }
 
- if (score > best) {
- saveBest(score);
- bestNode.textContent = String(score);
- message.textContent = "New best score: " + score + "!";
- } else {
- message.textContent = "Finished with " + score + " taps.";
- }
- }
+    function saveProgress() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+      } catch (error) {
+        return;
+      }
+    }
 
- function updateTimer() {
- var millisecondsLeft;
- var secondsLeft;
+    function addTimer(callback, delay) {
+      var id = window.setTimeout(function () {
+        removeTimer(id);
+        callback();
+      }, delay);
+      timerSequence.push(id);
+      return id;
+    }
 
- if (!running) {
- return;
- }
+    function removeTimer(id) {
+      var index = timerSequence.indexOf(id);
+      if (index !== -1) {
+        timerSequence.splice(index, 1);
+      }
+    }
 
- millisecondsLeft = finishAt - Date.now();
- secondsLeft = Math.max(
- 0,
- Math.ceil(millisecondsLeft / 1000)
- );
+    function clearTimers() {
+      var i;
+      for (i = 0; i < timerSequence.length; i += 1) {
+        window.clearTimeout(timerSequence[i]);
+      }
+      timerSequence = [];
+      window.clearTimeout(rushTimer);
+      rushTimer = 0;
+    }
 
- timeNode.textContent = String(secondsLeft);
+    function clearEntities() {
+      var key;
+      for (key in entities) {
+        if (Object.prototype.hasOwnProperty.call(entities, key)) {
+          window.clearTimeout(entities[key].timer);
+          if (entities[key].node && entities[key].node.parentNode) {
+            entities[key].node.parentNode.removeChild(entities[key].node);
+          }
+        }
+      }
+      entities = {};
+      splitGroups = {};
+      var leftovers = field.querySelectorAll(".entity, .particle, .floating-score");
+      var i;
+      for (i = 0; i < leftovers.length; i += 1) {
+        if (leftovers[i].parentNode) { leftovers[i].parentNode.removeChild(leftovers[i]); }
+      }
+    }
 
- if (millisecondsLeft <= 0) {
- finishGame();
- return;
- }
+    function initializeAudio() {
+      var AudioClass = window.AudioContext || window.webkitAudioContext;
+      if (!audioContext && AudioClass) {
+        try {
+          audioContext = new AudioClass();
+        } catch (error) {
+          audioContext = null;
+        }
+      }
+      if (audioContext && audioContext.state === "suspended") {
+        audioContext.resume();
+      }
+    }
 
- timer = setTimeout(updateTimer, 100);
- }
+    function tone(frequency, duration, type, volume, delay) {
+      if (soundMuted || !audioContext) {
+        return;
+      }
+      try {
+        var startAt = audioContext.currentTime + (delay || 0);
+        var oscillator = audioContext.createOscillator();
+        var gain = audioContext.createGain();
+        oscillator.type = type || "sine";
+        oscillator.frequency.setValueAtTime(frequency, startAt);
+        gain.gain.setValueAtTime(0.0001, startAt);
+        gain.gain.exponentialRampToValueAtTime(volume || 0.05, startAt + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
+        oscillator.connect(gain);
+        gain.connect(audioContext.destination);
+        oscillator.start(startAt);
+        oscillator.stop(startAt + duration + 0.03);
+      } catch (error) {
+        return;
+      }
+    }
 
- function applyMissPenalty() {
- var millisecondsLeft;
- var secondsLeft;
+    function soundHit() {
+      tone(520 + Math.min(combo, 16) * 18, 0.09, "sine", 0.055, 0);
+      tone(820 + Math.min(combo, 16) * 12, 0.07, "triangle", 0.035, 0.035);
+    }
 
- /* GIDI-TAP-MISS-PENALTY: field misses remove three seconds. */
- finishAt -= 3000;
- millisecondsLeft = finishAt - Date.now();
- secondsLeft = Math.max(
- 0,
- Math.ceil(millisecondsLeft / 1000)
- );
+    function soundMiss() { tone(150, 0.15, "sawtooth", 0.035, 0); }
+    function soundBomb() {
+      tone(92, 0.42, "sawtooth", 0.09, 0);
+      tone(55, 0.5, "square", 0.06, 0.04);
+    }
+    function soundWin() {
+      tone(440, 0.12, "sine", 0.05, 0);
+      tone(660, 0.16, "sine", 0.055, 0.12);
+      tone(880, 0.24, "triangle", 0.06, 0.26);
+    }
 
- timeNode.textContent = String(secondsLeft);
- message.textContent = "Miss! 3 seconds lost.";
+    function multiplierFor(value) {
+      if (value >= 20) { return 5; }
+      if (value >= 15) { return 4; }
+      if (value >= 10) { return 3; }
+      if (value >= 5) { return 2; }
+      return 1;
+    }
 
- if (millisecondsLeft <= 0) {
- finishGame();
- }
- }
+    function updateRecords() {
+      recordRun.textContent = String(saved.bestRun);
+      recordRush.textContent = String(saved.rushBest);
+      recordCombo.textContent = String(saved.longestCombo);
+      recordHits.textContent = String(saved.totalHits);
+    }
 
- start.addEventListener("click", function () {
- clearTimeout(timer);
- score = 0;
- running = true;
- finishAt = Date.now() + duration * 1000;
+    function updateCombo() {
+      var multiplier = multiplierFor(combo);
+      comboValue.textContent = "×" + multiplier;
+      if (combo > saved.longestCombo) {
+        saved.longestCombo = combo;
+        saveProgress();
+        updateRecords();
+      }
+    }
 
- scoreNode.textContent = "0";
- timeNode.textContent = String(duration);
- message.textContent = "Go!";
- start.disabled = true;
- target.disabled = false;
+    function updateStrikes() {
+      var dots = strikesNode.querySelectorAll(".strike-dot");
+      var i;
+      for (i = 0; i < dots.length; i += 1) {
+        if (i >= strikes) {
+          dots[i].classList.add("lost");
+        } else {
+          dots[i].classList.remove("lost");
+        }
+      }
+      strikesNode.setAttribute("aria-label", strikes + " strikes remaining");
+    }
 
- moveTarget();
- updateTimer();
- });
+    function updateBestDisplay() {
+      bestValue.textContent = String(mode === "levels" ? saved.bestRun : saved.rushBest);
+    }
 
- field.addEventListener("click", function (event) {
- if (!running) {
- return;
- }
+    function updateInterface() {
+      var level = levels[selectedLevel - 1];
+      scoreValue.textContent = String(score);
+      updateCombo();
+      updateBestDisplay();
+      updateRecords();
+      levelsMode.setAttribute("aria-pressed", mode === "levels" ? "true" : "false");
+      rushMode.setAttribute("aria-pressed", mode === "rush" ? "true" : "false");
 
- if (target.contains(event.target)) {
- score += 1;
- scoreNode.textContent = String(score);
- message.textContent = "Hit!";
- moveTarget();
- return;
- }
+      if (mode === "levels") {
+        modeMetricLabel.textContent = "Level";
+        modeMetricValue.textContent = String(currentLevel || selectedLevel);
+        stageTitle.textContent = "Level " + selectedLevel + " · " + level.name;
+        progressText.textContent = hits + " of " + level.goal + " targets";
+        progressFill.style.width = Math.min(100, (hits / level.goal) * 100) + "%";
+        strikesNode.hidden = false;
+        updateStrikes();
+        levelButton.hidden = false;
+        startButton.textContent = "Start Level " + selectedLevel;
+        introTitle.textContent = "Ready for Level " + selectedLevel + "?";
+        introText.textContent = "Clear " + level.goal + " targets with three strikes. Bombs end the level immediately.";
+      } else {
+        modeMetricLabel.textContent = "Time";
+        modeMetricValue.textContent = "20.0";
+        stageTitle.textContent = "20-Second Rush";
+        progressText.textContent = "Fast targets · empty taps cost 3 seconds";
+        progressFill.style.width = "100%";
+        strikesNode.hidden = true;
+        levelButton.hidden = true;
+        startButton.textContent = "Start 20-Second Rush";
+        introTitle.textContent = "Twenty seconds. How high can you score?";
+        introText.textContent = "Targets disappear quickly, bombs end the run, and tapping empty space costs three seconds.";
+      }
+    }
 
- applyMissPenalty();
- });
+    function setMode(nextMode) {
+      if (phase !== "idle" && phase !== "result") {
+        return;
+      }
+      mode = nextMode;
+      score = 0;
+      levelScore = 0;
+      combo = 0;
+      hits = 0;
+      phase = "idle";
+      resultCard.hidden = true;
+      fieldIntro.hidden = false;
+      message.textContent = mode === "levels"
+        ? "Hit every target before its ring runs out. Never tap a bomb."
+        : "Score as much as possible before time runs out. Empty taps cost three seconds.";
+      updateInterface();
+    }
 
- window.addEventListener("resize", function () {
- if (running) {
- moveTarget();
- }
- });
+    function renderLevelGrid() {
+      var fragment = document.createDocumentFragment();
+      var i;
+      levelGrid.innerHTML = "";
+      for (i = 1; i <= MAX_LEVEL; i += 1) {
+        var button = document.createElement("button");
+        var starCount = Math.max(0, Math.min(3, Number(saved.stars[String(i)]) || 0));
+        button.type = "button";
+        button.className = "level-button" + (i === selectedLevel ? " selected" : "");
+        button.disabled = i > saved.unlockedLevel;
+        button.setAttribute("data-level", String(i));
+        button.setAttribute("aria-label", button.disabled ? "Level " + i + " locked" : "Level " + i + ", " + starCount + " stars");
+        button.innerHTML = "<span>" + i + "</span><span class=\"level-stars\">" + repeatStar(starCount) + "</span>";
+        fragment.appendChild(button);
+      }
+      levelGrid.appendChild(fragment);
+    }
 
- bestNode.textContent = String(getBest());
- }());
- </script>
-<!-- GIDI-HOME-SAFETY-SCRIPT:START -->
+    function repeatStar(count) {
+      var text = "";
+      var i;
+      for (i = 0; i < count; i += 1) { text += "★"; }
+      return text;
+    }
+
+    function startSelectedGame() {
+      initializeAudio();
+      if (phase === "countdown" || phase === "playing" || phase === "ending") {
+        return;
+      }
+      if (mode === "levels") {
+        beginLevel(selectedLevel, false);
+      } else {
+        beginRush();
+      }
+    }
+
+    function prepareRound() {
+      clearTimers();
+      clearEntities();
+      resultCard.hidden = true;
+      fieldIntro.hidden = true;
+      startButton.disabled = true;
+      levelsMode.disabled = true;
+      rushMode.disabled = true;
+      levelButton.disabled = true;
+      phase = "countdown";
+      field.classList.remove("shake");
+      try {
+        field.scrollIntoView({ block: "center", behavior: "smooth" });
+      } catch (error) {
+        field.scrollIntoView();
+      }
+    }
+
+    function runCountdown(onComplete) {
+      var values = ["3", "2", "1", "GO!"];
+      var index = 0;
+      countdown.hidden = false;
+      function showNext() {
+        if (index >= values.length) {
+          countdown.hidden = true;
+          onComplete();
+          return;
+        }
+        countdownValue.textContent = values[index];
+        countdownValue.style.animation = "none";
+        void countdownValue.offsetWidth;
+        countdownValue.style.animation = "countdown-pop 680ms cubic-bezier(.2,.85,.25,1)";
+        tone(index < 3 ? 330 + index * 90 : 720, 0.09, "sine", 0.04, 0);
+        index += 1;
+        addTimer(showNext, index === values.length ? 520 : 680);
+      }
+      showNext();
+    }
+
+    function beginLevel(levelNumber, carryScore) {
+      var level = levels[levelNumber - 1];
+      selectedLevel = levelNumber;
+      currentLevel = levelNumber;
+      if (!carryScore) {
+        score = 0;
+      }
+      levelStartScore = score;
+      levelScore = 0;
+      combo = 0;
+      runBestCombo = 0;
+      strikes = 3;
+      hits = 0;
+      prepareRound();
+      updateInterface();
+      message.textContent = "Level " + levelNumber + ": " + level.name;
+      runCountdown(function () {
+        phase = "playing";
+        message.textContent = "Go!";
+        spawnLevelWave();
+      });
+    }
+
+    function beginRush() {
+      score = 0;
+      levelScore = 0;
+      combo = 0;
+      runBestCombo = 0;
+      strikes = 0;
+      hits = 0;
+      prepareRound();
+      updateInterface();
+      message.textContent = "Get ready for the rush.";
+      runCountdown(function () {
+        phase = "playing";
+        rushEndsAt = Date.now() + RUSH_DURATION;
+        message.textContent = "Go! Empty taps cost three seconds.";
+        updateRushClock();
+        spawnRushWave();
+      });
+    }
+
+    function getWaveCount(level, remaining) {
+      var count = 1;
+      if (level.maxTargets === 2) {
+        count = Math.random() < (level.number < 8 ? 0.48 : 0.78) ? 2 : 1;
+      } else if (level.maxTargets === 3) {
+        if (Math.random() < Math.min(0.42, 0.18 + (level.number - 13) * 0.014)) {
+          count = 3;
+        } else {
+          count = Math.random() < 0.8 ? 2 : 1;
+        }
+      }
+      return Math.max(1, Math.min(count, remaining));
+    }
+
+    function chooseTargetType(level) {
+      var roll = Math.random();
+      var cursor = level.goldChance;
+      if (roll < cursor) { return "gold"; }
+      cursor += level.armorChance;
+      if (roll < cursor) { return "armor"; }
+      cursor += level.splitChance;
+      if (roll < cursor) { return "split"; }
+      cursor += level.smallChance;
+      if (roll < cursor) { return "small"; }
+      cursor += level.movingChance;
+      if (roll < cursor) { return "moving"; }
+      return "normal";
+    }
+
+    function occupiedRectangles() {
+      var rects = [];
+      var key;
+      for (key in entities) {
+        if (Object.prototype.hasOwnProperty.call(entities, key)) {
+          var entity = entities[key];
+          rects.push({ x: entity.x, y: entity.y, width: entity.size, height: entity.size });
+        }
+      }
+      return rects;
+    }
+
+    function overlaps(a, b, padding) {
+      return !(a.x + a.width + padding <= b.x ||
+        b.x + b.width + padding <= a.x ||
+        a.y + a.height + padding <= b.y ||
+        b.y + b.height + padding <= a.y);
+    }
+
+    function safePosition(size, extraRects) {
+      var width = Math.max(1, field.clientWidth);
+      var height = Math.max(1, field.clientHeight);
+      var maxX = Math.max(8, width - size - 8);
+      var maxY = Math.max(8, height - size - 8);
+      var existing = occupiedRectangles().concat(extraRects || []);
+      var attempt;
+      var candidate;
+      var i;
+      for (attempt = 0; attempt < 90; attempt += 1) {
+        candidate = {
+          x: 8 + Math.floor(Math.random() * Math.max(1, maxX - 7)),
+          y: 8 + Math.floor(Math.random() * Math.max(1, maxY - 7)),
+          width: size,
+          height: size
+        };
+        var clear = true;
+        for (i = 0; i < existing.length; i += 1) {
+          if (overlaps(candidate, existing[i], 10)) {
+            clear = false;
+            break;
+          }
+        }
+        if (clear) { return candidate; }
+      }
+      for (candidate = { x: 8, y: 8, width: size, height: size };
+           candidate.y <= maxY;
+           candidate.y += Math.max(20, Math.floor(size * 0.65))) {
+        for (candidate.x = 8; candidate.x <= maxX; candidate.x += Math.max(20, Math.floor(size * 0.65))) {
+          var available = true;
+          for (i = 0; i < existing.length; i += 1) {
+            if (overlaps(candidate, existing[i], 4)) {
+              available = false;
+              break;
+            }
+          }
+          if (available) {
+            return { x: candidate.x, y: candidate.y, width: size, height: size };
+          }
+        }
+      }
+      return { x: Math.max(8, (width - size) / 2), y: Math.max(8, (height - size) / 2), width: size, height: size };
+    }
+
+    function entityId(prefix) {
+      entitySequence += 1;
+      return prefix + entitySequence;
+    }
+
+    function createLifeRing(duration) {
+      var namespace = "http://www.w3.org/2000/svg";
+      var svg = document.createElementNS(namespace, "svg");
+      var circle = document.createElementNS(namespace, "circle");
+      svg.setAttribute("class", "life-ring");
+      svg.setAttribute("viewBox", "0 0 36 36");
+      svg.setAttribute("aria-hidden", "true");
+      circle.setAttribute("cx", "18");
+      circle.setAttribute("cy", "18");
+      circle.setAttribute("r", "15.9155");
+      circle.style.animationDuration = duration + "ms";
+      svg.appendChild(circle);
+      return svg;
+    }
+
+    function spawnTarget(options) {
+      var type = options.type || "normal";
+      var size = options.size;
+      var position = options.position || safePosition(size, []);
+      var id = entityId("t");
+      var node = document.createElement("button");
+      var face = document.createElement("span");
+      var badge;
+      node.type = "button";
+      node.className = "entity target " + type;
+      node.style.width = size + "px";
+      node.style.height = size + "px";
+      node.style.left = position.x + "px";
+      node.style.top = position.y + "px";
+      node.style.setProperty("--target-size", size + "px");
+      node.setAttribute("data-id", id);
+      node.setAttribute("aria-label", targetLabel(type));
+      face.className = "target-face";
+      node.appendChild(face);
+      node.appendChild(createLifeRing(options.life));
+
+      if (type === "armor") {
+        badge = document.createElement("span");
+        badge.className = "target-badge";
+        badge.textContent = "2";
+        node.appendChild(badge);
+      } else if (type === "split") {
+        badge = document.createElement("span");
+        badge.className = "target-badge";
+        badge.textContent = "↔";
+        node.appendChild(badge);
+      }
+
+      if (type === "moving") {
+        var roomX = Math.min(38, Math.max(12, field.clientWidth - position.x - size - 8));
+        var roomLeft = Math.min(38, Math.max(12, position.x - 8));
+        var roomY = Math.min(30, Math.max(10, field.clientHeight - position.y - size - 8));
+        var moveX = Math.random() < 0.5 ? -roomLeft : roomX;
+        var moveY = Math.random() < 0.5 ? -Math.min(24, position.y - 8) : roomY;
+        node.style.setProperty("--move-x", moveX + "px");
+        node.style.setProperty("--move-y", moveY + "px");
+        node.style.setProperty("--move-duration", (1.05 + Math.random() * 0.65).toFixed(2) + "s");
+      }
+
+      entities[id] = {
+        id: id,
+        kind: "target",
+        type: type,
+        node: node,
+        x: position.x,
+        y: position.y,
+        size: size,
+        life: options.life,
+        expiresAt: Date.now() + options.life,
+        hitsNeeded: type === "armor" ? 2 : 1,
+        groupId: options.groupId || "",
+        timer: 0
+      };
+
+      node.addEventListener("click", handleEntityClick);
+      field.appendChild(node);
+      entities[id].timer = window.setTimeout(function () { expireTarget(id); }, options.life);
+      return entities[id];
+    }
+
+    function targetLabel(type) {
+      if (type === "gold") { return "Gold bonus target"; }
+      if (type === "armor") { return "Armored target. Tap twice"; }
+      if (type === "split") { return "Split target"; }
+      if (type === "moving") { return "Moving target"; }
+      if (type === "small" || type === "mini") { return "Small target"; }
+      return "Target";
+    }
+
+    function spawnBomb(size, life) {
+      var position = safePosition(size, []);
+      var id = entityId("b");
+      var node = document.createElement("button");
+      node.type = "button";
+      node.className = "entity bomb";
+      node.style.width = size + "px";
+      node.style.height = size + "px";
+      node.style.left = position.x + "px";
+      node.style.top = position.y + "px";
+      node.setAttribute("data-id", id);
+      node.setAttribute("aria-label", "Bomb. Do not tap");
+      node.innerHTML = "<span class=\"bomb-fuse\"></span><span class=\"bomb-shell\"></span>";
+      entities[id] = {
+        id: id,
+        kind: "bomb",
+        type: "bomb",
+        node: node,
+        x: position.x,
+        y: position.y,
+        size: size,
+        life: life,
+        expiresAt: Date.now() + life,
+        timer: 0
+      };
+      node.addEventListener("click", handleEntityClick);
+      field.appendChild(node);
+      entities[id].timer = window.setTimeout(function () { removeEntity(id, false); }, life);
+      return entities[id];
+    }
+
+    function spawnLevelWave() {
+      if (phase !== "playing" || mode !== "levels") { return; }
+      var level = levels[currentLevel - 1];
+      var remaining = level.goal - hits;
+      if (remaining <= 0) {
+        completeLevel();
+        return;
+      }
+      var count = getWaveCount(level, remaining);
+      var waveLife = level.life + 260;
+      var i;
+      for (i = 0; i < count; i += 1) {
+        var type = chooseTargetType(level);
+        var size = level.size;
+        if (type === "small") { size = Math.max(40, Math.floor(size * 0.76)); }
+        spawnTarget({ type: type, size: size, life: level.life + Math.floor(Math.random() * 150) });
+      }
+      if (Math.random() < level.bombChance) {
+        var bombs = level.bombMax > 1 && Math.random() < Math.min(0.48, (currentLevel - 9) * 0.025) ? 2 : 1;
+        for (i = 0; i < bombs; i += 1) {
+          spawnBomb(Math.max(48, Math.min(58, level.size - 6)), waveLife);
+        }
+      }
+    }
+
+    function spawnRushWave() {
+      if (phase !== "playing" || mode !== "rush") { return; }
+      var elapsed = Math.max(0, RUSH_DURATION - Math.max(0, rushEndsAt - Date.now()));
+      var life = Math.max(840, 1650 - elapsed * 0.03);
+      var count = elapsed > 9000 && Math.random() < 0.58 ? 2 : 1;
+      var i;
+      for (i = 0; i < count; i += 1) {
+        var roll = Math.random();
+        var type = roll < 0.08 ? "gold" : (roll < 0.22 ? "small" : (roll < 0.36 ? "moving" : "normal"));
+        var size = type === "small" ? 46 : 60;
+        spawnTarget({ type: type, size: size, life: life + Math.floor(Math.random() * 120) });
+      }
+      if (elapsed > 3500 && Math.random() < Math.min(0.72, 0.22 + elapsed / 32000)) {
+        spawnBomb(50, life + 280);
+      }
+    }
+
+    function handleEntityClick(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (phase !== "playing") { return; }
+      var id = event.currentTarget.getAttribute("data-id");
+      var entity = entities[id];
+      if (!entity) { return; }
+      if (entity.kind === "bomb") {
+        triggerBomb(entity);
+      } else {
+        hitTarget(entity);
+      }
+    }
+
+    function hitTarget(entity) {
+      if (!entities[entity.id] || phase !== "playing") { return; }
+      if (entity.type === "armor" && entity.hitsNeeded > 1) {
+        entity.hitsNeeded -= 1;
+        entity.node.classList.add("cracked");
+        var badge = entity.node.querySelector(".target-badge");
+        if (badge) { badge.textContent = "1"; }
+        message.textContent = "Armor cracked — one more tap!";
+        tone(300, 0.08, "square", 0.035, 0);
+        return;
+      }
+
+      if (entity.type === "split") {
+        splitTarget(entity);
+        return;
+      }
+
+      var now = Date.now();
+      var remainingFraction = Math.max(0, Math.min(1, (entity.expiresAt - now) / entity.life));
+      var base = scoreBase(entity.type);
+      var speedCap = entity.type === "mini" ? 5 : 10;
+      var speedBonus = Math.max(0, Math.round(speedCap * remainingFraction));
+      combo += 1;
+      runBestCombo = Math.max(runBestCombo, combo);
+      var multiplier = multiplierFor(combo);
+      var points = Math.max(1, Math.round((base + speedBonus) * multiplier));
+      score += points;
+      levelScore += points;
+      saved.totalHits += 1;
+      soundHit();
+      particles(entity.x + entity.size / 2, entity.y + entity.size / 2, entity.type === "gold" ? "#ffd65f" : "#70ddff", 8);
+      floatingScore(entity.x + entity.size / 2, entity.y + entity.size / 2, "+" + points);
+      removeEntity(entity.id, true);
+
+      if (entity.type === "mini" && entity.groupId) {
+        resolveSplitChild(entity.groupId, true);
+      } else {
+        hits += 1;
+      }
+
+      scoreValue.textContent = String(score);
+      updateCombo();
+      updateProgressDuringPlay();
+      message.textContent = combo >= 5 ? combo + " hit combo · ×" + multiplier : "Hit! +" + points;
+      checkWaveState();
+    }
+
+    function scoreBase(type) {
+      if (type === "gold") { return 30; }
+      if (type === "moving") { return 20; }
+      if (type === "armor") { return 18; }
+      if (type === "small") { return 15; }
+      if (type === "mini") { return 6; }
+      return 10;
+    }
+
+    function splitTarget(entity) {
+      var groupId = "s" + (++splitSequence);
+      var miniSize = Math.max(38, Math.floor(entity.size * 0.64));
+      var life = Math.max(780, Math.floor(entity.life * 0.78));
+      var centerX = entity.x + entity.size / 2;
+      var centerY = entity.y + entity.size / 2;
+      removeEntity(entity.id, true);
+      splitGroups[groupId] = { pending: 2, success: 0, failed: false, strikeTaken: false };
+      particles(centerX, centerY, "#6ce6a8", 10);
+      tone(420, 0.08, "triangle", 0.045, 0);
+      tone(610, 0.08, "triangle", 0.035, 0.05);
+      spawnTarget({
+        type: "mini",
+        size: miniSize,
+        life: life,
+        groupId: groupId,
+        position: safePosition(miniSize, [{ x: Math.max(8, centerX - miniSize - 8), y: Math.max(8, centerY - miniSize / 2), width: miniSize, height: miniSize }])
+      });
+      spawnTarget({
+        type: "mini",
+        size: miniSize,
+        life: life,
+        groupId: groupId,
+        position: safePosition(miniSize, [])
+      });
+      message.textContent = "Split target — catch both!";
+    }
+
+    function resolveSplitChild(groupId, success) {
+      var group = splitGroups[groupId];
+      if (!group) { return; }
+      group.pending -= 1;
+      if (success) { group.success += 1; }
+      if (!success) { group.failed = true; }
+      if (group.pending <= 0) {
+        if (!group.failed && group.success === 2) {
+          hits += 1;
+        }
+        delete splitGroups[groupId];
+      }
+    }
+
+    function expireTarget(id) {
+      var entity = entities[id];
+      if (!entity || phase !== "playing") { return; }
+      removeEntity(id, false);
+      combo = 0;
+      updateCombo();
+      soundMiss();
+      if (entity.type === "mini" && entity.groupId) {
+        var group = splitGroups[entity.groupId];
+        if (group && !group.strikeTaken) {
+          group.strikeTaken = true;
+          loseTargetPenalty();
+        }
+        resolveSplitChild(entity.groupId, false);
+      } else {
+        loseTargetPenalty();
+      }
+      checkWaveState();
+    }
+
+    function loseTargetPenalty() {
+      if (mode === "levels") {
+        strikes -= 1;
+        updateStrikes();
+        message.textContent = strikes > 0 ? "Target escaped. " + strikes + " strikes left." : "No strikes left.";
+        if (strikes <= 0) {
+          failLevel("strikes");
+        }
+      } else {
+        rushEndsAt -= 1000;
+        message.textContent = "Target escaped — 1 second lost.";
+        if (rushEndsAt <= Date.now()) {
+          finishRush("time");
+        }
+      }
+    }
+
+    function triggerBomb(entity) {
+      if (phase !== "playing") { return; }
+      phase = "ending";
+      clearTimers();
+      disableEntities();
+      entity.node.classList.add("explode");
+      field.classList.remove("shake");
+      void field.offsetWidth;
+      field.classList.add("shake");
+      soundBomb();
+      particles(entity.x + entity.size / 2, entity.y + entity.size / 2, "#ff5d52", 18);
+      message.textContent = "Bomb hit!";
+      addTimer(function () {
+        if (mode === "levels") {
+          clearEntities();
+          showLevelFailure("bomb");
+        } else {
+          finishRush("bomb");
+        }
+      }, 430);
+    }
+
+    function disableEntities() {
+      var key;
+      for (key in entities) {
+        if (Object.prototype.hasOwnProperty.call(entities, key)) {
+          entities[key].node.disabled = true;
+        }
+      }
+    }
+
+    function removeEntity(id, animate) {
+      var entity = entities[id];
+      if (!entity) { return; }
+      window.clearTimeout(entity.timer);
+      delete entities[id];
+      if (animate) {
+        entity.node.classList.add("hit");
+        addTimer(function () {
+          if (entity.node.parentNode) { entity.node.parentNode.removeChild(entity.node); }
+        }, 175);
+      } else if (entity.node.parentNode) {
+        entity.node.parentNode.removeChild(entity.node);
+      }
+    }
+
+    function activeTargetCount() {
+      var count = 0;
+      var key;
+      for (key in entities) {
+        if (Object.prototype.hasOwnProperty.call(entities, key) && entities[key].kind === "target") {
+          count += 1;
+        }
+      }
+      return count;
+    }
+
+    function clearBombs() {
+      var ids = [];
+      var key;
+      var i;
+      for (key in entities) {
+        if (Object.prototype.hasOwnProperty.call(entities, key) && entities[key].kind === "bomb") {
+          ids.push(key);
+        }
+      }
+      for (i = 0; i < ids.length; i += 1) { removeEntity(ids[i], false); }
+    }
+
+    function checkWaveState() {
+      if (phase !== "playing") { return; }
+      if (activeTargetCount() > 0) { return; }
+      clearBombs();
+      if (mode === "levels") {
+        if (hits >= levels[currentLevel - 1].goal) {
+          completeLevel();
+        } else {
+          addTimer(spawnLevelWave, 260);
+        }
+      } else {
+        addTimer(spawnRushWave, 180);
+      }
+    }
+
+    function updateProgressDuringPlay() {
+      if (mode === "levels") {
+        var level = levels[currentLevel - 1];
+        modeMetricValue.textContent = String(currentLevel);
+        progressText.textContent = Math.min(hits, level.goal) + " of " + level.goal + " targets";
+        progressFill.style.width = Math.min(100, (hits / level.goal) * 100) + "%";
+      }
+    }
+
+    function completeLevel() {
+      if (phase !== "playing") { return; }
+      phase = "ending";
+      clearTimers();
+      clearEntities();
+      var level = levels[currentLevel - 1];
+      var perfect = strikes === 3;
+      var perfectBonus = perfect ? PERFECT_BONUS : 0;
+      var remainingBonus = strikes * STRIKE_BONUS;
+      score += perfectBonus + remainingBonus;
+      levelScore += perfectBonus + remainingBonus;
+      var scoreThreshold = level.goal * 18;
+      var stars = 1 + (levelScore >= scoreThreshold ? 1 : 0) + (perfect ? 1 : 0);
+      var key = String(currentLevel);
+      saved.levelBest[key] = Math.max(Number(saved.levelBest[key]) || 0, levelScore);
+      saved.stars[key] = Math.max(Number(saved.stars[key]) || 0, stars);
+      if (currentLevel < MAX_LEVEL) {
+        saved.unlockedLevel = Math.max(saved.unlockedLevel, currentLevel + 1);
+      }
+      saved.bestRun = Math.max(saved.bestRun, score);
+      saveProgress();
+      scoreValue.textContent = String(score);
+      updateBestDisplay();
+      updateRecords();
+      soundWin();
+      particles(field.clientWidth / 2, field.clientHeight / 2, "#ffd864", 24);
+      showLevelResult(stars, perfectBonus, remainingBonus);
+    }
+
+    function showLevelResult(stars, perfectBonus, remainingBonus) {
+      phase = "result";
+      resultAction = currentLevel < MAX_LEVEL ? "continue" : "finished";
+      resultStars.textContent = repeatStar(stars);
+      resultStars.setAttribute("aria-label", stars + " stars");
+      resultTitle.textContent = currentLevel < MAX_LEVEL ? "Level complete!" : "All 30 levels cleared!";
+      resultScore.textContent = score + " points";
+      resultText.textContent = (perfectBonus ? "Perfect +" + perfectBonus + ". " : "") +
+        "Remaining strikes +" + remainingBonus + ". Level score: " + levelScore + ".";
+      resultSecondary.textContent = "Replay";
+      resultPrimary.textContent = currentLevel < MAX_LEVEL ? "Next level" : "Level select";
+      resultCard.hidden = false;
+      startButton.disabled = false;
+      levelsMode.disabled = false;
+      rushMode.disabled = false;
+      levelButton.disabled = false;
+      renderLevelGrid();
+    }
+
+    function failLevel(reason) {
+      if (phase !== "playing") { return; }
+      phase = "ending";
+      clearTimers();
+      clearEntities();
+      showLevelFailure(reason);
+    }
+
+    function showLevelFailure(reason) {
+      phase = "result";
+      score = levelStartScore;
+      levelScore = 0;
+      resultAction = "retry";
+      resultStars.textContent = "";
+      resultStars.setAttribute("aria-label", "No stars");
+      resultTitle.textContent = reason === "bomb" ? "Boom! Level failed" : "Level failed";
+      resultScore.textContent = "Try again";
+      resultText.textContent = reason === "bomb"
+        ? "A bomb ends the current level immediately. Your score from earlier levels is safe."
+        : "Three targets escaped. Your score from earlier levels is safe.";
+      resultSecondary.textContent = "Level select";
+      resultPrimary.textContent = "Retry level";
+      resultCard.hidden = false;
+      scoreValue.textContent = String(score);
+      startButton.disabled = false;
+      levelsMode.disabled = false;
+      rushMode.disabled = false;
+      levelButton.disabled = false;
+    }
+
+    function updateRushClock() {
+      if (phase !== "playing" || mode !== "rush") { return; }
+      var remaining = Math.max(0, rushEndsAt - Date.now());
+      modeMetricValue.textContent = (remaining / 1000).toFixed(1);
+      progressFill.style.width = Math.max(0, Math.min(100, (remaining / RUSH_DURATION) * 100)) + "%";
+      if (remaining <= 0) {
+        finishRush("time");
+        return;
+      }
+      rushTimer = window.setTimeout(updateRushClock, 50);
+    }
+
+    function finishRush(reason) {
+      if (phase === "result") { return; }
+      phase = "ending";
+      clearTimers();
+      clearEntities();
+      var isNewBest = score > saved.rushBest;
+      saved.rushBest = Math.max(saved.rushBest, score);
+      saveProgress();
+      updateBestDisplay();
+      updateRecords();
+      resultAction = "rush";
+      resultStars.textContent = isNewBest && score > 0 ? "★" : "";
+      resultStars.setAttribute("aria-label", score > 0 ? "Rush complete" : "No stars");
+      resultTitle.textContent = reason === "bomb" ? "Bomb hit!" : "Time!";
+      resultScore.textContent = score + " points";
+      resultText.textContent = isNewBest && score > 0
+        ? "New Rush high score! Longest combo: " + runBestCombo + "."
+        : "Rush best: " + saved.rushBest + ". Longest combo this run: " + runBestCombo + ".";
+      resultSecondary.textContent = "Levels";
+      resultPrimary.textContent = "Play again";
+      resultCard.hidden = false;
+      startButton.disabled = false;
+      levelsMode.disabled = false;
+      rushMode.disabled = false;
+      phase = "result";
+    }
+
+    function applyEmptyTapPenalty() {
+      if (phase !== "playing") { return; }
+      combo = 0;
+      if (mode === "levels") {
+        levelScore = Math.max(0, levelScore - 2);
+        score = levelStartScore + levelScore;
+        message.textContent = "Miss! −2 points and combo reset.";
+      } else {
+        score = Math.max(0, score - 2);
+        rushEndsAt -= 3000;
+        message.textContent = "Miss! −2 points and 3 seconds.";
+      }
+      scoreValue.textContent = String(score);
+      updateCombo();
+      soundMiss();
+      if (mode === "rush" && rushEndsAt <= Date.now()) {
+        finishRush("time");
+      }
+    }
+
+    function particles(x, y, color, count) {
+      var i;
+      for (i = 0; i < count; i += 1) {
+        var particle = document.createElement("span");
+        var angle = (Math.PI * 2 * i) / count + Math.random() * 0.35;
+        var distance = 24 + Math.random() * 42;
+        particle.className = "particle";
+        particle.style.left = x + "px";
+        particle.style.top = y + "px";
+        particle.style.setProperty("--particle-color", color);
+        particle.style.setProperty("--px", Math.cos(angle) * distance + "px");
+        particle.style.setProperty("--py", Math.sin(angle) * distance + "px");
+        field.appendChild(particle);
+        (function (node) {
+          window.setTimeout(function () {
+            if (node.parentNode) { node.parentNode.removeChild(node); }
+          }, 540);
+        }(particle));
+      }
+    }
+
+    function floatingScore(x, y, text) {
+      var node = document.createElement("span");
+      node.className = "floating-score";
+      node.style.left = x + "px";
+      node.style.top = y + "px";
+      node.textContent = text;
+      field.appendChild(node);
+      window.setTimeout(function () {
+        if (node.parentNode) { node.parentNode.removeChild(node); }
+      }, 720);
+    }
+
+    function returnToIdle() {
+      clearTimers();
+      clearEntities();
+      phase = "idle";
+      resultCard.hidden = true;
+      fieldIntro.hidden = false;
+      startButton.disabled = false;
+      levelsMode.disabled = false;
+      rushMode.disabled = false;
+      levelButton.disabled = false;
+      score = 0;
+      levelScore = 0;
+      combo = 0;
+      hits = 0;
+      updateInterface();
+    }
+
+    startButton.addEventListener("click", startSelectedGame);
+    levelsMode.addEventListener("click", function () { setMode("levels"); });
+    rushMode.addEventListener("click", function () { setMode("rush"); });
+
+    levelButton.addEventListener("click", function () {
+      if (phase === "playing" || phase === "countdown" || phase === "ending") { return; }
+      renderLevelGrid();
+      levelModal.hidden = false;
+      closeLevels.focus();
+    });
+
+    closeLevels.addEventListener("click", function () {
+      levelModal.hidden = true;
+      levelButton.focus();
+    });
+
+    levelModal.addEventListener("click", function (event) {
+      if (event.target === levelModal) {
+        levelModal.hidden = true;
+        levelButton.focus();
+      }
+    });
+
+    levelGrid.addEventListener("click", function (event) {
+      var button = event.target.closest ? event.target.closest(".level-button") : null;
+      if (!button || button.disabled) { return; }
+      selectedLevel = Number(button.getAttribute("data-level")) || 1;
+      currentLevel = selectedLevel;
+      levelModal.hidden = true;
+      returnToIdle();
+    });
+
+    resultPrimary.addEventListener("click", function () {
+      resultCard.hidden = true;
+      if (resultAction === "continue") {
+        selectedLevel = Math.min(MAX_LEVEL, currentLevel + 1);
+        beginLevel(selectedLevel, true);
+      } else if (resultAction === "finished") {
+        renderLevelGrid();
+        levelModal.hidden = false;
+      } else if (resultAction === "retry") {
+        beginLevel(currentLevel, true);
+      } else if (resultAction === "rush") {
+        beginRush();
+      }
+    });
+
+    resultSecondary.addEventListener("click", function () {
+      resultCard.hidden = true;
+      if (resultAction === "continue" || resultAction === "finished") {
+        score = levelStartScore;
+        beginLevel(currentLevel, true);
+      } else if (resultAction === "retry") {
+        renderLevelGrid();
+        levelModal.hidden = false;
+      } else if (resultAction === "rush") {
+        setMode("levels");
+      }
+    });
+
+    soundButton.addEventListener("click", function () {
+      soundMuted = !soundMuted;
+      saved.muted = soundMuted;
+      saveProgress();
+      soundButton.textContent = soundMuted ? "🔇" : "🔊";
+      soundButton.setAttribute("aria-label", soundMuted ? "Turn sound on" : "Mute sound");
+      soundButton.setAttribute("aria-pressed", soundMuted ? "true" : "false");
+      if (!soundMuted) {
+        initializeAudio();
+        tone(540, 0.09, "sine", 0.04, 0);
+      }
+    });
+
+    field.addEventListener("click", function (event) {
+      if (event.target === field) {
+        applyEmptyTapPenalty();
+      }
+    });
+
+    field.addEventListener("touchmove", function (event) {
+      if (phase === "playing") { event.preventDefault(); }
+    }, { passive: false });
+
+    window.addEventListener("resize", function () {
+      if (phase === "playing") {
+        message.textContent = "Game resized. Keep going!";
+      }
+    });
+
+
+    soundButton.textContent = soundMuted ? "🔇" : "🔊";
+    soundButton.setAttribute("aria-label", soundMuted ? "Turn sound on" : "Mute sound");
+    soundButton.setAttribute("aria-pressed", soundMuted ? "true" : "false");
+    updateInterface();
+    renderLevelGrid();
+  }());
+  </script>
+  <!-- GIDI-HOME-SAFETY-SCRIPT:START -->
   <script src="../shared/gidi-home-safety.js?v=1.0.0"></script>
   <!-- GIDI-HOME-SAFETY-SCRIPT:END -->
 </body>
