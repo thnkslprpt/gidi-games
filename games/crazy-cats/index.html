@@ -695,7 +695,7 @@
     <div class="shell topbar-row">
       <a class="back-button" href="../../" aria-label="All games">← <span>All games</span></a>
       <div class="brand">
-        <h1><span>Crazy</span> Cats <span class="version">v3.0.2</span></h1>
+        <h1><span>Crazy</span> Cats <span class="version">v3.0.3</span></h1>
         <p>Power cats. Bigger crashes. Thirty backyard missions.</p>
       </div>
       <div class="top-actions">
@@ -2330,9 +2330,9 @@
       var points = [];
       var stoppedByCollision = false;
 
-      // CRAZY-CATS-V3.0.2-PARTIAL-AIM-GUIDE: calculate the accurate full flight internally, but reveal only
-      // the opening half. The last part of the visible guide fades away so the
-      // player can judge direction and power without being shown the landing point.
+      // CRAZY-CATS-V3.0.3-AIM-VISIBILITY: keep the physics-accurate preview, but render a denser,
+      // higher-contrast dotted guide that stays readable against the sky.
+      // Only the opening ~half of the flight is revealed, with a slow fade out.
       var step;
       for (step = 1; step <= 180; step += 1) {
         simVy += GRAVITY * fixedDt;
@@ -2351,7 +2351,7 @@
           return !bomb.exploded && circleHit(probe, bomb, 2);
         }) || Boolean(diamond && !diamond.gone && circleHit(probe, diamond, 1));
 
-        if (step % 5 === 0 || stoppedByCollision) {
+        if (step % 3 === 0 || stoppedByCollision) {
           points.push({
             x: simX,
             y: Math.min(simY, GROUND - currentCat.r),
@@ -2362,24 +2362,25 @@
         if (stoppedByCollision || simX > W + 20 || simX < -20 || simY + currentCat.r >= GROUND) break;
       }
 
-      var visibleCount = Math.min(points.length, Math.max(3, Math.ceil(points.length * .5)));
+      var visibleCount = Math.min(points.length, Math.max(8, Math.ceil(points.length * .52)));
       ctx.save();
-      ctx.globalCompositeOperation = "screen";
+      ctx.globalCompositeOperation = "source-over";
+      ctx.shadowColor = "rgba(10, 22, 56, .48)";
+      ctx.shadowBlur = 5;
       points.slice(0, visibleCount).forEach(function (point, index) {
         var progress = visibleCount <= 1 ? 0 : index / (visibleCount - 1);
-        var fade = progress <= .48 ? 1 : Math.max(.04, Math.pow((1 - progress) / .52, 1.45));
-        ctx.globalAlpha = .9 * fade;
-        ctx.fillStyle = index % 2 ? "#ffe16d" : "#ffffff";
+        var fade = 1 - progress * .72;
+        var radius = (3.6 + pull / SLING.maxPull * 1.2) * (1 - progress * .16);
+        ctx.globalAlpha = Math.max(.28, fade);
+        ctx.fillStyle = index % 3 === 0 ? "#ffd44f" : "#18cfff";
+        ctx.strokeStyle = "rgba(13, 38, 86, .92)";
+        ctx.lineWidth = 1.35;
         ctx.beginPath();
-        ctx.arc(
-          point.x,
-          point.y,
-          (3 + pull / SLING.maxPull) * (.72 + fade * .28),
-          0,
-          Math.PI * 2
-        );
+        ctx.arc(point.x, point.y, Math.max(2.2, radius), 0, Math.PI * 2);
         ctx.fill();
+        ctx.stroke();
       });
+      ctx.shadowBlur = 0;
 
       ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1;
       ctx.fillStyle = "rgba(23,34,59,.72)"; roundedRectPath(ctx, 22, 21, 150, 34, 12); ctx.fill();
