@@ -1365,7 +1365,7 @@
       <a class="icon-button" href="../../" aria-label="Back to games">←</a>
       <div class="title-block">
         <p class="eyebrow">Local + AI + online strategy</p>
-        <h1>Crossmate <span class="version">v1.5.2</span></h1>
+        <h1>Crossmate <span class="version">v1.5.3</span></h1>
       </div>
       <div class="top-actions">
         <button class="icon-button" id="soundButton" type="button" aria-label="Turn sound off" title="Sound">♪</button>
@@ -1593,7 +1593,7 @@
       ];
       var TYPE_NAMES = { circle: "Circle", diamond: "Diamond", square: "Square", triangle: "Triangle", cross: "Cross" };
       var POINT_VALUES = { circle: 1, triangle: 3, square: 5, diamond: 6, cross: 0 };
-      var VERSION = "1.5.2";
+      var VERSION = "1.5.3";
       var ROOM_LIFETIME_MS = 10 * 24 * 60 * 60 * 1000;
       var BACK_ROW = ["diamond", "square", "triangle", null, "cross", null, "triangle", "square", "diamond"];
 
@@ -1806,12 +1806,25 @@
         if (playMode !== "online") { return true; }
         return onlineHasOpponent && !onlineBusy && localPlayer === state.currentPlayer && !state.gameOver;
       }
+      /* Crossmate v1.5.3: keep the local online player's bar beside their board edge. */
       function applyBoardPerspective() {
         var r;
         var c;
+        var playerTwoAtBottom = playMode === "online" && localPlayer === 2;
+        var topCard = playerTwoAtBottom ? player1Card : player2Card;
+        var bottomCard = playerTwoAtBottom ? player2Card : player1Card;
+        var actionBar = document.querySelector(".action-bar");
+
+        if (statusEl.previousElementSibling !== topCard) {
+          statusEl.parentNode.insertBefore(topCard, statusEl);
+        }
+        if (actionBar && actionBar.previousElementSibling !== bottomCard) {
+          actionBar.parentNode.insertBefore(bottomCard, actionBar);
+        }
+
         if (!cellEls.length) { return; }
         if (directionOverlay.parentNode === boardEl) { boardEl.removeChild(directionOverlay); }
-        if (playMode === "online" && localPlayer === 2) {
+        if (playerTwoAtBottom) {
           for (r = SIZE - 1; r >= 0; r -= 1) {
             for (c = SIZE - 1; c >= 0; c -= 1) { boardEl.appendChild(cellEls[r][c]); }
           }
