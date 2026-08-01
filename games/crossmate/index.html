@@ -1365,7 +1365,7 @@
       <a class="icon-button" href="../../" aria-label="Back to games">←</a>
       <div class="title-block">
         <p class="eyebrow">Local + AI + online strategy</p>
-        <h1>Crossmate <span class="version">v1.6.0</span></h1>
+        <h1>Crossmate <span class="version">v1.6.1</span></h1>
       </div>
       <div class="top-actions">
         <button class="icon-button" id="soundButton" type="button" aria-label="Turn sound off" title="Sound">♪</button>
@@ -1408,7 +1408,7 @@
         <div class="action-sub" id="actionSub">Captures are optional. Keep your cross out of danger.</div>
       </div>
       <div class="action-buttons" id="actionButtons">
-        <div class="history-controls" id="historyControls" hidden aria-label="Online move history">
+        <div class="history-controls" id="historyControls" hidden aria-label="Move history">
           <button class="history-button" id="historyBackButton" type="button" aria-label="Previous move">‹</button>
           <span class="history-label" id="historyLabel">Live</span>
           <button class="history-button" id="historyForwardButton" type="button" aria-label="Next move">›</button>
@@ -1593,7 +1593,7 @@
       ];
       var TYPE_NAMES = { circle: "Circle", diamond: "Diamond", square: "Square", triangle: "Triangle", cross: "Cross" };
       var POINT_VALUES = { circle: 1, triangle: 3, square: 5, diamond: 6, cross: 0 };
-      var VERSION = "1.6.0";
+      var VERSION = "1.6.1";
       var ROOM_LIFETIME_MS = 10 * 24 * 60 * 60 * 1000;
       var BACK_ROW = ["diamond", "square", "triangle", null, "cross", null, "triangle", "square", "diamond"];
 
@@ -3013,11 +3013,13 @@
         layoutRefreshFrame = window.requestAnimationFrame(function () {
           layoutRefreshFrame = window.requestAnimationFrame(function () {
             var width;
+            var boardWidth;
             if (!state) { return; }
             width = Math.round(boardShell.getBoundingClientRect().width);
             if (width > 0) {
               boardShell.style.height = width + "px";
-              boardEl.style.height = width + "px";
+              boardWidth = Math.round(boardEl.getBoundingClientRect().width);
+              boardEl.style.height = Math.max(0, boardWidth) + "px";
             }
             boardEl.getBoundingClientRect();
             renderBoard();
@@ -3479,11 +3481,14 @@
       function historyCount() {
         return state && Array.isArray(state.history) ? state.history.length : 0;
       }
-      function reviewingHistory() { return playMode === "online" && reviewIndex >= 0; }
+      function reviewingHistory() { return playMode !== "choosing" && reviewIndex >= 0; }
       function updateHistoryControls() {
         var count = historyCount();
         var currentMove;
-        historyControls.hidden = playMode !== "online" || !onlineHasOpponent || count < 2;
+        historyControls.hidden =
+          playMode === "choosing" ||
+          (playMode === "online" && !onlineHasOpponent) ||
+          count < 2;
         if (historyControls.hidden) { return; }
         if (reviewIndex < 0) {
           currentMove = Number(state.moveNumber || 0);
@@ -3500,7 +3505,7 @@
       }
       function reviewBack() {
         var count = historyCount();
-        if (playMode !== "online" || count < 2) { return; }
+        if (playMode === "choosing" || (playMode === "online" && !onlineHasOpponent) || count < 2) { return; }
         if (reviewIndex < 0) { reviewIndex = count - 2; }
         else { reviewIndex = Math.max(0, reviewIndex - 1); }
         selectedId = null;
@@ -4079,7 +4084,7 @@
       commitMove = function (move) {
         diamondPreviewMove = null;
         trianglePreviewMove = null;
-        reviewIndex = -1;
+        if (!reviewingHistory()) { reviewIndex = -1; }
         v13CommitMove(move);
       };
       var v13RenderBoard = renderBoard;
@@ -4113,7 +4118,7 @@
           lastMovePieceId = savedLastMovePieceId;
           lastCapturedSquares = savedCaptured;
           statusText.textContent = "Reviewing move " + Number(displayState.moveNumber || 0) + " of " + Number(liveState.moveNumber || 0);
-          actionTitle.textContent = "Reviewing online history";
+          actionTitle.textContent = "Reviewing move history";
           actionSub.textContent = "Use the arrows to move backward or return to the live board.";
           clearButton.hidden = true;
         }
@@ -4194,7 +4199,7 @@
         v13ShowResultOverlay(result);
         if (result && result.type === "draw") { endTitle.textContent = "Crossmate drawn."; }
         playAgainButton.textContent = playMode === "online" ? "New online game" : "Play again";
-        reviewGameButton.hidden = playMode !== "online";
+        reviewGameButton.hidden = historyCount() < 2;
       };
 
       historyBackButton.addEventListener("click", reviewBack);
@@ -4731,6 +4736,7 @@
       };
       var v14CanLocalAct = canLocalAct;
       canLocalAct = function () {
+        if (reviewingHistory()) { return false; }
         if (playMode === "ai") {
           return !aiThinking && !state.gameOver && state.currentPlayer === humanPlayer;
         }
@@ -4770,8 +4776,9 @@
           p1Name.textContent = "You · Rose";
           p2Name.textContent = "Computer · Cyan";
           networkBadge.textContent = "Computer · " + aiTitle(aiDifficulty);
-          networkBadge.className = "network-pill ai" + (aiThinking ? " ai-thinking" : "");
-          boardShell.classList.toggle("ai-thinking", aiThinking);
+          networkBadge.className = "network-pill ai" + (aiThinking && !reviewingHistory() ? " ai-thinking" : "");
+          boardShell.classList.toggle("ai-thinking", aiThinking && !reviewingHistory());
+          if (reviewingHistory()) { return; }
           check = isInCheck(state, state.currentPlayer);
           if (!state.gameOver && state.currentPlayer === aiPlayer) {
             statusText.textContent = aiThinking ? "Computer is thinking" : (check ? "Computer is in check" : "Computer to move");
