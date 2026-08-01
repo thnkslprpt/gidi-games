@@ -695,7 +695,7 @@
     <div class="shell topbar-row">
       <a class="back-button" href="../../" aria-label="All games">← <span>All games</span></a>
       <div class="brand">
-        <h1><span>Crazy</span> Cats <span class="version">v3.0.3</span></h1>
+        <h1><span>Crazy</span> Cats <span class="version">v3.0.4</span></h1>
         <p>Power cats. Bigger crashes. Thirty backyard missions.</p>
       </div>
       <div class="top-actions">
@@ -1057,7 +1057,14 @@
     function sound(name) {
       if (!soundOn) return;
       if (name === "launch") { tone(280, .08, "triangle", .035); tone(430, .1, "sine", .02, .05); }
-      else if (name === "hit") tone(125 + Math.random() * 70, .055, "square", .025);
+      else if (name === "hit") {
+        // Keep legitimate impacts audible without allowing one trapped contact
+        // to create a machine-gun stream of bounce sounds.
+        var hitNow = performance.now();
+        if (hitNow - (sound.lastHitAt || 0) < 135) return;
+        sound.lastHitAt = hitNow;
+        tone(125 + Math.random() * 70, .055, "square", .025);
+      }
       else if (name === "break") { tone(190, .06, "sawtooth", .025); tone(95, .1, "square", .02, .03); }
       else if (name === "target") { tone(520, .08, "sine", .04); tone(760, .11, "sine", .028, .06); }
       else if (name === "bomb") { tone(75, .22, "sawtooth", .06); tone(46, .3, "square", .04, .02); }
@@ -1610,17 +1617,43 @@
       });
     }
 
+    // CRAZY-CATS-V3.0.4-STABLE-SURFACE-CONTACT: always separate overlapping bodies, even while damage is on
+    // cooldown. Low-speed top contacts settle instead of being reflected every frame.
     function resolveCatBlock(cat, block, now) {
-      if (block.gone || now - block.hitAt < 55) return;
+      if (block.gone) return;
       var collision = circleRectCollision(cat, block);
       if (!collision) return;
-      block.hitAt = now;
+
       cat.x += collision.nx * collision.penetration;
       cat.y += collision.ny * collision.penetration;
-      var speed = Math.sqrt(cat.vx * cat.vx + cat.vy * cat.vy);
-      var impact = speed * cat.force * (cat.smashMode ? 1.75 : 1);
-      damageBlock(block, impact, "cat", cat.vx * cat.mass, cat.vy * cat.mass);
-      var normalVelocity = cat.vx * collision.nx + cat.vy * collision.ny;
+
+      var blockVx = block.vx || 0;
+      var blockVy = block.vy || 0;
+      var relativeVx = cat.vx - blockVx;
+      var relativeVy = cat.vy - blockVy;
+      var normalVelocity = relativeVx * collision.nx + relativeVy * collision.ny;
+      var normalImpact = Math.max(0, -normalVelocity);
+      var impact = normalImpact * cat.force * (cat.smashMode ? 1.75 : 1);
+      var topContact = collision.ny < -.68 && cat.y < block.y;
+      var stableTopContact = topContact && normalImpact < 165 && !cat.smashMode;
+      var canDamage = now - block.hitAt >= 70;
+
+      // Damage is based on speed into the surface, not sideways sliding speed.
+      if (canDamage && impact > 45) {
+        block.hitAt = now;
+        damageBlock(block, impact, "cat", cat.vx * cat.mass, cat.vy * cat.mass);
+        if (block.gone) return;
+      }
+
+      if (stableTopContact) {
+        cat.supportedSurface = true;
+        cat.vy = blockVy;
+        cat.vx = blockVx + relativeVx * .86;
+        if (Math.abs(cat.vx - blockVx) < 8) cat.vx = blockVx;
+        cat.spin *= .68;
+        return;
+      }
+
       if (normalVelocity < 0) {
         cat.vx -= (1 + cat.bounce) * normalVelocity * collision.nx;
         cat.vy -= (1 + cat.bounce) * normalVelocity * collision.ny;
@@ -1631,22 +1664,34 @@
       cat.vx *= block.material === "steel" ? .62 : .8;
       cat.vy *= block.material === "steel" ? .68 : .84;
       cat.spin += (Math.random() - .5) * 3;
-      if (speed > 390) shake(Math.min(7, speed / 110));
+      if (normalImpact > 390) shake(Math.min(7, normalImpact / 110));
     }
 
-    function resolveCatObstacle(cat, obstacle) {
+    function resolveCatObstacle(cat, obstacle, now) {
       var collision = circleRectCollision(cat, obstacle);
       if (!collision) return;
       cat.x += collision.nx * collision.penetration;
       cat.y += collision.ny * collision.penetration;
+
       var normalVelocity = cat.vx * collision.nx + cat.vy * collision.ny;
+      var normalImpact = Math.max(0, -normalVelocity);
+      var topContact = collision.ny < -.68 && cat.y < obstacle.y;
+      if (topContact && normalImpact < 165 && !cat.smashMode) {
+        cat.supportedSurface = true;
+        cat.vy = 0;
+        cat.vx *= .86;
+        if (Math.abs(cat.vx) < 8) cat.vx = 0;
+        cat.spin *= .68;
+        return;
+      }
+
       if (normalVelocity < 0) {
         cat.vx -= 1.55 * normalVelocity * collision.nx;
         cat.vy -= 1.55 * normalVelocity * collision.ny;
       }
       cat.vx *= .84;
       cat.vy *= .84;
-      sound("hit");
+      if (normalImpact > 85) sound("hit");
     }
 
     function groundPound(cat) {
@@ -1677,6 +1722,7 @@
     function updateCats(dt, now) {
       cats.forEach(function (cat) {
         if (!cat.launched || cat.resting) return;
+        cat.supportedSurface = false;
         cat.vy += GRAVITY * dt;
         cat.x += cat.vx * dt;
         cat.y += cat.vy * dt;
@@ -1688,7 +1734,7 @@
           addParticles(cat.x - cat.vx * .012, cat.y - cat.vy * .012, 1, "trail", cat.color);
         }
 
-        obstacles.forEach(function (obstacle) { resolveCatObstacle(cat, obstacle); });
+        obstacles.forEach(function (obstacle) { resolveCatObstacle(cat, obstacle, now); });
         blocks.forEach(function (block) { resolveCatBlock(cat, block, now); });
 
         targets.forEach(function (target) {
@@ -1710,6 +1756,7 @@
         if (cat.y + cat.r >= GROUND) {
           var landing = Math.abs(cat.vy);
           cat.y = GROUND - cat.r;
+          cat.supportedSurface = true;
           groundPound(cat);
           cat.vy *= -cat.bounce;
           cat.vx *= .79;
@@ -1719,7 +1766,8 @@
 
         var speedNow = Math.sqrt(cat.vx * cat.vx + cat.vy * cat.vy);
         var grounded = cat.y + cat.r >= GROUND - 1;
-        if (speedNow < 24 && grounded) {
+        var supported = grounded || cat.supportedSurface;
+        if (speedNow < 26 && supported) {
           if (!cat.lowSince) cat.lowSince = now;
         } else cat.lowSince = 0;
 
