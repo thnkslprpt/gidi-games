@@ -814,7 +814,7 @@
         <h1>Tiny Submarine</h1>
         <p>Pilot through living caves, rescue lost divers, chain treasure combos, and survive five increasingly dangerous ocean zones.</p>
       </div>
-      <div class="version-pill">Expedition v2.0.0</div>
+      <div class="version-pill">Expedition v2.0.1</div>
     </header>
 
     <main>
@@ -917,7 +917,7 @@
       "use strict";
 
       var canvas = document.getElementById("game");
-      var ctx = canvas.getContext("2d");
+      var ctx = canvas.getContext("2d", { alpha: false }) || canvas.getContext("2d");
       var overlay = document.getElementById("overlay");
       var overlayIcon = document.getElementById("overlayIcon");
       var overlayTitle = document.getElementById("overlayTitle");
@@ -957,6 +957,12 @@
       var SEGMENT_WIDTH = 68;
       var SUB_X = 218;
       var TWO_PI = Math.PI * 2;
+      var FIXED_STEP = 1 / 60;
+      var MAX_FRAME_DELTA = 0.12;
+      var MAX_UPDATE_STEPS = 6;
+      var HUD_INTERVAL = 0.1;
+      var PARTICLE_LIMIT = window.innerWidth <= 520 ? 110 : 160;
+      var FLOATING_TEXT_LIMIT = 8;
 
       var ZONES = [
         { name: "Sunlit Reef", start: 0, top: "#0b9fc0", bottom: "#075078", glow: "#75fff0", rock: "#174f61", edge: "#3ebcbd" },
@@ -979,6 +985,11 @@
       var overlayMode = "start";
       var lastTime = 0;
       var animationId = 0;
+      var frameAccumulator = 0;
+      var hudTimer = 0;
+      var effectsQuality = 1;
+      var slowFrameScore = 0;
+      var recoveryTimer = 0;
       var elapsed = 0;
       var distance = 0;
       var score = 0;
@@ -1015,6 +1026,15 @@
       var bestDistance = Math.max(readNumber("tinySubmarineBestDistanceV2"), readNumber("tinySubmarineBestDistance"));
       var audioContext = null;
       var masterGain = null;
+      var activeTones = 0;
+      var paletteCache = null;
+      var paletteCacheDistance = -999;
+      var paletteCacheZone = -1;
+      var backgroundGradientCache = null;
+      var rockGradientCache = null;
+      var vignetteGradientCache = null;
+      var gradientPaletteCache = null;
+      var hudCache = {};
 
       var submarine = {
         x: SUB_X,
@@ -1072,6 +1092,44 @@
 
       function formatNumber(value) {
         return Math.floor(value).toLocaleString("en-US");
+      }
+
+      function qualityShadow(value) {
+        return effectsQuality < 0.8 ? 0 : value;
+      }
+
+      function setTextCached(element, key, value) {
+        value = String(value);
+        if (hudCache[key] !== value) {
+          hudCache[key] = value;
+          element.textContent = value;
+        }
+      }
+
+      function addParticle(particle) {
+        if (particles.length >= PARTICLE_LIMIT) {
+          particles.splice(0, Math.max(1, particles.length - PARTICLE_LIMIT + 1));
+        }
+        particles.push(particle);
+      }
+
+      function updatePerformanceQuality(delta) {
+        if (delta > 0.024) {
+          slowFrameScore += delta;
+          recoveryTimer = 0;
+        } else {
+          slowFrameScore = Math.max(0, slowFrameScore - delta * 0.45);
+          if (effectsQuality < 1) {
+            recoveryTimer += delta;
+          }
+        }
+        if (effectsQuality === 1 && slowFrameScore > 1.05) {
+          effectsQuality = 0.68;
+          recoveryTimer = 0;
+        } else if (effectsQuality < 1 && recoveryTimer > 4.5 && slowFrameScore < 0.18) {
+          effectsQuality = 1;
+          recoveryTimer = 0;
+        }
       }
 
       function hexToRgb(color) {
@@ -1154,7 +1212,7 @@
           return;
         }
         initializeAudio();
-        if (!audioContext || !masterGain) {
+        if (!audioContext || !masterGain || activeTones >= 8) {
           return;
         }
         if (audioContext.state === "suspended") {
@@ -1209,6 +1267,16 @@
           gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
           oscillator.connect(gain);
           gain.connect(masterGain);
+          activeTones += 1;
+          oscillator.onended = function () {
+            activeTones = Math.max(0, activeTones - 1);
+            try {
+              oscillator.disconnect();
+              gain.disconnect();
+            } catch (cleanupError) {
+              // Some older WebKit builds disconnect ended nodes automatically.
+            }
+          };
           oscillator.start(now);
           oscillator.stop(now + duration + 0.03);
         } catch (error) {
@@ -1235,20 +1303,46 @@
       }
 
       function getZonePalette() {
-        var current = ZONES[zoneIndex];
-        var next = ZONES[Math.min(zoneIndex + 1, ZONES.length - 1)];
+        var current;
+        var next;
         var amount = 0;
+        if (paletteCache && paletteCacheZone === zoneIndex && Math.abs(distance - paletteCacheDistance) < 1.8) {
+          return paletteCache;
+        }
+        current = ZONES[zoneIndex];
+        next = ZONES[Math.min(zoneIndex + 1, ZONES.length - 1)];
         if (next !== current) {
           amount = clamp((distance - current.start) / (next.start - current.start), 0, 1);
           amount = easeOut(amount) * 0.72;
         }
-        return {
+        paletteCache = {
           top: mixColor(current.top, next.top, amount),
           bottom: mixColor(current.bottom, next.bottom, amount),
           glow: mixColor(current.glow, next.glow, amount),
           rock: mixColor(current.rock, next.rock, amount),
           edge: mixColor(current.edge, next.edge, amount)
         };
+        paletteCacheDistance = distance;
+        paletteCacheZone = zoneIndex;
+        return paletteCache;
+      }
+
+      function prepareRenderCache(palette) {
+        if (gradientPaletteCache !== palette) {
+          backgroundGradientCache = ctx.createLinearGradient(0, 0, 0, HEIGHT);
+          backgroundGradientCache.addColorStop(0, palette.top);
+          backgroundGradientCache.addColorStop(1, palette.bottom);
+          rockGradientCache = ctx.createLinearGradient(0, 0, 0, HEIGHT);
+          rockGradientCache.addColorStop(0, mixColor("#071119", palette.rock, 0.78));
+          rockGradientCache.addColorStop(0.52, palette.rock);
+          rockGradientCache.addColorStop(1, mixColor("#02070b", palette.rock, 0.72));
+          gradientPaletteCache = palette;
+        }
+        if (!vignetteGradientCache) {
+          vignetteGradientCache = ctx.createRadialGradient(WIDTH * 0.5, HEIGHT * 0.48, HEIGHT * 0.16, WIDTH * 0.5, HEIGHT * 0.48, WIDTH * 0.7);
+          vignetteGradientCache.addColorStop(0, "rgba(0,0,0,0)");
+          vignetteGradientCache.addColorStop(1, "rgba(0,6,15,0.46)");
+        }
       }
 
       function buildCave() {
@@ -1368,6 +1462,13 @@
         zoneIndex = 0;
         zoneBannerTimer = 0;
         missionResetTimer = 0;
+        frameAccumulator = 0;
+        hudTimer = 0;
+        paletteCache = null;
+        paletteCacheDistance = -999;
+        paletteCacheZone = -1;
+        gradientPaletteCache = null;
+        hudCache = {};
         entities = [];
         particles = [];
         floatingTexts = [];
@@ -1381,7 +1482,7 @@
         chooseMission();
         setRise(false);
         setStatus("Expedition underway", "Follow the treasure routes and leave room to dodge.", "good", 0);
-        updateHud();
+        updateHud(true);
       }
 
       function addEntity(type, x, y, extra) {
@@ -1570,7 +1671,7 @@
 
         if (submarine.trailClock <= 0) {
           submarine.trailClock = rising ? 0.055 : 0.095;
-          particles.push({
+          addParticle({
             type: "bubble",
             x: submarine.x - 52,
             y: submarine.y + random(-5, 5),
@@ -1780,8 +1881,9 @@
         };
         var palette = colors[style] || colors.oxygen;
         var index;
+        count = Math.min(count, effectsQuality < 0.8 ? 12 : 28);
         for (index = 0; index < count; index += 1) {
-          particles.push({
+          addParticle({
             type: "spark",
             x: x,
             y: y,
@@ -1796,6 +1898,9 @@
       }
 
       function setFloatingText(text, x, y, color) {
+        if (floatingTexts.length >= FLOATING_TEXT_LIMIT) {
+          floatingTexts.shift();
+        }
         floatingTexts.push({ text: text, x: x, y: y, life: 1.05, maxLife: 1.05, color: color });
       }
 
@@ -1930,22 +2035,33 @@
         }
       }
 
-      function updateHud() {
+      function updateHud(force) {
         var progress = missionProgress();
-        scoreValue.textContent = formatNumber(score);
-        distanceValue.textContent = Math.floor(distance) + " m";
-        zoneValue.textContent = ZONES[zoneIndex].name;
-        hullValue.textContent = hull > 0 ? Array(hull + 1).join("♥ ").trim() : "—";
-        oxygenValue.textContent = Math.max(0, Math.ceil(oxygen)) + "%";
-        oxygenFill.style.width = clamp(oxygen, 0, 100) + "%";
-        oxygenPanel.classList.toggle("is-low", oxygen <= 24);
-        treasureValue.textContent = String(treasure);
-        diversValue.textContent = String(divers);
-        bestScoreValue.textContent = formatNumber(bestScore);
-        bestDistanceValue.textContent = Math.floor(bestDistance) + " m";
+        var scoreText = formatNumber(score);
+        var distanceText = Math.floor(distance) + " m";
+        var hullText = hull > 0 ? Array(hull + 1).join("♥ ").trim() : "—";
+        var oxygenText = Math.max(0, Math.ceil(oxygen)) + "%";
+        var oxygenWidth = Math.round(clamp(oxygen, 0, 100) * 2) / 2;
+        setTextCached(scoreValue, "score", scoreText);
+        setTextCached(distanceValue, "distance", distanceText);
+        setTextCached(zoneValue, "zone", ZONES[zoneIndex].name);
+        setTextCached(hullValue, "hull", hullText);
+        setTextCached(oxygenValue, "oxygen", oxygenText);
+        setTextCached(treasureValue, "treasure", treasure);
+        setTextCached(diversValue, "divers", divers);
+        setTextCached(bestScoreValue, "bestScore", formatNumber(bestScore));
+        setTextCached(bestDistanceValue, "bestDistance", Math.floor(bestDistance) + " m");
+        if (force || hudCache.oxygenWidth !== oxygenWidth) {
+          hudCache.oxygenWidth = oxygenWidth;
+          oxygenFill.style.width = oxygenWidth + "%";
+        }
+        if (force || hudCache.oxygenLow !== (oxygen <= 24)) {
+          hudCache.oxygenLow = oxygen <= 24;
+          oxygenPanel.classList.toggle("is-low", oxygen <= 24);
+        }
         if (mission) {
-          missionText.textContent = missionComplete ? "Mission complete" : mission.text;
-          missionValue.textContent = Math.min(progress, mission.target) + "/" + mission.target;
+          setTextCached(missionText, "missionText", missionComplete ? "Mission complete" : mission.text);
+          setTextCached(missionValue, "missionValue", Math.min(progress, mission.target) + "/" + mission.target);
         }
       }
 
@@ -1993,24 +2109,31 @@
         updateTimers(delta);
         updateZone();
         checkMission();
-        updateHud();
+        hudTimer -= delta;
+        if (hudTimer <= 0) {
+          hudTimer += HUD_INTERVAL;
+          updateHud(false);
+        }
         shake *= Math.pow(0.88, delta * 60);
         flashStrength *= Math.pow(0.82, delta * 60);
       }
 
       function drawBackground(palette) {
-        var gradient = ctx.createLinearGradient(0, 0, 0, HEIGHT);
         var index;
         var rayX;
         var rayWidth;
-        gradient.addColorStop(0, palette.top);
-        gradient.addColorStop(1, palette.bottom);
-        ctx.fillStyle = gradient;
+        var rayCount = effectsQuality < 0.8 ? 3 : 6;
+        var bubbleCount = effectsQuality < 0.8 ? Math.min(26, bubbles.length) : bubbles.length;
+        var fishCount = effectsQuality < 0.8 ? Math.min(5, silhouettes.length) : silhouettes.length;
+        var bubble;
+        var fish;
+        var sway;
+        ctx.fillStyle = backgroundGradientCache;
         ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
         ctx.save();
         ctx.globalCompositeOperation = "screen";
-        for (index = 0; index < 6; index += 1) {
+        for (index = 0; index < rayCount; index += 1) {
           rayX = ((index * 197 + distance * 1.9) % (WIDTH + 300)) - 150;
           rayWidth = 75 + index * 17;
           ctx.beginPath();
@@ -2027,19 +2150,21 @@
         ctx.save();
         ctx.globalAlpha = 0.18;
         ctx.fillStyle = palette.glow;
-        bubbles.forEach(function (bubble) {
+        for (index = 0; index < bubbleCount; index += 1) {
+          bubble = bubbles[index];
           ctx.globalAlpha = bubble.alpha * 0.45;
           ctx.beginPath();
           ctx.arc(bubble.x, bubble.y, bubble.radius, 0, TWO_PI);
           ctx.fill();
-        });
+        }
         ctx.restore();
 
         ctx.save();
         ctx.globalAlpha = 0.13;
         ctx.fillStyle = "#00101c";
-        silhouettes.forEach(function (fish) {
-          var sway = Math.sin(fish.phase) * 2;
+        for (index = 0; index < fishCount; index += 1) {
+          fish = silhouettes[index];
+          sway = Math.sin(fish.phase) * 2;
           ctx.save();
           ctx.translate(fish.x, fish.y + sway);
           ctx.scale(fish.size, fish.size * 0.55);
@@ -2051,22 +2176,18 @@
           ctx.closePath();
           ctx.fill();
           ctx.restore();
-        });
+        }
         ctx.restore();
       }
 
       function drawCave(palette) {
-        var rockGradient = ctx.createLinearGradient(0, 0, 0, HEIGHT);
         var index;
         var segment;
         var top;
         var bottom;
-        rockGradient.addColorStop(0, mixColor("#071119", palette.rock, 0.78));
-        rockGradient.addColorStop(0.52, palette.rock);
-        rockGradient.addColorStop(1, mixColor("#02070b", palette.rock, 0.72));
 
         ctx.save();
-        ctx.fillStyle = rockGradient;
+        ctx.fillStyle = rockGradientCache;
         ctx.beginPath();
         ctx.moveTo(0, 0);
         cave.forEach(function (point) {
@@ -2089,7 +2210,7 @@
         ctx.lineWidth = 4;
         ctx.globalAlpha = 0.54;
         ctx.shadowColor = palette.glow;
-        ctx.shadowBlur = 14;
+        ctx.shadowBlur = qualityShadow(14);
         ctx.beginPath();
         cave.forEach(function (point, pointIndex) {
           top = point.center - point.opening * 0.5;
@@ -2134,10 +2255,10 @@
           ctx.closePath();
           ctx.fill();
 
-          if (segment.plant) {
+          if (segment.plant && (effectsQuality >= 0.8 || index % 2 === 0)) {
             drawPlant(segment.x, bottom + 3, palette.glow, segment.seed);
           }
-          if (segment.crystal) {
+          if (segment.crystal && (effectsQuality >= 0.8 || index % 2 === 0)) {
             drawWallCrystal(segment.x + 7, segment.seed > 0.5 ? top - 3 : bottom + 3, palette.glow, segment.seed);
           }
         }
@@ -2170,7 +2291,7 @@
         ctx.globalAlpha = 0.26;
         ctx.fillStyle = color;
         ctx.shadowColor = color;
-        ctx.shadowBlur = 12;
+        ctx.shadowBlur = qualityShadow(12);
         ctx.beginPath();
         ctx.moveTo(-5, 0);
         ctx.lineTo(-2, 13 + seed * 8);
@@ -2207,13 +2328,22 @@
       }
 
       function drawGlow(x, y, radius, color, alpha) {
-        var gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
-        gradient.addColorStop(0, color);
-        gradient.addColorStop(1, "rgba(0,0,0,0)");
+        var gradient;
         ctx.save();
-        ctx.globalAlpha = alpha;
-        ctx.fillStyle = gradient;
-        ctx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+        if (effectsQuality < 0.8) {
+          ctx.globalAlpha = alpha * 0.42;
+          ctx.fillStyle = color;
+          ctx.beginPath();
+          ctx.arc(x, y, radius * 0.55, 0, TWO_PI);
+          ctx.fill();
+        } else {
+          gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+          gradient.addColorStop(0, color);
+          gradient.addColorStop(1, "rgba(0,0,0,0)");
+          ctx.globalAlpha = alpha;
+          ctx.fillStyle = gradient;
+          ctx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+        }
         ctx.restore();
       }
 
@@ -2225,7 +2355,7 @@
         ctx.rotate(entity.spin * 0.38);
         ctx.scale(pulse, pulse);
         ctx.shadowColor = "#ffd65f";
-        ctx.shadowBlur = 12;
+        ctx.shadowBlur = qualityShadow(12);
         ctx.fillStyle = "#ffcf4b";
         ctx.strokeStyle = "#fff4ad";
         ctx.lineWidth = 2;
@@ -2277,7 +2407,7 @@
         ctx.stroke();
         ctx.fillStyle = "rgba(255,72,93," + (0.45 + blink * 0.55) + ")";
         ctx.shadowColor = "#ff485d";
-        ctx.shadowBlur = 10 + blink * 7;
+        ctx.shadowBlur = qualityShadow(10 + blink * 7);
         ctx.beginPath();
         ctx.arc(0, 0, 5, 0, TWO_PI);
         ctx.fill();
@@ -2388,7 +2518,7 @@
         ctx.strokeStyle = color;
         ctx.lineWidth = 3;
         ctx.shadowColor = color;
-        ctx.shadowBlur = 12;
+        ctx.shadowBlur = qualityShadow(12);
         ctx.beginPath();
         ctx.arc(0, 0, 20, 0, TWO_PI);
         ctx.fill();
@@ -2440,7 +2570,7 @@
         ctx.strokeStyle = "#8affdf";
         ctx.lineWidth = 2.5;
         ctx.shadowColor = "#69f7d1";
-        ctx.shadowBlur = 16;
+        ctx.shadowBlur = qualityShadow(16);
         ctx.beginPath();
         ctx.moveTo(0, -23);
         ctx.lineTo(18, -7);
@@ -2475,7 +2605,7 @@
           ctx.strokeStyle = "rgba(104,207,255," + (0.58 + Math.sin(elapsed * 6) * 0.15) + ")";
           ctx.lineWidth = 4;
           ctx.shadowColor = "#69d3ff";
-          ctx.shadowBlur = 16;
+          ctx.shadowBlur = qualityShadow(16);
           ctx.beginPath();
           ctx.ellipse(0, 0, 59, 34, 0, 0, TWO_PI);
           ctx.stroke();
@@ -2508,7 +2638,7 @@
         ctx.strokeStyle = "#fff0a4";
         ctx.lineWidth = 2.2;
         ctx.shadowColor = "rgba(0,0,0,0.28)";
-        ctx.shadowBlur = 11;
+        ctx.shadowBlur = qualityShadow(11);
         ctx.beginPath();
         ctx.moveTo(-49, -4);
         ctx.quadraticCurveTo(-39, -25, -6, -25);
@@ -2577,7 +2707,7 @@
 
         ctx.fillStyle = rising ? "#bffff4" : "#79d8e8";
         ctx.shadowColor = "#69ead4";
-        ctx.shadowBlur = rising ? 13 : 6;
+        ctx.shadowBlur = qualityShadow(rising ? 13 : 6);
         ctx.beginPath();
         ctx.arc(-51, 0, rising ? 5 : 3.5, 0, TWO_PI);
         ctx.fill();
@@ -2598,7 +2728,7 @@
           } else {
             ctx.fillStyle = particle.color;
             ctx.shadowColor = particle.color;
-            ctx.shadowBlur = 8;
+            ctx.shadowBlur = qualityShadow(8);
             ctx.beginPath();
             ctx.arc(particle.x, particle.y, particle.size * alpha, 0, TWO_PI);
             ctx.fill();
@@ -2623,10 +2753,7 @@
       }
 
       function drawVignette() {
-        var vignette = ctx.createRadialGradient(WIDTH * 0.5, HEIGHT * 0.48, HEIGHT * 0.16, WIDTH * 0.5, HEIGHT * 0.48, WIDTH * 0.7);
-        vignette.addColorStop(0, "rgba(0,0,0,0)");
-        vignette.addColorStop(1, "rgba(0,6,15,0.46)");
-        ctx.fillStyle = vignette;
+        ctx.fillStyle = vignetteGradientCache;
         ctx.fillRect(0, 0, WIDTH, HEIGHT);
       }
 
@@ -2634,6 +2761,7 @@
         var palette = getZonePalette();
         var offsetX = shake > 0.25 ? random(-shake, shake) : 0;
         var offsetY = shake > 0.25 ? random(-shake, shake) : 0;
+        prepareRenderCache(palette);
         ctx.save();
         ctx.translate(offsetX, offsetY);
         drawBackground(palette);
@@ -2646,18 +2774,30 @@
       }
 
       function frame(timestamp) {
-        var delta;
+        var rawDelta;
+        var steps = 0;
         if (!running) {
           return;
         }
         if (!lastTime) {
           lastTime = timestamp;
         }
-        delta = Math.min(0.033, (timestamp - lastTime) / 1000);
+        rawDelta = clamp((timestamp - lastTime) / 1000, 0, MAX_FRAME_DELTA);
         lastTime = timestamp;
+        updatePerformanceQuality(rawDelta);
+        frameAccumulator += rawDelta;
         if (!paused) {
-          update(delta);
-          draw();
+          while (frameAccumulator >= FIXED_STEP && steps < MAX_UPDATE_STEPS && running) {
+            update(FIXED_STEP);
+            frameAccumulator -= FIXED_STEP;
+            steps += 1;
+          }
+          if (steps === MAX_UPDATE_STEPS && frameAccumulator > FIXED_STEP) {
+            frameAccumulator = 0;
+          }
+          if (running) {
+            draw();
+          }
         }
         if (running && !paused) {
           animationId = window.requestAnimationFrame(frame);
@@ -2709,6 +2849,7 @@
         running = true;
         paused = false;
         lastTime = 0;
+        frameAccumulator = 0;
         pauseButton.disabled = false;
         pauseButton.textContent = "Ⅱ";
         pauseButton.setAttribute("aria-label", "Pause game");
@@ -2738,7 +2879,7 @@
           bestDistance = Math.floor(distance);
           saveValue("tinySubmarineBestDistanceV2", bestDistance);
         }
-        updateHud();
+        updateHud(true);
         setStatus("Expedition ended", reason, "danger", 0);
         playTone("gameover");
         showOverlay("end", reason);
@@ -2759,6 +2900,7 @@
           pauseButton.setAttribute("aria-label", "Pause game");
           hideOverlay();
           lastTime = 0;
+          frameAccumulator = 0;
           animationId = window.requestAnimationFrame(frame);
         }
       }
