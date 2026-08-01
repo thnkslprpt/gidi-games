@@ -1365,7 +1365,7 @@
       <a class="icon-button" href="../../" aria-label="Back to games">←</a>
       <div class="title-block">
         <p class="eyebrow">Local + AI + online strategy</p>
-        <h1>Crossmate <span class="version">v1.5.3</span></h1>
+        <h1>Crossmate <span class="version">v1.6.0</span></h1>
       </div>
       <div class="top-actions">
         <button class="icon-button" id="soundButton" type="button" aria-label="Turn sound off" title="Sound">♪</button>
@@ -1512,14 +1512,14 @@
         </article>
         <article class="rule-card">
           <div class="rule-head"><span class="rule-icon">×</span><strong>Cross</strong></div>
-          <p>Move up to 3 squares in any straight or diagonal direction. On capturing an enemy, the cross stops immediately on that square. A cross may never enter either of its own diamonds’ forcefields. It may enter an enemy diamond’s field only along a clear path to land on and destroy that diamond.</p>
+          <p>Move up to 3 squares in any straight or diagonal direction. On capturing an enemy, the cross stops immediately on that square. A cross may move through and finish inside its own diamonds’ forcefields, but friendly forcefields never shield it from check, capture, or checkmate. It may enter an enemy diamond’s field only along a clear path to land on and destroy that diamond.</p>
         </article>
         <article class="rule-card forcefield-rule">
           <div class="rule-head"><span class="rule-icon">◇</span><strong>Diamond forcefield</strong><span class="point-tag">6 points</span></div>
-          <p>A diamond moves 1 square in any direction to an empty square. Its 8 surrounding squares form a forcefield: enemy pieces cannot enter, capture into, or pass through them. The diamond cannot move if its new field would contain any enemy or its own cross. Only a square, a cross, or a far-edge circle blast can destroy it.</p>
+          <p>A diamond moves 1 square in any direction to an empty square. Its 8 surrounding squares form a forcefield: enemy pieces cannot enter, capture into, or pass through them when attacking ordinary pieces. The diamond cannot move if its new field would contain an enemy. Friendly pieces, including its own cross, may stand inside it. Only a square, a cross, or a far-edge circle blast can destroy the diamond.</p>
         </article>
       </div>
-      <div class="rule-note"><strong>Points:</strong> captured circles are worth 1, triangles 3, squares 5, and diamonds 6. Points show material advantage but never replace the cross win condition.<br><br><strong>Check and forcefields:</strong> you may not finish a move with your own cross threatened. The board highlights the attacker, attack path, and relevant forcefield. Forcefield squares block enemy movement and attacks. Checkmate wins. Stalemate, only the two crosses remaining, a threefold repetition, or 60 consecutive player moves without a capture ends the game in a draw.</div>
+      <div class="rule-note"><strong>Points:</strong> captured circles are worth 1, triangles 3, squares 5, and diamonds 6. Points show material advantage but never replace the cross win condition.<br><br><strong>Check and forcefields:</strong> you may not finish a move with your own cross threatened. The board highlights the attacker, attack path, and relevant forcefield. Forcefields block enemy movement and attacks against ordinary pieces, but a cross receives no protection from its own forcefields; attacks on it treat those fields as transparent. Checkmate wins. Stalemate, only the two crosses remaining, a threefold repetition, or 60 consecutive player moves without a capture ends the game in a draw.</div>
       <div class="modal-actions">
         <button class="small-button" id="tutorialFromHelpButton" type="button">Tutorial</button>
         <button class="primary-button" id="closeHelpButton" type="button">Close</button>
@@ -1593,7 +1593,7 @@
       ];
       var TYPE_NAMES = { circle: "Circle", diamond: "Diamond", square: "Square", triangle: "Triangle", cross: "Cross" };
       var POINT_VALUES = { circle: 1, triangle: 3, square: 5, diamond: 6, cross: 0 };
-      var VERSION = "1.5.3";
+      var VERSION = "1.6.0";
       var ROOM_LIFETIME_MS = 10 * 24 * 60 * 60 * 1000;
       var BACK_ROW = ["diamond", "square", "triangle", null, "cross", null, "triangle", "square", "diamond"];
 
@@ -2116,6 +2116,7 @@
       }
 
       function isForcefieldSquare(gameState, owner, r, c, ignoredDiamondId) {
+        if (gameState && Number(gameState.transparentForcefieldPlayer || 0) === owner) { return false; }
         var i;
         var piece;
         for (i = 0; i < gameState.pieces.length; i += 1) {
@@ -2137,8 +2138,7 @@
       }
 
       function crossFieldBlocked(gameState, player, r, c, ignoredEnemyDiamondId) {
-        return isOwnForcefield(gameState, player, r, c) ||
-          isEnemyForcefield(gameState, player, r, c, ignoredEnemyDiamondId);
+        return isEnemyForcefield(gameState, player, r, c, ignoredEnemyDiamondId);
       }
 
       function diamondCanCreateField(gameState, diamond, r, c) {
@@ -2150,7 +2150,7 @@
           piece = gameState.pieces[i];
           if (!piece.alive || piece.id === diamond.id) { continue; }
           if (isAdjacent(r, c, piece.r, piece.c)) {
-            if (piece.player !== diamond.player || piece.type === "cross") { return false; }
+            if (piece.player !== diamond.player) { return false; }
           }
         }
         return true;
@@ -2537,7 +2537,7 @@
           for (step = 1; step < distance; step += 1) {
             r = piece.r + dr * step;
             c = piece.c + dc * step;
-            if (isOwnForcefield(gameState, piece.player, r, c) || isEnemyForcefield(gameState, piece.player, r, c, target.id)) {
+            if (isEnemyForcefield(gameState, piece.player, r, c, target.id)) {
               blocked = true; break;
             }
             occupant = pieceAt(gameState, r, c);
@@ -2625,13 +2625,18 @@
 
       function isSquareAttacked(gameState, r, c, byPlayer) {
         var target = pieceAt(gameState, r, c);
+        var attackState = gameState;
         var i;
         var j;
         var moves;
         if (!target) { return false; }
-        for (i = 0; i < gameState.pieces.length; i += 1) {
-          if (!gameState.pieces[i].alive || gameState.pieces[i].player !== byPlayer) { continue; }
-          moves = generatePseudoMovesForPiece(gameState, gameState.pieces[i]);
+        if (target.type === "cross") {
+          attackState = Object.create(gameState);
+          attackState.transparentForcefieldPlayer = target.player;
+        }
+        for (i = 0; i < attackState.pieces.length; i += 1) {
+          if (!attackState.pieces[i].alive || attackState.pieces[i].player !== byPlayer) { continue; }
+          moves = generatePseudoMovesForPiece(attackState, attackState.pieces[i]);
           for (j = 0; j < moves.length; j += 1) {
             if (moves[j].captures.indexOf(target.id) !== -1) { return true; }
           }
@@ -2649,9 +2654,51 @@
         var pseudo = generatePseudoMovesForPiece(gameState, piece);
         var legal = [];
         var legalBlastArrivals = {};
+        var enemyCross = crossFor(gameState, otherPlayer(piece.player));
+        var attackState;
+        var attackPseudo;
+        var knownMoves = {};
+        var hasDefendingDiamond = false;
+        var couldReachCross = false;
+        var deltaR;
+        var deltaC;
+        var candidateKey;
         var i;
         var next;
         var ownCross;
+        if (enemyCross) {
+          for (i = 0; i < gameState.pieces.length; i += 1) {
+            if (gameState.pieces[i].alive && gameState.pieces[i].player === enemyCross.player && gameState.pieces[i].type === "diamond") {
+              hasDefendingDiamond = true;
+              break;
+            }
+          }
+          deltaR = Math.abs(enemyCross.r - piece.r);
+          deltaC = Math.abs(enemyCross.c - piece.c);
+          if (piece.type === "circle") {
+            couldReachCross = deltaC === 1 && enemyCross.r - piece.r === (piece.player === 1 ? -1 : 1);
+          } else if (piece.type === "square") {
+            couldReachCross = deltaR === 0 || deltaC === 0;
+          } else if (piece.type === "triangle") {
+            couldReachCross = deltaR + deltaC > 0 && deltaR + deltaC <= 3;
+          } else if (piece.type === "cross") {
+            couldReachCross = Math.max(deltaR, deltaC) > 0 && Math.max(deltaR, deltaC) <= 3 &&
+              (deltaR === 0 || deltaC === 0 || deltaR === deltaC);
+          }
+          if (hasDefendingDiamond && couldReachCross) {
+            for (i = 0; i < pseudo.length; i += 1) { knownMoves[JSON.stringify(pseudo[i])] = true; }
+            attackState = Object.create(gameState);
+            attackState.transparentForcefieldPlayer = enemyCross.player;
+            attackPseudo = generatePseudoMovesForPiece(attackState, piece);
+            for (i = 0; i < attackPseudo.length; i += 1) {
+              candidateKey = JSON.stringify(attackPseudo[i]);
+              if (attackPseudo[i].captures.indexOf(enemyCross.id) !== -1 && !knownMoves[candidateKey]) {
+                pseudo.push(attackPseudo[i]);
+                knownMoves[candidateKey] = true;
+              }
+            }
+          }
+        }
         for (i = 0; i < pseudo.length; i += 1) {
           next = simulateMove(gameState, pseudo[i]);
           ownCross = crossFor(next, piece.player);
@@ -2941,7 +2988,7 @@
         actionTitle.textContent = TYPE_NAMES[piece.type] + " selected · " + selectedMoves.length + " legal " + (selectedMoves.length === 1 ? "move" : "moves");
         if (piece.type !== "triangle") {
           if (piece.type === "diamond") {
-            actionSub.textContent = selectedMoves.length ? "Move 1 square. The new forcefield may not contain an enemy or your cross." : "No legal forcefield position keeps your cross safe.";
+            actionSub.textContent = selectedMoves.length ? "Move 1 square. The new forcefield may contain your cross, but not an enemy." : "No legal forcefield position keeps your cross safe.";
           } else if (piece.type === "circle") {
             actionSub.textContent = "Reach the far edge to trade this circle for any enemy except the cross.";
           } else {
@@ -3518,6 +3565,7 @@
       }
       function checkVisualData(gameState, player) {
         var cross = crossFor(gameState, player);
+        var attackState = gameState;
         var attackers = {};
         var paths = {};
         var fields = {};
@@ -3528,10 +3576,12 @@
         var moves;
         var keys;
         if (!cross) { return { attackers: attackers, paths: paths, fields: fields, sources: sources }; }
-        for (i = 0; i < gameState.pieces.length; i += 1) {
-          piece = gameState.pieces[i];
+        attackState = Object.create(gameState);
+        attackState.transparentForcefieldPlayer = cross.player;
+        for (i = 0; i < attackState.pieces.length; i += 1) {
+          piece = attackState.pieces[i];
           if (!piece.alive || piece.player !== otherPlayer(player)) { continue; }
-          moves = generatePseudoMovesForPiece(gameState, piece);
+          moves = generatePseudoMovesForPiece(attackState, piece);
           for (j = 0; j < moves.length; j += 1) {
             if (moves[j].captures.indexOf(cross.id) === -1) { continue; }
             attackers[piece.id] = true;
@@ -3817,8 +3867,8 @@
         {
           title: "Diamond forcefield",
           stepTitle: "Control the eight surrounding squares",
-          text: "A diamond moves one square. Its eight neighbouring squares block enemy movement and attacks. The new field is previewed before the move, newly blocked squares pulse, and tapping a blocked square highlights the diamond responsible.",
-          pieces: [{ r: 2, c: 2, text: "◇", cls: "p1" }, { r: 0, c: 2, text: "×", cls: "p2" }],
+          text: "A diamond moves one square. Its eight neighbouring squares block enemy movement and attacks against ordinary pieces. Its own cross may enter the field, but the field never shields that cross from check, capture, or checkmate. The new field is previewed before the move.",
+          pieces: [{ r: 2, c: 2, text: "◇", cls: "p1" }, { r: 1, c: 2, text: "×", cls: "p1 target" }, { r: 0, c: 2, text: "□", cls: "p2 attacker" }],
           fields: [{ r: 1, c: 1 }, { r: 1, c: 2 }, { r: 1, c: 3 }, { r: 2, c: 1 }, { r: 2, c: 3 }, { r: 3, c: 1 }, { r: 3, c: 2 }, { r: 3, c: 3 }]
         },
         {
@@ -3945,13 +3995,11 @@
           if (!(dr === 0 || dc === 0 || Math.abs(dr) === Math.abs(dc))) { continue; }
           dr = dr === 0 ? 0 : (dr > 0 ? 1 : -1);
           dc = dc === 0 ? 0 : (dc > 0 ? 1 : -1);
-          blocked = isOwnForcefield(gameState, piece.player, target.r, target.c) ||
-            isEnemyForcefield(gameState, piece.player, target.r, target.c, target.id);
+          blocked = isEnemyForcefield(gameState, piece.player, target.r, target.c, target.id);
           for (step = 1; !blocked && step < distance; step += 1) {
             r = piece.r + dr * step;
             c = piece.c + dc * step;
-            if (isOwnForcefield(gameState, piece.player, r, c) ||
-                isEnemyForcefield(gameState, piece.player, r, c, target.id) ||
+            if (isEnemyForcefield(gameState, piece.player, r, c, target.id) ||
                 pieceAt(gameState, r, c)) {
               blocked = true;
             }
@@ -4018,7 +4066,10 @@
         var selected = selectedPiece();
         var r = Number(event.currentTarget.getAttribute("data-r"));
         var c = Number(event.currentTarget.getAttribute("data-c"));
-        if (selected && !reviewingHistory() && isEnemyForcefield(state, selected.player, r, c, null)) {
+        var legalFieldMove = selectedMoves.some(function (move) {
+          return move.toR === r && move.toC === c;
+        });
+        if (selected && !reviewingHistory() && isEnemyForcefield(state, selected.player, r, c, null) && !legalFieldMove) {
           showBlockedField(r, c, selected.player);
           return;
         }
