@@ -632,6 +632,54 @@
       .cat-copy strong { font-size: 8px; }
       .cat-face { width: 30px; height: 30px; }
     }
+
+    /* CRAZY-CATS-V3.0.1-LANDSCAPE-RESULT-FIX: keep the complete result dialog visible on short landscape phones. */
+    @media (orientation: landscape) and (max-height: 430px) {
+      #resultOverlay.overlay {
+        padding: max(4px, env(safe-area-inset-top)) max(6px, env(safe-area-inset-right)) max(4px, env(safe-area-inset-bottom)) max(6px, env(safe-area-inset-left));
+      }
+      .result-panel {
+        width: min(92vw, 400px);
+        max-height: calc(100vh - 8px);
+        overflow-y: auto;
+        border-width: 2px;
+        border-radius: 18px;
+      }
+      .result-hero { padding: 8px 14px 7px; }
+      .result-hero .big-cat { font-size: 32px; line-height: 1; }
+      .result-hero h2 { margin-top: 2px; font-size: 21px; line-height: 1; }
+      .result-hero p {
+        max-width: 360px;
+        margin: 3px auto 0;
+        overflow: hidden;
+        font-size: 10px;
+        line-height: 1.15;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .star-row { margin: 5px 0 0; font-size: 24px; line-height: 1; letter-spacing: 3px; }
+      .result-body { padding: 8px 11px 10px; }
+      .result-score { gap: 5px; }
+      .result-score div { padding: 5px 3px; border-radius: 10px; }
+      .result-score span { font-size: 7px; }
+      .result-score strong { margin-top: 1px; font-size: 15px; line-height: 1.05; }
+      .result-actions { gap: 6px; margin-top: 7px; }
+      .result-actions .primary-button,
+      .result-actions .secondary-button {
+        min-height: 36px;
+        padding: 6px 10px;
+        border-radius: 11px;
+        font-size: 12px;
+      }
+    }
+    @media (orientation: landscape) and (max-height: 330px) {
+      .result-hero { padding-block: 6px; }
+      .result-hero .big-cat { font-size: 27px; }
+      .result-hero p { display: none; }
+      .star-row { font-size: 21px; }
+      .result-body { padding-block: 6px 8px; }
+    }
+
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
         scroll-behavior: auto !important;
@@ -647,7 +695,7 @@
     <div class="shell topbar-row">
       <a class="back-button" href="../../" aria-label="All games">← <span>All games</span></a>
       <div class="brand">
-        <h1><span>Crazy</span> Cats <span class="version">v3.0.0</span></h1>
+        <h1><span>Crazy</span> Cats <span class="version">v3.0.2</span></h1>
         <p>Power cats. Bigger crashes. Thirty backyard missions.</p>
       </div>
       <div class="top-actions">
@@ -767,7 +815,10 @@
     var GROUND = 455;
     var SLING = { x: 135, y: 356, maxPull: 128 };
     var GRAVITY = 980;
+    var LAUNCH_SCALE = 10.8;
+    var AIR_DRAG = .997;
     var STORAGE_KEY = "crazyCatsV3Progress";
+    // CRAZY-CATS-V3.0.1-AIM-FIX: the preview and live cat share these physics constants.
     var TUTORIAL_KEY = "crazyCatsV3Tutorial";
 
     var WORLDS = [
@@ -1235,8 +1286,8 @@
       var type = currentCat.type;
       roster[type] -= 1;
       catsUsed += 1;
-      currentCat.vx = dx * 10.8;
-      currentCat.vy = dy * 10.8;
+      currentCat.vx = dx * LAUNCH_SCALE;
+      currentCat.vy = dy * LAUNCH_SCALE;
       currentCat.launched = true;
       currentCat.launchedAt = performance.now();
       currentCat.spin = currentCat.vx * .002;
@@ -1630,7 +1681,7 @@
         cat.x += cat.vx * dt;
         cat.y += cat.vy * dt;
         cat.angle += cat.spin * dt;
-        cat.vx *= Math.pow(.997, dt * 60);
+        cat.vx *= Math.pow(AIR_DRAG, dt * 60);
         cat.spin *= Math.pow(.993, dt * 60);
 
         if (Math.random() > .72 && Math.abs(cat.vx) + Math.abs(cat.vy) > 350) {
@@ -2271,20 +2322,65 @@
       var dx = SLING.x - currentCat.x;
       var dy = SLING.y - currentCat.y;
       var pull = Math.sqrt(dx * dx + dy * dy);
-      var vx = dx * 10.8;
-      var vy = dy * 10.8;
+      var simX = currentCat.x;
+      var simY = currentCat.y;
+      var simVx = dx * LAUNCH_SCALE;
+      var simVy = dy * LAUNCH_SCALE;
+      var fixedDt = 1 / 60;
+      var points = [];
+      var stoppedByCollision = false;
+
+      // CRAZY-CATS-V3.0.2-PARTIAL-AIM-GUIDE: calculate the accurate full flight internally, but reveal only
+      // the opening half. The last part of the visible guide fades away so the
+      // player can judge direction and power without being shown the landing point.
+      var step;
+      for (step = 1; step <= 180; step += 1) {
+        simVy += GRAVITY * fixedDt;
+        simX += simVx * fixedDt;
+        simY += simVy * fixedDt;
+        simVx *= Math.pow(AIR_DRAG, fixedDt * 60);
+
+        var probe = { x: simX, y: simY, r: currentCat.r };
+        stoppedByCollision = obstacles.some(function (obstacle) {
+          return Boolean(circleRectCollision(probe, obstacle));
+        }) || blocks.some(function (block) {
+          return !block.gone && Boolean(circleRectCollision(probe, block));
+        }) || targets.some(function (target) {
+          return !target.gone && circleHit(probe, target, 2);
+        }) || bombs.some(function (bomb) {
+          return !bomb.exploded && circleHit(probe, bomb, 2);
+        }) || Boolean(diamond && !diamond.gone && circleHit(probe, diamond, 1));
+
+        if (step % 5 === 0 || stoppedByCollision) {
+          points.push({
+            x: simX,
+            y: Math.min(simY, GROUND - currentCat.r),
+            step: step
+          });
+        }
+
+        if (stoppedByCollision || simX > W + 20 || simX < -20 || simY + currentCat.r >= GROUND) break;
+      }
+
+      var visibleCount = Math.min(points.length, Math.max(3, Math.ceil(points.length * .5)));
       ctx.save();
       ctx.globalCompositeOperation = "screen";
-      var i;
-      for (i = 2; i < 33; i += 2) {
-        var t = i * .052;
-        var x = SLING.x + vx * t;
-        var y = SLING.y + vy * t + .5 * GRAVITY * t * t;
-        if (x > W + 20 || y > GROUND) break;
-        ctx.globalAlpha = Math.max(.15, .88 - i * .024);
-        ctx.fillStyle = i % 4 === 0 ? "#ffe16d" : "#ffffff";
-        ctx.beginPath(); ctx.arc(x, y, 3 + pull / SLING.maxPull, 0, Math.PI * 2); ctx.fill();
-      }
+      points.slice(0, visibleCount).forEach(function (point, index) {
+        var progress = visibleCount <= 1 ? 0 : index / (visibleCount - 1);
+        var fade = progress <= .48 ? 1 : Math.max(.04, Math.pow((1 - progress) / .52, 1.45));
+        ctx.globalAlpha = .9 * fade;
+        ctx.fillStyle = index % 2 ? "#ffe16d" : "#ffffff";
+        ctx.beginPath();
+        ctx.arc(
+          point.x,
+          point.y,
+          (3 + pull / SLING.maxPull) * (.72 + fade * .28),
+          0,
+          Math.PI * 2
+        );
+        ctx.fill();
+      });
+
       ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1;
       ctx.fillStyle = "rgba(23,34,59,.72)"; roundedRectPath(ctx, 22, 21, 150, 34, 12); ctx.fill();
       ctx.fillStyle = "rgba(255,255,255,.2)"; roundedRectPath(ctx, 35, 41, 124, 6, 3); ctx.fill();
