@@ -1346,6 +1346,674 @@
       .ai-choice span { display: none; }
     }
 
+
+
+    /* Crossmate v1.7.0: four complete local visual themes */
+    .theme-button-icon {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255,255,255,0.82);
+      border-radius: 50%;
+      display: block;
+      position: relative;
+      background: conic-gradient(var(--p1) 0 25%, var(--gold) 0 50%, var(--p2) 0 75%, #8f7cff 0);
+      box-shadow: 0 0 10px rgba(var(--p2-rgb),0.2);
+    }
+    .theme-button-icon::after {
+      content: "";
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%,-50%);
+      background: #08101d;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.45);
+    }
+    .theme-modal { width: min(100%, 560px); }
+    .theme-modal-head {
+      display: grid;
+      grid-template-columns: minmax(0,1fr) auto;
+      gap: 12px;
+      align-items: start;
+    }
+    .theme-close {
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      border: 1px solid rgba(151,174,219,0.18);
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      color: #dce8fa;
+      background: rgba(255,255,255,0.055);
+      cursor: pointer;
+      font-size: 20px;
+      line-height: 1;
+    }
+    .theme-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 9px;
+      margin-top: 15px;
+    }
+    .theme-card {
+      min-width: 0;
+      padding: 8px;
+      border: 1px solid rgba(151,174,219,0.18);
+      border-radius: 18px;
+      position: relative;
+      display: grid;
+      gap: 8px;
+      text-align: left;
+      color: var(--ink);
+      background: linear-gradient(145deg, rgba(31,43,72,0.94), rgba(10,17,31,0.98));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 9px 22px rgba(0,0,0,0.2);
+      cursor: pointer;
+      transition: transform 120ms ease, border-color 160ms ease, box-shadow 160ms ease, filter 160ms ease;
+    }
+    .theme-card:active { transform: scale(0.98); }
+    .theme-card:focus-visible { outline: 2px solid var(--p2); outline-offset: 2px; }
+    .theme-card.selected {
+      border-color: rgba(var(--p2-rgb),0.68);
+      box-shadow: inset 0 0 0 1px rgba(var(--p2-rgb),0.12), 0 0 24px rgba(var(--p2-rgb),0.16);
+    }
+    .theme-card.selected::after {
+      content: "✓";
+      width: 23px;
+      height: 23px;
+      border-radius: 50%;
+      position: absolute;
+      right: 7px;
+      top: 7px;
+      display: grid;
+      place-items: center;
+      color: #06131d;
+      background: linear-gradient(145deg, var(--p2-soft), var(--p2));
+      box-shadow: 0 5px 13px rgba(0,0,0,0.28);
+      font-size: 12px;
+      font-weight: 950;
+    }
+    .theme-preview {
+      height: 91px;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 13px;
+      position: relative;
+      overflow: hidden;
+      background-color: #0b1221;
+      background-image:
+        linear-gradient(90deg, rgba(255,255,255,0.045) 1px, transparent 1px),
+        linear-gradient(rgba(255,255,255,0.045) 1px, transparent 1px);
+      background-size: 22px 22px;
+      box-shadow: inset 0 0 18px rgba(0,0,0,0.28);
+    }
+    .theme-preview::before {
+      content: "";
+      position: absolute;
+      inset: 6px;
+      border-radius: 9px;
+      opacity: 0.8;
+      pointer-events: none;
+    }
+    .mini-piece {
+      width: 25px;
+      height: 25px;
+      border: 1px solid currentColor;
+      border-radius: 8px;
+      position: absolute;
+      display: grid;
+      place-items: center;
+      color: #ff79a7;
+      background: rgba(255,121,167,0.18);
+      box-shadow: 0 3px 8px rgba(0,0,0,0.38), 0 0 8px currentColor;
+    }
+    .mini-piece.p2 { color: #65dff0; background: rgba(101,223,240,0.17); }
+    .mini-piece::before, .mini-piece::after { content: ""; display: block; position: absolute; }
+    .mini-circle { left: 14%; top: 17%; border-radius: 50%; }
+    .mini-circle::before { width: 11px; height: 11px; border: 2px solid currentColor; border-radius: 50%; }
+    .mini-triangle { right: 13%; top: 16%; }
+    .mini-triangle::before { width: 14px; height: 16px; background: currentColor; clip-path: polygon(50% 0,100% 100%,50% 76%,0 100%); }
+    .mini-diamond { left: 29%; bottom: 13%; }
+    .mini-diamond::before { width: 11px; height: 11px; border: 2px solid currentColor; transform: rotate(45deg); }
+    .mini-cross { right: 29%; bottom: 13%; }
+    .mini-cross::before, .mini-cross::after { width: 3px; height: 15px; border-radius: 999px; background: currentColor; }
+    .mini-cross::before { transform: rotate(45deg); }
+    .mini-cross::after { transform: rotate(-45deg); }
+    .theme-copy { min-width: 0; padding: 0 3px 3px; }
+    .theme-copy strong { display: block; padding-right: 27px; font-size: 13px; }
+    .theme-copy span { display: block; margin-top: 2px; color: var(--muted); font-size: 9px; line-height: 1.35; }
+    .mode-theme-shortcut {
+      width: 100%;
+      min-height: 43px;
+      margin: 9px 0 2px;
+      padding: 7px 10px;
+      border: 1px solid rgba(151,174,219,0.15);
+      border-radius: 13px;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      text-align: left;
+      color: var(--ink);
+      background: rgba(255,255,255,0.035);
+      cursor: pointer;
+    }
+    .mode-theme-shortcut .theme-button-icon { width: 20px; height: 20px; flex: 0 0 auto; }
+    .mode-theme-shortcut span:last-child { min-width: 0; color: var(--muted); font-size: 9px; line-height: 1.2; }
+    .mode-theme-shortcut strong { display: block; margin-top: 2px; color: var(--ink); font-size: 11px; }
+    .theme-note {
+      margin-top: 11px;
+      padding: 8px 10px;
+      border: 1px solid rgba(151,174,219,0.12);
+      border-radius: 13px;
+      color: #9facbf;
+      background: rgba(255,255,255,0.028);
+      font-size: 9px;
+      line-height: 1.4;
+    }
+    .theme-detail { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; }
+
+    /* Theme previews */
+    .theme-card[data-theme-choice="neon"] .theme-preview {
+      background:
+        radial-gradient(circle at 15% 15%, rgba(255,92,166,0.2), transparent 35%),
+        radial-gradient(circle at 85% 80%, rgba(76,220,245,0.2), transparent 35%),
+        repeating-linear-gradient(0deg, rgba(101,133,197,0.12) 0 1px, transparent 1px 22px),
+        repeating-linear-gradient(90deg, rgba(101,133,197,0.12) 0 1px, transparent 1px 22px),
+        #08101e;
+    }
+    .theme-card[data-theme-choice="wood"] .theme-preview {
+      background:
+        repeating-linear-gradient(90deg, rgba(76,37,18,0.12) 0 3px, transparent 3px 11px),
+        conic-gradient(from 90deg, #d7ad76 0 25%, #7b4b2e 0 50%, #d7ad76 0 75%, #7b4b2e 0) 0 0 / 44px 44px;
+      border-color: rgba(255,220,166,0.34);
+      box-shadow: inset 0 0 0 6px #422716, inset 0 0 18px rgba(0,0,0,0.28);
+    }
+    .theme-card[data-theme-choice="wood"] .mini-piece {
+      color: #7a3029;
+      border-color: #8d5a32;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 28%, #ffe4b8, #c98d52 65%, #6f4225);
+      box-shadow: 0 3px 7px rgba(43,20,7,0.45), inset 0 1px rgba(255,255,255,0.42);
+    }
+    .theme-card[data-theme-choice="wood"] .mini-piece.p2 {
+      color: #d9ffff;
+      background: radial-gradient(circle at 35% 28%, #4faaa7, #255f62 66%, #173b3e);
+    }
+    .theme-card[data-theme-choice="space"] .theme-preview {
+      background:
+        radial-gradient(circle at 14% 18%, #fff 0 1px, transparent 1.5px),
+        radial-gradient(circle at 72% 27%, #79e4ff 0 1px, transparent 1.5px),
+        radial-gradient(circle at 42% 74%, #fff 0 1px, transparent 1.5px),
+        radial-gradient(circle at 87% 84%, #ef8cff 0 1px, transparent 1.5px),
+        linear-gradient(145deg, #050916, #0b1730 62%, #07101e);
+      border-color: rgba(108,220,255,0.34);
+    }
+    .theme-card[data-theme-choice="space"] .theme-preview::before {
+      border: 1px solid rgba(85,215,232,0.15);
+      background: linear-gradient(90deg, transparent 49%, rgba(85,215,232,0.09) 50%, transparent 51%);
+    }
+    .theme-card[data-theme-choice="space"] .mini-piece { border-radius: 42% 58% 50% 50%; }
+    .theme-card[data-theme-choice="fire-ice"] .theme-preview {
+      background:
+        radial-gradient(circle at 8% 90%, rgba(255,97,38,0.42), transparent 38%),
+        radial-gradient(circle at 94% 10%, rgba(76,207,255,0.38), transparent 40%),
+        linear-gradient(135deg, #2a0c09, #16111d 49%, #071d32 51%, #08101a);
+      border-color: rgba(255,255,255,0.18);
+    }
+    .theme-card[data-theme-choice="fire-ice"] .mini-piece:not(.p2) {
+      color: #ffd16b;
+      background: radial-gradient(circle at 50% 68%, #ffcf55, #ff5b28 52%, #6f130d);
+      box-shadow: 0 0 12px #ff5b28;
+    }
+    .theme-card[data-theme-choice="fire-ice"] .mini-piece.p2 {
+      color: #e8fbff;
+      background: linear-gradient(145deg, #e7fbff, #55cfff 48%, #15548e);
+      box-shadow: 0 0 12px #55cfff;
+    }
+
+    /* Original Neon: the familiar Crossmate look, with a light scan-line finish. */
+    body[data-theme="neon"] .board::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      opacity: 0.09;
+      pointer-events: none;
+      background: repeating-linear-gradient(180deg, transparent 0 5px, rgba(157,218,255,0.15) 5px 6px);
+      mix-blend-mode: screen;
+    }
+    body[data-theme="neon"] .theme-detail { display: none; }
+
+    /* Classic Wood */
+    body[data-theme="wood"] {
+      --bg: #1c1009;
+      --panel: rgba(53,31,18,0.94);
+      --panel-2: rgba(69,41,23,0.97);
+      --line: rgba(255,220,167,0.2);
+      --ink: #fff4df;
+      --muted: #c8ad8d;
+      --p1: #e88075;
+      --p1-soft: #ffd2b1;
+      --p1-rgb: 232,128,117;
+      --p2: #55aaa8;
+      --p2-soft: #c8ffff;
+      --p2-rgb: 85,170,168;
+      --gold: #f0c270;
+      --danger: #ee5c55;
+      --cell-a: #d1a26c;
+      --cell-b: #7a482c;
+      background:
+        radial-gradient(circle at 8% 0%, rgba(237,179,106,0.17), transparent 32rem),
+        radial-gradient(circle at 95% 90%, rgba(54,126,120,0.11), transparent 30rem),
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.015) 0 2px, transparent 2px 13px),
+        linear-gradient(155deg, #241309, #140b07 60%, #20120a);
+    }
+    body[data-theme="wood"] .icon-button,
+    body[data-theme="wood"] .player-card,
+    body[data-theme="wood"] .action-bar {
+      border-color: rgba(255,218,163,0.19);
+      background:
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.018) 0 2px, transparent 2px 12px),
+        linear-gradient(145deg, rgba(81,48,27,0.97), rgba(35,20,12,0.98));
+      box-shadow: inset 0 1px rgba(255,240,211,0.09), 0 10px 24px rgba(20,8,2,0.28);
+    }
+    body[data-theme="wood"] .status {
+      border-color: rgba(255,218,163,0.15);
+      background: rgba(35,19,11,0.82);
+    }
+    body[data-theme="wood"] .modal {
+      border-color: rgba(255,218,163,0.22);
+      background:
+        radial-gradient(circle at 85% 5%, rgba(73,160,155,0.12), transparent 34%),
+        radial-gradient(circle at 8% 100%, rgba(232,128,117,0.12), transparent 36%),
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.014) 0 2px, transparent 2px 13px),
+        linear-gradient(150deg, rgba(79,47,27,0.99), rgba(30,17,10,0.99));
+    }
+    body[data-theme="wood"] .board-shell {
+      padding: clamp(8px, 2.1vw, 13px);
+      border-color: #9c693d;
+      background:
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.035) 0 2px, transparent 2px 15px),
+        linear-gradient(145deg, #9b693d, #5e361f 44%, #2d180e 100%);
+      box-shadow:
+        inset 0 2px 0 rgba(255,232,191,0.22),
+        inset 0 -7px 14px rgba(40,17,5,0.34),
+        0 22px 46px rgba(21,8,2,0.42),
+        0 0 0 2px rgba(47,24,11,0.9);
+    }
+    body[data-theme="wood"] .board-shell::before {
+      background: linear-gradient(135deg, rgba(255,227,178,0.42), transparent 35%, transparent 65%, rgba(43,20,9,0.5));
+    }
+    body[data-theme="wood"] .board {
+      gap: clamp(1px, 0.42vw, 2px);
+      border-radius: clamp(8px, 3vw, 14px);
+      background: #3a2113;
+      box-shadow: inset 0 0 0 2px rgba(44,23,10,0.75), inset 0 0 18px rgba(0,0,0,0.23);
+    }
+    body[data-theme="wood"] .cell {
+      border-radius: clamp(2px, 0.7vw, 5px);
+      background:
+        radial-gradient(ellipse at 22% 20%, rgba(255,245,216,0.18), transparent 36%),
+        repeating-linear-gradient(92deg, rgba(78,38,15,0.055) 0 2px, transparent 2px 9px),
+        var(--cell-a);
+    }
+    body[data-theme="wood"] .cell.alt {
+      background:
+        radial-gradient(ellipse at 22% 20%, rgba(255,218,169,0.1), transparent 36%),
+        repeating-linear-gradient(92deg, rgba(255,226,183,0.035) 0 2px, transparent 2px 9px),
+        var(--cell-b);
+    }
+    body[data-theme="wood"] .cell::before { opacity: 0.18; }
+    body[data-theme="wood"] .piece {
+      width: 79%;
+      border-radius: 50%;
+      border-color: rgba(97,52,25,0.65);
+      background:
+        radial-gradient(circle at 35% 24%, rgba(255,255,255,0.48), transparent 24%),
+        repeating-radial-gradient(circle at 50% 50%, rgba(96,49,21,0.07) 0 2px, transparent 2px 6px),
+        radial-gradient(circle at 48% 42%, #f1bd7b, #c58145 66%, #754021 100%);
+      box-shadow:
+        inset 0 2px 0 rgba(255,244,214,0.5),
+        inset 0 -4px 7px rgba(72,33,14,0.32),
+        0 5px 8px rgba(48,22,8,0.45),
+        0 0 0 1px rgba(255,226,180,0.25);
+    }
+    body[data-theme="wood"] .piece.p1 { color: #7a2f2c; }
+    body[data-theme="wood"] .piece.p2 {
+      color: #e3ffff;
+      border-color: rgba(17,69,70,0.75);
+      background:
+        radial-gradient(circle at 35% 24%, rgba(255,255,255,0.35), transparent 24%),
+        repeating-radial-gradient(circle at 50% 50%, rgba(1,34,35,0.09) 0 2px, transparent 2px 6px),
+        radial-gradient(circle at 48% 42%, #58aca6, #2b7472 66%, #174343 100%);
+      box-shadow:
+        inset 0 2px 0 rgba(217,255,250,0.28),
+        inset 0 -4px 7px rgba(5,37,38,0.38),
+        0 5px 8px rgba(28,14,7,0.45),
+        0 0 0 1px rgba(194,255,250,0.2);
+    }
+    body[data-theme="wood"] .piece .glyph { filter: drop-shadow(0 1px 0 rgba(255,255,255,0.14)); }
+    body[data-theme="wood"] .piece.type-square { border-radius: 23%; }
+    body[data-theme="wood"] .piece.type-triangle { border-radius: 42% 42% 28% 28%; }
+    body[data-theme="wood"] .piece.type-diamond { border-radius: 28%; }
+    body[data-theme="wood"] .piece.type-cross { border-radius: 34%; }
+    body[data-theme="wood"] .theme-detail {
+      inset: 8%;
+      border: 1px solid rgba(83,40,18,0.2);
+      border-radius: inherit;
+      box-shadow: inset 0 0 0 1px rgba(255,239,209,0.09);
+    }
+    body[data-theme="wood"] .cell.forcefield-p1::before {
+      opacity: 0.68;
+      background: radial-gradient(circle, rgba(255,175,125,0.25), transparent 62%);
+      box-shadow: inset 0 0 0 2px rgba(132,55,47,0.3);
+    }
+    body[data-theme="wood"] .cell.forcefield-p2::before {
+      opacity: 0.68;
+      background: radial-gradient(circle, rgba(106,210,203,0.23), transparent 62%);
+      box-shadow: inset 0 0 0 2px rgba(32,108,106,0.34);
+    }
+
+    /* Space Fleet */
+    body[data-theme="space"] {
+      --bg: #030611;
+      --panel: rgba(7,15,32,0.94);
+      --panel-2: rgba(9,20,42,0.97);
+      --line: rgba(107,208,255,0.18);
+      --ink: #eff8ff;
+      --muted: #8fa8c7;
+      --p1: #ff5fae;
+      --p1-soft: #ffc6e4;
+      --p1-rgb: 255,95,174;
+      --p2: #54dcff;
+      --p2-soft: #c9f7ff;
+      --p2-rgb: 84,220,255;
+      --gold: #ffe36d;
+      --danger: #ff566d;
+      --cell-a: #0d1a31;
+      --cell-b: #071225;
+      background:
+        radial-gradient(circle at 18% 12%, rgba(125,71,255,0.22), transparent 29rem),
+        radial-gradient(circle at 88% 31%, rgba(48,201,255,0.17), transparent 31rem),
+        radial-gradient(circle at 50% 120%, rgba(255,62,157,0.12), transparent 35rem),
+        #030611;
+    }
+    body[data-theme="space"]::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      opacity: 0.56;
+      background:
+        radial-gradient(circle at 12% 18%, #fff 0 1px, transparent 1.5px),
+        radial-gradient(circle at 31% 67%, #77dcff 0 1px, transparent 1.6px),
+        radial-gradient(circle at 73% 24%, #fff 0 1px, transparent 1.5px),
+        radial-gradient(circle at 91% 78%, #f796ff 0 1px, transparent 1.6px),
+        radial-gradient(circle at 54% 48%, #fff 0 0.8px, transparent 1.3px);
+      background-size: 170px 150px, 210px 190px, 230px 180px, 190px 220px, 130px 170px;
+    }
+    body[data-theme="space"] .icon-button,
+    body[data-theme="space"] .player-card,
+    body[data-theme="space"] .action-bar,
+    body[data-theme="space"] .modal {
+      border-color: rgba(93,215,255,0.2);
+      background:
+        linear-gradient(90deg, rgba(84,220,255,0.035) 1px, transparent 1px) 0 0 / 18px 18px,
+        linear-gradient(rgba(84,220,255,0.025) 1px, transparent 1px) 0 0 / 18px 18px,
+        linear-gradient(145deg, rgba(13,28,57,0.97), rgba(4,10,23,0.98));
+      box-shadow: inset 0 1px rgba(224,249,255,0.08), 0 10px 26px rgba(0,0,0,0.34), 0 0 18px rgba(64,195,255,0.035);
+    }
+    body[data-theme="space"] .status { border-color: rgba(93,215,255,0.13); background: rgba(3,9,22,0.78); }
+    body[data-theme="space"] .board-shell {
+      border-color: rgba(103,220,255,0.38);
+      background:
+        linear-gradient(90deg, rgba(84,220,255,0.055) 1px, transparent 1px) 0 0 / 15px 15px,
+        linear-gradient(rgba(84,220,255,0.045) 1px, transparent 1px) 0 0 / 15px 15px,
+        linear-gradient(145deg, #172b4b, #071226 48%, #020713);
+      box-shadow:
+        inset 0 1px 0 rgba(220,249,255,0.15),
+        inset 0 -8px 20px rgba(0,0,0,0.36),
+        0 24px 55px rgba(0,0,0,0.46),
+        0 0 28px rgba(61,197,255,0.11);
+    }
+    body[data-theme="space"] .board-shell::before {
+      background: linear-gradient(135deg, rgba(84,220,255,0.72), transparent 33%, transparent 67%, rgba(255,95,174,0.58));
+    }
+    body[data-theme="space"] .board {
+      background:
+        radial-gradient(circle at 28% 19%, rgba(255,255,255,0.45) 0 1px, transparent 1.4px),
+        radial-gradient(circle at 74% 68%, rgba(84,220,255,0.38) 0 1px, transparent 1.4px),
+        #020713;
+      background-size: 83px 71px, 117px 103px, auto;
+      box-shadow: inset 0 0 0 1px rgba(126,224,255,0.09), inset 0 0 30px rgba(0,0,0,0.42);
+    }
+    body[data-theme="space"] .cell {
+      border-radius: clamp(3px, 1vw, 6px);
+      background:
+        linear-gradient(135deg, rgba(94,210,255,0.08), transparent 48%),
+        linear-gradient(315deg, rgba(130,86,255,0.05), transparent 52%),
+        var(--cell-a);
+      box-shadow: inset 0 0 0 1px rgba(109,203,255,0.045);
+    }
+    body[data-theme="space"] .cell.alt {
+      background:
+        linear-gradient(135deg, rgba(94,210,255,0.045), transparent 48%),
+        linear-gradient(315deg, rgba(255,82,174,0.035), transparent 52%),
+        var(--cell-b);
+    }
+    body[data-theme="space"] .piece {
+      width: 84%;
+      border-color: rgba(var(--piece-rgb),0.68);
+      background:
+        radial-gradient(circle at 50% 45%, rgba(var(--piece-rgb),0.22), transparent 46%),
+        linear-gradient(145deg, rgba(31,51,82,0.98), rgba(5,12,27,0.98));
+      box-shadow:
+        inset 0 1px 0 rgba(230,249,255,0.18),
+        inset 0 -4px 7px rgba(0,0,0,0.36),
+        0 5px 9px rgba(0,0,0,0.48),
+        0 0 12px rgba(var(--piece-rgb),0.34);
+    }
+    body[data-theme="space"] .piece.type-circle { border-radius: 50%; }
+    body[data-theme="space"] .piece.type-triangle { border-radius: 52% 52% 26% 26%; }
+    body[data-theme="space"] .piece.type-square { border-radius: 18%; }
+    body[data-theme="space"] .piece.type-diamond { border-radius: 44% 44% 26% 26%; }
+    body[data-theme="space"] .piece.type-cross { border-radius: 50%; }
+    body[data-theme="space"] .theme-detail::before,
+    body[data-theme="space"] .theme-detail::after { content: ""; position: absolute; pointer-events: none; }
+    body[data-theme="space"] .piece.type-circle .theme-detail::before {
+      inset: 13%;
+      border: 1px solid rgba(var(--piece-rgb),0.58);
+      border-radius: 50%;
+      transform: rotate(-22deg) scaleY(0.44);
+      box-shadow: 0 0 5px rgba(var(--piece-rgb),0.44);
+    }
+    body[data-theme="space"] .piece.type-triangle .theme-detail::before {
+      left: 5%; right: 5%; bottom: 12%; height: 24%;
+      border-radius: 50%;
+      background: linear-gradient(90deg, rgba(var(--piece-rgb),0.1), rgba(var(--piece-rgb),0.8), rgba(var(--piece-rgb),0.1));
+      filter: blur(1px);
+    }
+    body[data-theme="space"] .piece.type-square .theme-detail::before {
+      left: 12%; right: 12%; top: 14%; height: 2px;
+      background: currentColor;
+      box-shadow: 0 7px currentColor, 0 14px currentColor;
+      opacity: 0.35;
+    }
+    body[data-theme="space"] .piece.type-diamond .theme-detail::before {
+      inset: -11%;
+      border: 1px solid rgba(var(--piece-rgb),0.38);
+      border-radius: 50%;
+      animation: orbitSpin 3600ms linear infinite;
+      border-left-color: transparent;
+      border-right-color: transparent;
+    }
+    body[data-theme="space"] .piece.type-cross .theme-detail::before {
+      inset: 12%;
+      border: 1px dashed rgba(var(--piece-rgb),0.62);
+      border-radius: 50%;
+      animation: orbitSpin 6000ms linear infinite reverse;
+    }
+    body[data-theme="space"] .cell.forcefield-p1::before {
+      opacity: 0.78;
+      background:
+        linear-gradient(30deg, transparent 44%, rgba(var(--p1-rgb),0.1) 45% 55%, transparent 56%),
+        radial-gradient(circle, rgba(var(--p1-rgb),0.12), transparent 66%);
+      background-size: 9px 9px, auto;
+      box-shadow: inset 0 0 0 1px rgba(var(--p1-rgb),0.28);
+    }
+    body[data-theme="space"] .cell.forcefield-p2::before {
+      opacity: 0.78;
+      background:
+        linear-gradient(30deg, transparent 44%, rgba(var(--p2-rgb),0.1) 45% 55%, transparent 56%),
+        radial-gradient(circle, rgba(var(--p2-rgb),0.12), transparent 66%);
+      background-size: 9px 9px, auto;
+      box-shadow: inset 0 0 0 1px rgba(var(--p2-rgb),0.28);
+    }
+
+    /* Fire vs Ice */
+    body[data-theme="fire-ice"] {
+      --bg: #10090d;
+      --panel: rgba(24,16,25,0.94);
+      --panel-2: rgba(31,19,31,0.97);
+      --line: rgba(220,213,255,0.16);
+      --ink: #fff8f5;
+      --muted: #b9afc2;
+      --p1: #ff6334;
+      --p1-soft: #ffd16f;
+      --p1-rgb: 255,99,52;
+      --p2: #43cfff;
+      --p2-soft: #e1fbff;
+      --p2-rgb: 67,207,255;
+      --gold: #ffe06b;
+      --danger: #ff405d;
+      --cell-a: #251d2c;
+      --cell-b: #141d2c;
+      background:
+        radial-gradient(circle at 0% 92%, rgba(255,78,25,0.25), transparent 36rem),
+        radial-gradient(circle at 100% 5%, rgba(45,188,255,0.24), transparent 34rem),
+        linear-gradient(155deg, #160808 0%, #120d18 48%, #06121e 100%);
+    }
+    body[data-theme="fire-ice"] .icon-button,
+    body[data-theme="fire-ice"] .player-card,
+    body[data-theme="fire-ice"] .action-bar,
+    body[data-theme="fire-ice"] .modal {
+      border-color: rgba(214,222,255,0.16);
+      background:
+        radial-gradient(circle at 5% 100%, rgba(255,83,35,0.08), transparent 48%),
+        radial-gradient(circle at 95% 0%, rgba(67,207,255,0.08), transparent 48%),
+        linear-gradient(145deg, rgba(34,24,39,0.97), rgba(10,12,23,0.98));
+    }
+    body[data-theme="fire-ice"] .status { background: rgba(10,10,19,0.76); }
+    body[data-theme="fire-ice"] .board-shell {
+      border-color: rgba(216,225,255,0.23);
+      background:
+        radial-gradient(circle at 0% 100%, rgba(255,80,28,0.42), transparent 48%),
+        radial-gradient(circle at 100% 0%, rgba(67,207,255,0.42), transparent 48%),
+        linear-gradient(145deg, #32202a, #11121d 54%, #10283a);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.12),
+        inset 0 -8px 20px rgba(0,0,0,0.34),
+        -12px 20px 42px rgba(255,73,25,0.08),
+        12px 20px 42px rgba(45,183,255,0.08),
+        0 22px 48px rgba(0,0,0,0.38);
+    }
+    body[data-theme="fire-ice"] .board-shell::before {
+      background: linear-gradient(135deg, rgba(67,207,255,0.62), transparent 34%, transparent 66%, rgba(255,99,52,0.62));
+    }
+    body[data-theme="fire-ice"] .board {
+      background: linear-gradient(135deg, #1a0908, #15101a 49%, #071826 51%, #07121d);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.055), inset 0 0 27px rgba(0,0,0,0.4);
+    }
+    body[data-theme="fire-ice"] .cell {
+      background:
+        linear-gradient(145deg, rgba(255,255,255,0.05), transparent 42%),
+        radial-gradient(circle at 0% 100%, rgba(255,88,33,0.07), transparent 58%),
+        var(--cell-a);
+    }
+    body[data-theme="fire-ice"] .cell.alt {
+      background:
+        linear-gradient(145deg, rgba(255,255,255,0.04), transparent 42%),
+        radial-gradient(circle at 100% 0%, rgba(66,201,255,0.08), transparent 58%),
+        var(--cell-b);
+    }
+    body[data-theme="fire-ice"] .piece {
+      width: 83%;
+      border-color: rgba(var(--piece-rgb),0.7);
+    }
+    body[data-theme="fire-ice"] .piece.p1 {
+      color: #fff1b4;
+      background:
+        radial-gradient(circle at 50% 72%, #ffe26f 0 12%, #ff8a37 32%, #ef381f 67%, #5d1010 100%);
+      box-shadow:
+        inset 0 2px 0 rgba(255,248,194,0.44),
+        inset 0 -4px 8px rgba(93,16,6,0.46),
+        0 5px 9px rgba(37,5,2,0.46),
+        0 0 16px rgba(255,73,28,0.5);
+    }
+    body[data-theme="fire-ice"] .piece.p2 {
+      color: #effeff;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.8), transparent 18%),
+        linear-gradient(35deg, #0c5e9d, #45cfff 50%, #d9fbff 100%);
+      box-shadow:
+        inset 0 2px 0 rgba(255,255,255,0.68),
+        inset 0 -4px 8px rgba(2,65,107,0.42),
+        0 5px 9px rgba(2,20,38,0.5),
+        0 0 16px rgba(67,207,255,0.48);
+    }
+    body[data-theme="fire-ice"] .piece.type-circle { border-radius: 50%; }
+    body[data-theme="fire-ice"] .piece.type-triangle { border-radius: 54% 54% 26% 26%; }
+    body[data-theme="fire-ice"] .piece.type-square { border-radius: 18%; }
+    body[data-theme="fire-ice"] .piece.type-diamond { border-radius: 30%; }
+    body[data-theme="fire-ice"] .piece.type-cross { border-radius: 42%; }
+    body[data-theme="fire-ice"] .theme-detail::before,
+    body[data-theme="fire-ice"] .theme-detail::after { content: ""; position: absolute; pointer-events: none; }
+    body[data-theme="fire-ice"] .piece.p1 .theme-detail::before {
+      left: 12%; right: 12%; bottom: -7%; height: 38%;
+      border-radius: 50% 50% 38% 38%;
+      background:
+        radial-gradient(ellipse at 23% 100%, rgba(255,235,111,0.75), transparent 52%),
+        radial-gradient(ellipse at 55% 100%, rgba(255,145,47,0.86), transparent 57%),
+        radial-gradient(ellipse at 82% 100%, rgba(255,215,88,0.65), transparent 50%);
+      filter: blur(0.3px);
+      animation: flameBreathe 780ms ease-in-out infinite alternate;
+    }
+    body[data-theme="fire-ice"] .piece.p2 .theme-detail::before {
+      inset: 7%;
+      clip-path: polygon(50% 0,61% 31%,91% 17%,74% 47%,100% 57%,68% 65%,77% 97%,50% 74%,24% 97%,32% 65%,0 57%,26% 47%,9% 17%,39% 31%);
+      border: 1px solid rgba(235,253,255,0.54);
+      background: rgba(225,251,255,0.08);
+      opacity: 0.7;
+    }
+    body[data-theme="fire-ice"] .cell.forcefield-p1::before {
+      opacity: 0.76;
+      background:
+        radial-gradient(circle at 50% 65%, rgba(255,207,74,0.24), transparent 48%),
+        repeating-linear-gradient(105deg, rgba(255,83,29,0.12) 0 2px, transparent 2px 8px);
+      box-shadow: inset 0 0 0 1px rgba(255,103,48,0.36), inset 0 -8px 14px rgba(255,70,21,0.12);
+    }
+    body[data-theme="fire-ice"] .cell.forcefield-p2::before {
+      opacity: 0.76;
+      background:
+        linear-gradient(30deg, transparent 44%, rgba(225,251,255,0.14) 45% 55%, transparent 56%),
+        linear-gradient(150deg, transparent 44%, rgba(87,211,255,0.12) 45% 55%, transparent 56%),
+        radial-gradient(circle, rgba(67,207,255,0.13), transparent 64%);
+      background-size: 11px 11px, 11px 11px, auto;
+      box-shadow: inset 0 0 0 1px rgba(95,215,255,0.4);
+    }
+
+    @keyframes orbitSpin { to { transform: rotate(360deg); } }
+    @keyframes flameBreathe { from { transform: scaleY(0.82); opacity: 0.62; } to { transform: scaleY(1.08); opacity: 0.92; } }
+    @media (max-width: 430px) { .version { display: none; } }
+    @media (max-width: 360px) {
+      .theme-grid { gap: 7px; }
+      .theme-card { padding: 6px; border-radius: 15px; }
+      .theme-preview { height: 78px; }
+      .theme-copy span { font-size: 8px; }
+    }
+
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
         animation-duration: 0.01ms !important;
@@ -1359,16 +2027,17 @@
   <link rel="stylesheet" href="../shared/gidi-home-safety.css?v=1.0.0">
   <!-- GIDI-HOME-SAFETY-STYLE:END -->
 </head>
-<body>
+<body data-theme="neon">
   <main class="app" aria-label="Crossmate game">
     <header class="topbar">
       <a class="icon-button" href="../../" aria-label="Back to games">←</a>
       <div class="title-block">
         <p class="eyebrow">Local + AI + online strategy</p>
-        <h1>Crossmate <span class="version">v1.6.1</span></h1>
+        <h1>Crossmate <span class="version">v1.7.0</span></h1>
       </div>
       <div class="top-actions">
         <button class="icon-button" id="soundButton" type="button" aria-label="Turn sound off" title="Sound">♪</button>
+        <button class="icon-button" id="themeButton" type="button" aria-label="Choose board theme" title="Board theme"><span class="theme-button-icon" aria-hidden="true"></span></button>
         <button class="icon-button" id="helpButton" type="button" aria-label="How to play" title="How to play">?</button>
         <button class="icon-button" id="resetButton" type="button" aria-label="Start a new match" title="New match">↻</button>
       </div>
@@ -1426,6 +2095,10 @@
       <div class="modal-kicker">Choose how to play</div>
       <h2 id="modeTitle">Choose a match</h2>
       <p class="modal-lead" id="modeLead">Play the computer, share this device, or connect two phones with a private room code.</p>
+      <button class="mode-theme-shortcut" id="modeThemeButton" type="button">
+        <span class="theme-button-icon" aria-hidden="true"></span>
+        <span>Board and pieces<strong id="modeThemeName">Original Neon</strong></span>
+      </button>
       <div id="modeChoices">
         <div class="mode-main-choices" id="modeMainChoices">
           <div class="mode-grid three-modes">
@@ -1553,6 +2226,51 @@
     <button class="direction-cancel" id="cancelDirectionButton" type="button" aria-label="Cancel direction choice">×</button>
   </div>
 
+
+  <div class="overlay" id="themeOverlay" role="dialog" aria-modal="true" aria-labelledby="themeTitle">
+    <section class="modal theme-modal">
+      <div class="theme-modal-head">
+        <div>
+          <div class="modal-kicker">Board and piece collection</div>
+          <h2 id="themeTitle">Choose a theme</h2>
+          <p class="modal-lead">Each set changes the board, pieces, forcefields, panels, move markers, and effects without changing the rules.</p>
+        </div>
+        <button class="theme-close" id="themeCloseButton" type="button" aria-label="Close themes">×</button>
+      </div>
+      <div class="theme-grid" id="themeGrid">
+        <button class="theme-card" type="button" data-theme-choice="neon" aria-pressed="false">
+          <span class="theme-preview" aria-hidden="true">
+            <span class="mini-piece mini-circle"></span><span class="mini-piece mini-triangle p2"></span>
+            <span class="mini-piece mini-diamond"></span><span class="mini-piece mini-cross p2"></span>
+          </span>
+          <span class="theme-copy"><strong>Original Neon</strong><span>Dark glass, electric pieces, and holographic forcefields.</span></span>
+        </button>
+        <button class="theme-card" type="button" data-theme-choice="wood" aria-pressed="false">
+          <span class="theme-preview" aria-hidden="true">
+            <span class="mini-piece mini-circle"></span><span class="mini-piece mini-triangle p2"></span>
+            <span class="mini-piece mini-diamond"></span><span class="mini-piece mini-cross p2"></span>
+          </span>
+          <span class="theme-copy"><strong>Classic Wood</strong><span>Carved maple and teal walnut pieces on a framed board.</span></span>
+        </button>
+        <button class="theme-card" type="button" data-theme-choice="space" aria-pressed="false">
+          <span class="theme-preview" aria-hidden="true">
+            <span class="mini-piece mini-circle"></span><span class="mini-piece mini-triangle p2"></span>
+            <span class="mini-piece mini-diamond"></span><span class="mini-piece mini-cross p2"></span>
+          </span>
+          <span class="theme-copy"><strong>Space Fleet</strong><span>Scout pods, fighters, shield satellites, and command cores.</span></span>
+        </button>
+        <button class="theme-card" type="button" data-theme-choice="fire-ice" aria-pressed="false">
+          <span class="theme-preview" aria-hidden="true">
+            <span class="mini-piece mini-circle"></span><span class="mini-piece mini-triangle p2"></span>
+            <span class="mini-piece mini-diamond"></span><span class="mini-piece mini-cross p2"></span>
+          </span>
+          <span class="theme-copy"><strong>Fire vs Ice</strong><span>Ember-red forces clash with a sharp crystalline army.</span></span>
+        </button>
+      </div>
+      <div class="theme-note">Your choice is saved on this device. In online matches, each player sees their own selected theme.</div>
+    </section>
+  </div>
+
   <div class="overlay" id="endOverlay" role="dialog" aria-modal="true" aria-labelledby="endTitle">
     <section class="modal end-modal">
       <div class="end-emblem" id="endEmblem">×</div>
@@ -1593,7 +2311,14 @@
       ];
       var TYPE_NAMES = { circle: "Circle", diamond: "Diamond", square: "Square", triangle: "Triangle", cross: "Cross" };
       var POINT_VALUES = { circle: 1, triangle: 3, square: 5, diamond: 6, cross: 0 };
-      var VERSION = "1.6.1";
+      var VERSION = "1.7.0";
+      var THEME_KEY = "crossmate-theme";
+      var THEMES = {
+        neon: { id: "neon", name: "Original Neon", color: "#070b18" },
+        wood: { id: "wood", name: "Classic Wood", color: "#1c1009" },
+        space: { id: "space", name: "Space Fleet", color: "#030611" },
+        "fire-ice": { id: "fire-ice", name: "Fire vs Ice", color: "#10090d" }
+      };
       var ROOM_LIFETIME_MS = 10 * 24 * 60 * 60 * 1000;
       var BACK_ROW = ["diamond", "square", "triangle", null, "cross", null, "triangle", "square", "diamond"];
 
@@ -1615,6 +2340,12 @@
       var resetButton = document.getElementById("resetButton");
       var helpButton = document.getElementById("helpButton");
       var soundButton = document.getElementById("soundButton");
+      var themeButton = document.getElementById("themeButton");
+      var themeOverlay = document.getElementById("themeOverlay");
+      var themeGrid = document.getElementById("themeGrid");
+      var themeCloseButton = document.getElementById("themeCloseButton");
+      var modeThemeButton = document.getElementById("modeThemeButton");
+      var modeThemeName = document.getElementById("modeThemeName");
       var helpOverlay = document.getElementById("helpOverlay");
       var closeHelpButton = document.getElementById("closeHelpButton");
       var directionOverlay = document.getElementById("directionOverlay");
@@ -1716,6 +2447,7 @@
       var aiDeferredMove = null;
       var aiWorker = null;
       var aiWorkerSource = "";
+      var activeTheme = "neon";
 
 
       function safeGet(key) {
@@ -1729,6 +2461,44 @@
       }
 
 
+
+
+      function themeInfo(themeId) {
+        return THEMES[themeId] || THEMES.neon;
+      }
+      function updateThemeUi() {
+        var buttons = themeGrid.querySelectorAll("[data-theme-choice]");
+        var i;
+        var selected;
+        for (i = 0; i < buttons.length; i += 1) {
+          selected = buttons[i].getAttribute("data-theme-choice") === activeTheme;
+          buttons[i].classList.toggle("selected", selected);
+          buttons[i].setAttribute("aria-pressed", selected ? "true" : "false");
+        }
+      }
+      function applyTheme(themeId, announce) {
+        var info = themeInfo(themeId);
+        var colorMeta = document.querySelector('meta[name="theme-color"]');
+        activeTheme = info.id;
+        document.body.setAttribute("data-theme", activeTheme);
+        themeButton.setAttribute("aria-label", "Choose board theme. Current: " + info.name);
+        themeButton.setAttribute("title", "Board theme: " + info.name);
+        if (colorMeta) { colorMeta.setAttribute("content", info.color); }
+        updateThemeUi();
+        modeThemeName.textContent = info.name;
+        safeSet(THEME_KEY, activeTheme);
+        if (announce) {
+          showToast(info.name + " theme selected");
+          playTone(520, 0.055, "sine", 0.028);
+        }
+      }
+      function openThemeChooser() {
+        updateThemeUi();
+        themeOverlay.classList.add("open");
+      }
+      function closeThemeChooser() {
+        themeOverlay.classList.remove("open");
+      }
 
       function firebaseIsConfigured() {
         var required = ["apiKey", "authDomain", "databaseURL", "projectId", "appId"];
@@ -2779,7 +3549,7 @@
         if (piece.type === "triangle") { classes += " facing-" + (playMode === "online" && localPlayer === 2 ? mod4(piece.facing + 2) : piece.facing); }
         if (piece.id === lastMovePieceId) { classes += " last-moved"; }
         if (piece.type === "cross" && inCheck) { classes += " cross-in-check"; }
-        return '<span class="' + classes + '"><span class="glyph ' + glyph + '"></span></span>';
+        return '<span class="' + classes + '"><span class="theme-detail" aria-hidden="true"></span><span class="glyph ' + glyph + '"></span></span>';
       }
 
       function movesForDestination(r, c) {
@@ -4837,6 +5607,15 @@
         if (playMode === "online") { endOverlay.classList.remove("open"); leaveOnlineMatch(); }
         else { newGame(false, false); }
       });
+      themeButton.addEventListener("click", openThemeChooser);
+      modeThemeButton.addEventListener("click", openThemeChooser);
+      themeCloseButton.addEventListener("click", closeThemeChooser);
+      themeGrid.addEventListener("click", function (event) {
+        var button = event.target.closest("[data-theme-choice]");
+        if (!button) { return; }
+        applyTheme(button.getAttribute("data-theme-choice"), true);
+      });
+      themeOverlay.addEventListener("click", function (event) { if (event.target === themeOverlay) { closeThemeChooser(); } });
       helpButton.addEventListener("click", function () { helpOverlay.classList.add("open"); });
       closeHelpButton.addEventListener("click", function () {
         helpOverlay.classList.remove("open");
@@ -4852,11 +5631,13 @@
         if (event.key === "Escape") {
           if (directionOverlay.classList.contains("open")) { closeDirectionPicker(); }
           else if (tutorialOverlay.classList.contains("open")) { closeTutorial(true); }
+          else if (themeOverlay.classList.contains("open")) { closeThemeChooser(); }
           else if (helpOverlay.classList.contains("open")) { helpOverlay.classList.remove("open"); }
           else if (pendingAnnihilationMoves.length || selectedId) { cancelPendingAction(); }
         }
       });
 
+      applyTheme(safeGet(THEME_KEY) || "neon", false);
       newGame(false, true);
       (function initialiseLaunchMode() {
         var params;
