@@ -1349,7 +1349,7 @@
 
 
 
-    /* Crossmate v1.7.1: professional board and piece collection */
+    /* Crossmate v1.7.2: professional board collection with Prism Arcade */
     .theme-button-icon {
       width: 19px;
       height: 19px;
@@ -1638,31 +1638,34 @@
       border-color: #c9e5ee;
       background: radial-gradient(circle at 34% 24%, #ffffff, #a9c9d2 47%, #34464d 100%);
     }
-    .theme-card[data-theme-choice="temple"] .theme-preview {
+    .theme-card[data-theme-choice="prism"] .theme-preview {
       background:
-        radial-gradient(circle at 50% 0%, rgba(255,213,108,0.31), transparent 40%),
-        repeating-linear-gradient(88deg, rgba(91,48,18,0.08) 0 2px, transparent 2px 11px),
-        linear-gradient(145deg, #d1a45f, #704521 70%, #3d230f);
-      border-color: rgba(255,218,137,0.48);
-      box-shadow: inset 0 0 0 7px #805124, inset 0 0 0 8px rgba(255,225,148,0.34), inset 0 0 24px rgba(54,26,5,0.36), 0 4px 13px rgba(0,0,0,0.28);
+        radial-gradient(circle at 16% 14%, rgba(255,110,186,0.28), transparent 30%),
+        radial-gradient(circle at 84% 18%, rgba(255,214,90,0.26), transparent 28%),
+        radial-gradient(circle at 74% 84%, rgba(74,230,255,0.3), transparent 31%),
+        linear-gradient(145deg, #4a2b86, #1a1439 54%, #0d1127);
+      border-color: rgba(218,204,255,0.42);
+      box-shadow: inset 0 0 0 7px #2d2056, inset 0 0 0 8px rgba(255,255,255,0.12), inset 0 0 24px rgba(8,10,24,0.4), 0 4px 13px rgba(0,0,0,0.28);
     }
-    .theme-card[data-theme-choice="temple"] .theme-preview::before {
+    .theme-card[data-theme-choice="prism"] .theme-preview::before {
       background:
-        linear-gradient(45deg, rgba(121,69,28,0.08) 25%, transparent 25% 75%, rgba(121,69,28,0.08) 75%),
-        conic-gradient(from 90deg, #d9b06d 0 25%, #9c6a37 0 50%, #d9b06d 0 75%, #9c6a37 0);
-      background-size: 9px 9px, 36px 36px;
-      box-shadow: inset 0 0 0 1px rgba(91,49,20,0.52);
+        linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px),
+        linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px),
+        conic-gradient(from 90deg, #f6efff 0 25%, #d3f7ff 0 50%, #fff4d8 0 75%, #f6efff 0);
+      background-size: 9px 9px, 9px 9px, 36px 36px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.32), inset 0 0 14px rgba(255,255,255,0.08);
     }
-    .theme-card[data-theme-choice="temple"] .mini-piece {
-      color: #fff0b3;
-      border-color: #c56f38;
-      background: radial-gradient(circle at 35% 26%, #efb16c, #a94e2e 65%, #5b241a);
-      box-shadow: inset 0 1px rgba(255,237,184,0.34), 0 4px 8px rgba(50,20,6,0.5);
+    .theme-card[data-theme-choice="prism"] .mini-piece {
+      color: #fff7ff;
+      border-color: #ff79b4;
+      background: radial-gradient(circle at 35% 26%, #ffdce9, #ff6c93 55%, #7c255d);
+      box-shadow: inset 0 1px rgba(255,255,255,0.42), 0 4px 8px rgba(17,8,37,0.56), 0 0 8px rgba(255,108,147,0.22);
     }
-    .theme-card[data-theme-choice="temple"] .mini-piece.p2 {
-      color: #f5f1c8;
-      border-color: #205e77;
-      background: radial-gradient(circle at 35% 26%, #4ca9bd, #1f657c 63%, #173447);
+    .theme-card[data-theme-choice="prism"] .mini-piece.p2 {
+      color: #f8fcff;
+      border-color: #59dfff;
+      background: radial-gradient(circle at 35% 26%, #f5fdff, #42d8ff 55%, #245b90);
+      box-shadow: inset 0 1px rgba(255,255,255,0.42), 0 4px 8px rgba(17,8,37,0.56), 0 0 8px rgba(66,216,255,0.22);
     }
 
     /* Original Neon - layered glass, machined pieces, and precise light. */
@@ -2103,140 +2106,145 @@
     body[data-theme="obsidian"] .cell.legal::after { background: #f3d895; box-shadow: 0 0 0 4px rgba(232,199,119,0.12), 0 0 12px rgba(232,199,119,0.42); }
     body[data-theme="obsidian"] .cell.selected { box-shadow: inset 0 0 0 2px #f0d38a, 0 0 17px rgba(232,199,119,0.34); }
 
-    /* Sun Temple - sandstone slabs, lapis inlay, and carved relics. */
-    body[data-theme="temple"] {
-      --bg: #1b1008;
-      --panel: rgba(58,36,20,0.96);
-      --panel-2: rgba(74,47,25,0.98);
-      --line: rgba(248,211,139,0.2);
-      --ink: #fff4d9;
-      --muted: #c8aa7a;
-      --p1: #d96f3f;
-      --p1-soft: #ffd79a;
-      --p1-rgb: 217,111,63;
-      --p2: #3b92aa;
-      --p2-soft: #d8f8f3;
-      --p2-rgb: 59,146,170;
-      --gold: #f1c668;
-      --danger: #dc5145;
-      --cell-a: #d8b172;
-      --cell-b: #986538;
+    /* Prism Arcade - iridescent acrylic, rainbow inlay, and candy-lacquer pieces. */
+    body[data-theme="prism"] {
+      --bg: #17102f;
+      --panel: rgba(45,28,76,0.96);
+      --panel-2: rgba(59,38,94,0.98);
+      --line: rgba(230,222,255,0.2);
+      --ink: #fbf8ff;
+      --muted: #d6cff5;
+      --p1: #ff6c93;
+      --p1-soft: #ffe8f1;
+      --p1-rgb: 255,108,147;
+      --p2: #42d8ff;
+      --p2-soft: #e8fbff;
+      --p2-rgb: 66,216,255;
+      --gold: #ffd46b;
+      --danger: #e25588;
+      --cell-a: #f7efff;
+      --cell-b: #d8f6ff;
       background:
-        radial-gradient(circle at 50% -10%, rgba(255,203,95,0.2), transparent 35rem),
-        radial-gradient(circle at 96% 92%, rgba(32,111,137,0.1), transparent 27rem),
-        repeating-linear-gradient(88deg, rgba(87,44,15,0.025) 0 2px, transparent 2px 13px),
-        linear-gradient(155deg, #36200d, #160d07 58%, #241407);
+        radial-gradient(circle at 16% 12%, rgba(255,114,188,0.22), transparent 27rem),
+        radial-gradient(circle at 86% 18%, rgba(255,214,92,0.2), transparent 23rem),
+        radial-gradient(circle at 78% 84%, rgba(76,231,255,0.2), transparent 25rem),
+        radial-gradient(circle at 18% 88%, rgba(156,116,255,0.16), transparent 22rem),
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.018) 0 2px, transparent 2px 14px),
+        linear-gradient(160deg, #2b1a56, #14112d 56%, #0b1022);
     }
-    body[data-theme="temple"] .icon-button,
-    body[data-theme="temple"] .player-card,
-    body[data-theme="temple"] .action-bar,
-    body[data-theme="temple"] .modal {
-      border-color: rgba(248,211,139,0.2);
+    body[data-theme="prism"] .icon-button,
+    body[data-theme="prism"] .player-card,
+    body[data-theme="prism"] .action-bar,
+    body[data-theme="prism"] .modal {
+      border-color: rgba(231,223,255,0.18);
       background:
-        linear-gradient(45deg, rgba(255,217,139,0.025) 25%, transparent 25% 75%, rgba(255,217,139,0.025) 75%) 0 0 / 10px 10px,
-        radial-gradient(circle at 15% 0%, rgba(255,235,194,0.07), transparent 35%),
-        linear-gradient(145deg, rgba(91,57,29,0.98), rgba(35,20,10,0.99));
-      box-shadow: inset 0 1px rgba(255,235,190,0.1), 0 12px 27px rgba(26,10,2,0.34);
+        linear-gradient(140deg, rgba(255,255,255,0.14), rgba(255,255,255,0.03) 34%, rgba(255,255,255,0.02) 70%),
+        linear-gradient(90deg, rgba(255,113,182,0.05), rgba(255,220,97,0.03) 34%, rgba(85,228,255,0.05) 70%, rgba(171,122,255,0.04)),
+        linear-gradient(145deg, rgba(63,40,104,0.97), rgba(23,16,49,0.99));
+      box-shadow: inset 0 1px rgba(255,255,255,0.11), 0 14px 30px rgba(7,10,28,0.38);
+      backdrop-filter: blur(4px);
     }
-    body[data-theme="temple"] .status { border-color: rgba(248,211,139,0.15); background: rgba(46,27,14,0.85); }
-    body[data-theme="temple"] .board-shell {
+    body[data-theme="prism"] .status { border-color: rgba(226,216,255,0.13); background: rgba(24,17,48,0.82); }
+    body[data-theme="prism"] .board-shell {
       padding: clamp(10px, 2.45vw, 15px);
-      border-color: rgba(255,216,135,0.58);
+      border-color: rgba(244,239,255,0.42);
       background:
-        linear-gradient(45deg, rgba(108,57,20,0.13) 25%, transparent 25% 75%, rgba(108,57,20,0.13) 75%) 0 0 / 13px 13px,
-        radial-gradient(circle at 50% 0%, rgba(255,222,144,0.22), transparent 45%),
-        linear-gradient(145deg, #bd8342, #7a4a22 48%, #3e210f 100%);
+        linear-gradient(130deg, rgba(255,255,255,0.56), rgba(255,255,255,0.12) 18%, transparent 32%),
+        linear-gradient(115deg, rgba(255,111,180,0.26), rgba(255,212,102,0.22) 22%, rgba(104,245,255,0.22) 52%, rgba(174,122,255,0.24) 77%, rgba(255,255,255,0.08)),
+        linear-gradient(145deg, #5a399f, #2c235f 54%, #151631 100%);
       box-shadow:
-        inset 0 2px 0 rgba(255,235,188,0.25),
-        inset 0 0 0 2px rgba(91,48,18,0.62),
-        inset 0 0 0 4px rgba(242,193,93,0.12),
-        inset 0 -9px 18px rgba(55,25,7,0.39),
-        0 25px 50px rgba(27,10,2,0.47),
-        0 0 0 1px rgba(255,224,155,0.24);
+        inset 0 2px 0 rgba(255,255,255,0.34),
+        inset 0 0 0 2px rgba(36,22,71,0.6),
+        inset 0 0 0 4px rgba(255,255,255,0.08),
+        inset 0 -9px 20px rgba(10,11,29,0.33),
+        0 25px 52px rgba(8,10,28,0.46),
+        0 0 0 1px rgba(255,255,255,0.14);
     }
-    body[data-theme="temple"] .board-shell::before {
-      background: linear-gradient(135deg, rgba(255,231,174,0.68), rgba(102,54,19,0.12) 34%, transparent 48%, rgba(28,102,124,0.08) 66%, rgba(65,160,181,0.48));
+    body[data-theme="prism"] .board-shell::before {
+      background: linear-gradient(135deg, rgba(255,255,255,0.72), rgba(255,255,255,0.12) 22%, transparent 42%, rgba(255,120,180,0.12) 61%, rgba(76,228,255,0.2) 82%, rgba(255,223,124,0.56));
     }
-    body[data-theme="temple"] .board {
+    body[data-theme="prism"] .board {
       gap: clamp(1px, 0.36vw, 2px);
       border-radius: clamp(7px, 2.7vw, 13px);
-      background: #5b3518;
-      box-shadow: inset 0 0 0 2px rgba(75,38,13,0.72), inset 0 0 22px rgba(48,20,5,0.34);
+      background: #372567;
+      box-shadow: inset 0 0 0 2px rgba(31,21,62,0.72), inset 0 0 22px rgba(8,10,28,0.3);
     }
-    body[data-theme="temple"] .cell {
+    body[data-theme="prism"] .cell {
       border-radius: clamp(2px, 0.65vw, 5px);
       background:
-        linear-gradient(45deg, rgba(114,60,22,0.05) 25%, transparent 25% 75%, rgba(114,60,22,0.05) 75%) 0 0 / 8px 8px,
-        radial-gradient(ellipse at 20% 14%, rgba(255,246,205,0.21), transparent 34%),
-        linear-gradient(145deg, #e0bd7e, var(--cell-a));
-      box-shadow: inset 0 0 0 1px rgba(94,49,18,0.09), inset 0 -3px 5px rgba(78,38,12,0.07);
+        linear-gradient(135deg, rgba(255,255,255,0.52), rgba(255,255,255,0.08) 28%, transparent 29%),
+        linear-gradient(90deg, rgba(255,123,184,0.08), rgba(255,214,109,0.05) 35%, rgba(77,230,255,0.07) 68%, rgba(162,119,255,0.08)),
+        linear-gradient(145deg, #ffffff, var(--cell-a));
+      box-shadow: inset 0 0 0 1px rgba(112,95,164,0.1), inset 0 -3px 5px rgba(98,82,153,0.08);
     }
-    body[data-theme="temple"] .cell.alt {
+    body[data-theme="prism"] .cell.alt {
       background:
-        linear-gradient(45deg, rgba(255,225,167,0.035) 25%, transparent 25% 75%, rgba(255,225,167,0.035) 75%) 0 0 / 8px 8px,
-        radial-gradient(ellipse at 20% 14%, rgba(255,229,180,0.12), transparent 34%),
-        linear-gradient(145deg, #aa7443, var(--cell-b));
+        linear-gradient(135deg, rgba(255,255,255,0.42), rgba(255,255,255,0.05) 30%, transparent 31%),
+        linear-gradient(90deg, rgba(173,127,255,0.08), rgba(89,230,255,0.07) 36%, rgba(255,196,104,0.06) 70%, rgba(255,124,176,0.07)),
+        linear-gradient(145deg, #ecfbff, var(--cell-b));
     }
-    body[data-theme="temple"] .piece {
+    body[data-theme="prism"] .piece {
       width: 81%;
-      border-color: rgba(111,51,27,0.7);
+      border-color: rgba(149,56,103,0.72);
       background:
-        radial-gradient(circle at 35% 23%, rgba(255,245,203,0.38), transparent 23%),
-        linear-gradient(145deg, #e6a05e, #b45431 59%, #5e291c 100%);
+        radial-gradient(circle at 34% 22%, rgba(255,255,255,0.55), transparent 24%),
+        linear-gradient(145deg, #ffd7e5, #ff6c93 58%, #7a215b 100%);
       box-shadow:
-        inset 0 2px 0 rgba(255,235,183,0.35),
-        inset 0 -5px 8px rgba(80,31,18,0.38),
-        0 6px 9px rgba(49,21,6,0.5),
-        0 0 0 1px rgba(255,213,131,0.17);
+        inset 0 2px 0 rgba(255,255,255,0.42),
+        inset 0 -5px 8px rgba(117,28,88,0.36),
+        0 6px 9px rgba(22,13,43,0.45),
+        0 0 0 1px rgba(255,255,255,0.16),
+        0 0 16px rgba(255,108,147,0.08);
     }
-    body[data-theme="temple"] .piece.p1 { color: #fff0b6; }
-    body[data-theme="temple"] .piece.p2 {
-      color: #f5f2c9;
-      border-color: rgba(18,69,88,0.78);
+    body[data-theme="prism"] .piece.p1 { color: #fff6fb; }
+    body[data-theme="prism"] .piece.p2 {
+      color: #fbfeff;
+      border-color: rgba(28,104,143,0.74);
       background:
-        radial-gradient(circle at 35% 23%, rgba(232,255,247,0.32), transparent 23%),
-        linear-gradient(145deg, #54a8ba, #226c83 59%, #153b4e 100%);
+        radial-gradient(circle at 34% 22%, rgba(255,255,255,0.58), transparent 24%),
+        linear-gradient(145deg, #f7fdff, #42d8ff 58%, #245a8e 100%);
       box-shadow:
-        inset 0 2px 0 rgba(224,255,248,0.27),
-        inset 0 -5px 8px rgba(10,47,62,0.42),
-        0 6px 9px rgba(30,15,5,0.5),
-        0 0 0 1px rgba(222,243,209,0.16);
+        inset 0 2px 0 rgba(255,255,255,0.45),
+        inset 0 -5px 8px rgba(24,77,119,0.33),
+        0 6px 9px rgba(22,13,43,0.45),
+        0 0 0 1px rgba(255,255,255,0.16),
+        0 0 16px rgba(66,216,255,0.08);
     }
-    body[data-theme="temple"] .piece.type-circle { border-radius: 50%; }
-    body[data-theme="temple"] .piece.type-triangle { border-radius: 48% 48% 27% 27%; }
-    body[data-theme="temple"] .piece.type-square { border-radius: 17%; }
-    body[data-theme="temple"] .piece.type-diamond { border-radius: 27%; }
-    body[data-theme="temple"] .piece.type-cross { border-radius: 32%; }
-    body[data-theme="temple"] .piece .glyph { filter: drop-shadow(0 1px 0 rgba(62,27,10,0.36)); }
-    body[data-theme="temple"] .theme-detail {
+    body[data-theme="prism"] .piece.type-circle { border-radius: 50%; }
+    body[data-theme="prism"] .piece.type-triangle { border-radius: 48% 48% 27% 27%; }
+    body[data-theme="prism"] .piece.type-square { border-radius: 17%; }
+    body[data-theme="prism"] .piece.type-diamond { border-radius: 27%; }
+    body[data-theme="prism"] .piece.type-cross { border-radius: 32%; }
+    body[data-theme="prism"] .piece .glyph { filter: drop-shadow(0 1px 0 rgba(38,24,72,0.36)); }
+    body[data-theme="prism"] .theme-detail {
       inset: 7%;
-      border: 1px solid rgba(255,222,147,0.21);
-      box-shadow: inset 0 0 0 1px rgba(81,36,12,0.22);
+      border: 1px solid rgba(255,255,255,0.22);
+      box-shadow: inset 0 0 0 1px rgba(78,53,131,0.18), inset 0 0 14px rgba(255,255,255,0.08);
     }
-    body[data-theme="temple"] .theme-detail::before {
+    body[data-theme="prism"] .theme-detail::before {
       inset: 11%;
-      border: 1px dashed rgba(255,224,148,0.3);
+      border: 1px solid rgba(255,255,255,0.26);
       border-radius: inherit;
+      opacity: 0.85;
     }
-    body[data-theme="temple"] .piece.type-diamond .theme-detail::after {
+    body[data-theme="prism"] .piece.type-diamond .theme-detail::after {
       inset: 5%;
-      border: 1px solid currentColor;
-      border-left-color: transparent;
-      border-right-color: transparent;
       border-radius: 50%;
-      opacity: 0.42;
+      background: conic-gradient(from 0deg, rgba(255,114,188,0.52), rgba(255,213,89,0.5), rgba(82,233,255,0.52), rgba(173,122,255,0.52), rgba(255,114,188,0.52));
+      mask: radial-gradient(circle, transparent 56%, #000 57% 70%, transparent 71%);
+      opacity: 0.58;
       animation: cmRuneGlow 1600ms ease-in-out infinite alternate;
     }
-    body[data-theme="temple"] .cell.forcefield-p1::before,
-    body[data-theme="temple"] .cell.forcefield-p2::before {
-      opacity: 0.72;
+    body[data-theme="prism"] .cell.forcefield-p1::before,
+    body[data-theme="prism"] .cell.forcefield-p2::before {
+      opacity: 0.76;
       background:
-        linear-gradient(45deg, transparent 43%, rgba(255,229,161,0.1) 44% 56%, transparent 57%) 0 0 / 10px 10px,
-        radial-gradient(circle, rgba(255,229,161,0.07), transparent 63%);
+        conic-gradient(from 0deg, rgba(255,123,184,0.13), rgba(255,214,102,0.13), rgba(79,231,255,0.13), rgba(171,122,255,0.13), rgba(255,123,184,0.13)),
+        radial-gradient(circle, rgba(255,255,255,0.06), transparent 63%);
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,0.22), inset 0 0 12px rgba(255,255,255,0.05);
     }
-    body[data-theme="temple"] .cell.forcefield-p1::before { box-shadow: inset 0 0 0 2px rgba(var(--p1-rgb),0.3), inset 0 0 12px rgba(var(--p1-rgb),0.09); }
-    body[data-theme="temple"] .cell.forcefield-p2::before { box-shadow: inset 0 0 0 2px rgba(var(--p2-rgb),0.33), inset 0 0 12px rgba(var(--p2-rgb),0.09); }
-    body[data-theme="temple"] .cell.legal::after { background: #fff0b3; box-shadow: 0 0 0 4px rgba(95,54,22,0.11), 0 0 12px rgba(255,225,150,0.42); }
+    body[data-theme="prism"] .cell.legal::after { background: #fff4cf; box-shadow: 0 0 0 4px rgba(109,89,177,0.11), 0 0 12px rgba(255,221,123,0.4); }
+    body[data-theme="prism"] .cell.selected { box-shadow: inset 0 0 0 2px #fff3c9, 0 0 17px rgba(255,219,120,0.34); }
 
     @keyframes cmOrbit { to { transform: rotate(360deg); } }
     @keyframes cmRuneGlow { from { opacity: 0.23; transform: scale(0.9); } to { opacity: 0.62; transform: scale(1.03); } }
@@ -2272,7 +2280,7 @@
       <a class="icon-button" href="../../" aria-label="Back to games">←</a>
       <div class="title-block">
         <p class="eyebrow">Local + AI + online strategy</p>
-        <h1>Crossmate <span class="version">v1.7.1</span></h1>
+        <h1>Crossmate <span class="version">v1.7.2</span></h1>
       </div>
       <div class="top-actions">
         <button class="icon-button" id="soundButton" type="button" aria-label="Turn sound off" title="Sound">♪</button>
@@ -2499,12 +2507,12 @@
           </span>
           <span class="theme-copy"><strong>Obsidian Royale</strong><span>Black marble, gold inlay, rose-metal pieces, and polished platinum rivals.</span><span class="theme-badge">Luxury</span></span>
         </button>
-        <button class="theme-card" type="button" data-theme-choice="temple" aria-pressed="false">
+        <button class="theme-card" type="button" data-theme-choice="prism" aria-pressed="false">
           <span class="theme-preview" aria-hidden="true">
             <span class="mini-piece mini-circle"></span><span class="mini-piece mini-triangle p2"></span>
             <span class="mini-piece mini-diamond"></span><span class="mini-piece mini-cross p2"></span>
           </span>
-          <span class="theme-copy"><strong>Sun Temple</strong><span>Carved sandstone, lapis relics, gold runes, and ancient ward patterns.</span><span class="theme-badge">Mythic</span></span>
+          <span class="theme-copy"><strong>Prism Arcade</strong><span>Iridescent acrylic, candy-lacquer pieces, and rainbow energy wards on a glossy showpiece board.</span><span class="theme-badge">Vibrant</span></span>
         </button>
       </div>
       <div class="theme-note">All four sets are available immediately, saved on this device, and work offline. Online opponents can use a different local set.</div>
@@ -2551,15 +2559,15 @@
       ];
       var TYPE_NAMES = { circle: "Circle", diamond: "Diamond", square: "Square", triangle: "Triangle", cross: "Cross" };
       var POINT_VALUES = { circle: 1, triangle: 3, square: 5, diamond: 6, cross: 0 };
-      var VERSION = "1.7.1";
+      var VERSION = "1.7.2";
       var THEME_KEY = "crossmate-theme";
       var THEMES = {
         neon: { id: "neon", name: "Original Neon", color: "#050915" },
         wood: { id: "wood", name: "Classic Wood", color: "#160c07" },
         obsidian: { id: "obsidian", name: "Obsidian Royale", color: "#080808" },
-        temple: { id: "temple", name: "Sun Temple", color: "#1b1008" }
+        prism: { id: "prism", name: "Prism Arcade", color: "#17102f" }
       };
-      var THEME_ALIASES = { space: "obsidian", "fire-ice": "temple" };
+      var THEME_ALIASES = { space: "obsidian", "fire-ice": "prism", temple: "prism" };
       var ROOM_LIFETIME_MS = 10 * 24 * 60 * 60 * 1000;
       var BACK_ROW = ["diamond", "square", "triangle", null, "cross", null, "triangle", "square", "diamond"];
 

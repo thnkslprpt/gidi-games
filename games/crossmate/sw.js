@@ -1,8 +1,8 @@
-/* Crossmate v1.7.1 offline cache */
+/* Crossmate v1.7.2 offline cache */
 "use strict";
 
 var CACHE_PREFIX = "crossmate-";
-var CACHE_NAME = "crossmate-v1.7.1";
+var CACHE_NAME = "crossmate-v1.7.2";
 var CORE = ["./", "./index.html", "./firebase-config.js"];
 
 self.addEventListener("install", function (event) {
