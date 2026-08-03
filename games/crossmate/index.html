@@ -1349,7 +1349,7 @@
 
 
 
-    /* Crossmate v1.7.2: professional board collection with Prism Arcade */
+    /* Crossmate v1.7.3: square-backed triangle piece containers */
     .theme-button-icon {
       width: 19px;
       height: 19px;
@@ -1773,7 +1773,7 @@
         0 0 0 1px rgba(3,7,15,0.74);
     }
     body[data-theme="neon"] .piece.type-circle { border-radius: 50%; }
-    body[data-theme="neon"] .piece.type-triangle { border-radius: 48% 48% 25% 25%; }
+    body[data-theme="neon"] .piece.type-triangle { border-radius: 19%; }
     body[data-theme="neon"] .piece.type-square { border-radius: 19%; }
     body[data-theme="neon"] .piece.type-diamond { border-radius: 31%; }
     body[data-theme="neon"] .piece.type-cross { border-radius: 42%; }
@@ -1936,7 +1936,7 @@
         0 0 0 1px rgba(194,255,250,0.19);
     }
     body[data-theme="wood"] .piece.type-circle { border-radius: 50%; }
-    body[data-theme="wood"] .piece.type-triangle { border-radius: 47% 47% 29% 29%; }
+    body[data-theme="wood"] .piece.type-triangle { border-radius: 21%; }
     body[data-theme="wood"] .piece.type-square { border-radius: 21%; }
     body[data-theme="wood"] .piece.type-diamond { border-radius: 29%; }
     body[data-theme="wood"] .piece.type-cross { border-radius: 35%; }
@@ -2072,7 +2072,7 @@
         0 0 0 2px rgba(231,198,122,0.2);
     }
     body[data-theme="obsidian"] .piece.type-circle { border-radius: 50%; }
-    body[data-theme="obsidian"] .piece.type-triangle { border-radius: 45% 45% 24% 24%; }
+    body[data-theme="obsidian"] .piece.type-triangle { border-radius: 16%; }
     body[data-theme="obsidian"] .piece.type-square { border-radius: 16%; }
     body[data-theme="obsidian"] .piece.type-diamond { border-radius: 25%; }
     body[data-theme="obsidian"] .piece.type-cross { border-radius: 31%; }
@@ -2211,7 +2211,7 @@
         0 0 16px rgba(66,216,255,0.08);
     }
     body[data-theme="prism"] .piece.type-circle { border-radius: 50%; }
-    body[data-theme="prism"] .piece.type-triangle { border-radius: 48% 48% 27% 27%; }
+    body[data-theme="prism"] .piece.type-triangle { border-radius: 17%; }
     body[data-theme="prism"] .piece.type-square { border-radius: 17%; }
     body[data-theme="prism"] .piece.type-diamond { border-radius: 27%; }
     body[data-theme="prism"] .piece.type-cross { border-radius: 32%; }
@@ -2280,7 +2280,7 @@
       <a class="icon-button" href="../../" aria-label="Back to games">←</a>
       <div class="title-block">
         <p class="eyebrow">Local + AI + online strategy</p>
-        <h1>Crossmate <span class="version">v1.7.2</span></h1>
+        <h1>Crossmate <span class="version">v1.7.3</span></h1>
       </div>
       <div class="top-actions">
         <button class="icon-button" id="soundButton" type="button" aria-label="Turn sound off" title="Sound">♪</button>
@@ -2559,7 +2559,7 @@
       ];
       var TYPE_NAMES = { circle: "Circle", diamond: "Diamond", square: "Square", triangle: "Triangle", cross: "Cross" };
       var POINT_VALUES = { circle: 1, triangle: 3, square: 5, diamond: 6, cross: 0 };
-      var VERSION = "1.7.2";
+      var VERSION = "1.7.3";
       var THEME_KEY = "crossmate-theme";
       var THEMES = {
         neon: { id: "neon", name: "Original Neon", color: "#050915" },
