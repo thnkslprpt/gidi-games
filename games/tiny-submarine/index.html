@@ -137,6 +137,44 @@
       cursor: default;
     }
 
+    .game-pause-button {
+      position: absolute;
+      z-index: 8;
+      top: 72px;
+      right: 14px;
+      display: grid;
+      width: 46px;
+      height: 46px;
+      padding: 0;
+      place-items: center;
+      border: 1px solid rgba(190, 230, 255, 0.24);
+      border-radius: 14px;
+      color: #efffff;
+      background: rgba(2, 13, 25, 0.72);
+      box-shadow:
+        0 9px 22px rgba(0, 0, 0, 0.28),
+        inset 0 1px rgba(255, 255, 255, 0.08);
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
+      font-size: 1rem;
+      font-weight: 950;
+      line-height: 1;
+      cursor: pointer;
+      touch-action: manipulation;
+      transition: transform 120ms ease, border-color 120ms ease, background 120ms ease, opacity 120ms ease;
+    }
+
+    .game-pause-button:not([disabled]):active {
+      border-color: rgba(95, 240, 219, 0.5);
+      background: rgba(9, 44, 58, 0.88);
+      transform: scale(0.96);
+    }
+
+    .game-pause-button[disabled] {
+      opacity: 0.38;
+      cursor: default;
+    }
+
     .hero {
       display: flex;
       align-items: flex-end;
@@ -736,6 +774,13 @@
       .hud-bottom { right: 8px; left: 8px; }
       .hud-top { top: 8px; }
       .hud-bottom { bottom: 8px; }
+      .game-pause-button {
+        top: 58px;
+        right: 8px;
+        width: 44px;
+        height: 44px;
+        border-radius: 13px;
+      }
       .hud-chip { min-width: 63px; padding: 7px 8px; }
       .zone-chip { max-width: 152px; }
       .oxygen-panel { width: 45vw; padding: 7px 8px 8px; }
@@ -779,6 +824,7 @@
       .hud-chip { min-width: 56px; padding: 6px; }
       .zone-chip { min-width: 91px; }
       .hull-chip { min-width: 58px; }
+      .game-pause-button { top: 52px; }
       .hud-chip strong { font-size: 0.75rem; }
       .oxygen-panel { width: 45vw; }
       .mission-chip { width: 43vw; }
@@ -804,7 +850,6 @@
       </a>
       <div class="top-actions">
         <button class="icon-button" id="soundButton" type="button" aria-label="Mute sound" title="Sound on">♪</button>
-        <button class="icon-button" id="pauseButton" type="button" aria-label="Pause game" title="Pause" disabled>Ⅱ</button>
       </div>
     </nav>
 
@@ -814,7 +859,7 @@
         <h1>Tiny Submarine</h1>
         <p>Pilot through living caves, rescue lost divers, chain treasure combos, and survive five increasingly dangerous ocean zones.</p>
       </div>
-      <div class="version-pill">Expedition v2.0.1</div>
+      <div class="version-pill">Expedition v2.0.2</div>
     </header>
 
     <main>
@@ -862,6 +907,8 @@
             </div>
           </div>
         </div>
+
+        <button class="game-pause-button" id="pauseButton" type="button" aria-label="Pause game" title="Pause" disabled>Ⅱ</button>
 
         <div class="zone-banner" id="zoneBanner">
           <span>Entering</span>
