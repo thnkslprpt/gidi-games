@@ -1349,7 +1349,7 @@
 
 
 
-    /* Crossmate v1.7.3: square-backed triangle piece containers */
+    /* Crossmate v1.7.4: square-backed triangle piece containers */
     .theme-button-icon {
       width: 19px;
       height: 19px;
@@ -2280,7 +2280,7 @@
       <a class="icon-button" href="../../" aria-label="Back to games">←</a>
       <div class="title-block">
         <p class="eyebrow">Local + AI + online strategy</p>
-        <h1>Crossmate <span class="version">v1.7.3</span></h1>
+        <h1>Crossmate <span class="version">v1.7.4</span></h1>
       </div>
       <div class="top-actions">
         <button class="icon-button" id="soundButton" type="button" aria-label="Turn sound off" title="Sound">♪</button>
@@ -2559,7 +2559,7 @@
       ];
       var TYPE_NAMES = { circle: "Circle", diamond: "Diamond", square: "Square", triangle: "Triangle", cross: "Cross" };
       var POINT_VALUES = { circle: 1, triangle: 3, square: 5, diamond: 6, cross: 0 };
-      var VERSION = "1.7.3";
+      var VERSION = "1.7.4";
       var THEME_KEY = "crossmate-theme";
       var THEMES = {
         neon: { id: "neon", name: "Original Neon", color: "#050915" },
@@ -2930,13 +2930,13 @@
           playTone(300, 0.05, "triangle", 0.035);
         }
       }
-      function attachOnlineRoom(code, player, roomRoot) {
+      function attachOnlineRoom(code, player) {
         var uid = firebaseUser.uid;
         clearOnlineConnection(false);
         playMode = "online";
         localPlayer = player;
         onlineRoomCode = code;
-        onlineRoomRef = firebase.database().ref((roomRoot || "crossmateRooms") + "/" + code);
+        onlineRoomRef = firebase.database().ref("crossmateRooms/" + code);
         onlinePresenceRef = onlineRoomRef.child("presence/" + uid);
         onlinePresenceRef.set(true);
         onlinePresenceRef.onDisconnect().remove();
@@ -3024,18 +3024,9 @@
         setOnlineError("");
         setRoomPanel(code, "Finding room…", true);
         initialiseFirebase().then(function () {
-          var modernRef = firebase.database().ref("crossmateRooms/" + code);
-          var legacyRef = firebase.database().ref("shapeSiegeRooms/" + code);
-          return modernRef.once("value").then(function (modernSnapshot) {
-            if (modernSnapshot.val()) {
-              return { ref: modernRef, root: "crossmateRooms", snapshot: modernSnapshot };
-            }
-            return legacyRef.once("value").then(function (legacySnapshot) {
-              return { ref: legacyRef, root: "shapeSiegeRooms", snapshot: legacySnapshot };
-            });
-          }).then(function (located) {
-            var ref = located.ref;
-            var initialRoom = located.snapshot.val();
+          var ref = firebase.database().ref("crossmateRooms/" + code);
+          return ref.once("value").then(function (snapshot) {
+            var initialRoom = snapshot.val();
             var p1Uid;
             var p2Uid;
             var p2Ref;
@@ -3056,11 +3047,11 @@
             p1Uid = initialRoom.players.p1.uid || "";
             p2Uid = initialRoom.players.p2 && initialRoom.players.p2.uid ? initialRoom.players.p2.uid : "";
             if (p1Uid === firebaseUser.uid) {
-              attachOnlineRoom(code, 1, located.root);
+              attachOnlineRoom(code, 1);
               return;
             }
             if (p2Uid === firebaseUser.uid) {
-              attachOnlineRoom(code, 2, located.root);
+              attachOnlineRoom(code, 2);
               return;
             }
             if (p2Uid) {
@@ -3088,7 +3079,7 @@
                 return;
               }
               if (committed && finalP2 && finalP2.uid === firebaseUser.uid) {
-                attachOnlineRoom(code, 2, located.root);
+                attachOnlineRoom(code, 2);
                 return;
               }
               modeChoices.hidden = false;
