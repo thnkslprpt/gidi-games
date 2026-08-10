@@ -1349,6 +1349,48 @@
 
 
 
+    /* Crossmate v1.8.1: selectable 7x7 / 9x9 boards */
+    .board-size-setup {
+      margin-top: 11px;
+      padding: 9px;
+      border: 1px solid rgba(151,174,219,0.16);
+      border-radius: 15px;
+      background: rgba(255,255,255,0.035);
+    }
+    .board-size-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 7px;
+    }
+    .board-size-head strong { font-size: 10px; letter-spacing: 0.02em; }
+    .board-size-head span { color: var(--muted); font-size: 8px; }
+    .board-size-options { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 7px; }
+    .board-size-choice {
+      min-height: 45px;
+      padding: 7px 8px;
+      border: 1px solid rgba(151,174,219,0.18);
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      gap: 1px;
+      color: #dce7f7;
+      background: rgba(255,255,255,0.045);
+      cursor: pointer;
+      text-align: center;
+    }
+    .board-size-choice strong { font-size: 13px; }
+    .board-size-choice span { color: var(--muted); font-size: 8px; }
+    .board-size-choice.selected {
+      color: #1d1707;
+      border-color: rgba(255,209,102,0.72);
+      background: linear-gradient(145deg, #fff1b1, var(--gold));
+      box-shadow: 0 0 0 2px rgba(255,209,102,0.08), 0 7px 16px rgba(255,209,102,0.1);
+    }
+    .board-size-choice.selected span { color: rgba(29,23,7,0.72); }
+    .board-size-note { margin-top: 6px; color: var(--muted); font-size: 7px; line-height: 1.35; text-align: center; }
+
     /* Crossmate v1.7.4: square-backed triangle piece containers */
     .theme-button-icon {
       width: 19px;
@@ -2280,7 +2322,7 @@
       <a class="icon-button" href="../../" aria-label="Back to games">←</a>
       <div class="title-block">
         <p class="eyebrow">Local + AI + online strategy</p>
-        <h1>Crossmate <span class="version">v1.8.0</span></h1>
+        <h1>Crossmate <span class="version">v1.8.1</span></h1>
       </div>
       <div class="top-actions">
         <button class="icon-button" id="soundButton" type="button" aria-label="Turn sound off" title="Sound">♪</button>
@@ -2347,6 +2389,14 @@
         <span>Board and pieces<strong id="modeThemeName">Original Neon</strong></span>
       </button>
       <div id="modeChoices">
+        <div class="board-size-setup" aria-label="Board size">
+          <div class="board-size-head"><strong>Board size</strong><span>7×7 plays faster</span></div>
+          <div class="board-size-options" id="boardSizeChoices">
+            <button class="board-size-choice" type="button" data-board-size="7" aria-pressed="false"><strong>7×7</strong><span>Quick match</span></button>
+            <button class="board-size-choice selected" type="button" data-board-size="9" aria-pressed="true"><strong>9×9</strong><span>Classic</span></button>
+          </div>
+          <div class="board-size-note">New matches use this size. Joining an online room automatically uses the creator’s board.</div>
+        </div>
         <div class="mode-main-choices" id="modeMainChoices">
           <div class="mode-grid three-modes">
             <button class="mode-card computer-choice" id="computerModeButton" type="button">
@@ -2416,7 +2466,7 @@
     <section class="modal">
       <div class="modal-kicker">How to play</div>
       <h2 id="helpTitle">Protect your cross.<br>Break theirs.</h2>
-      <p class="modal-lead">Crossmate is a tactical duel on a 9×9 board. Each side starts with nine circles in front of two diamonds, two squares, two triangles, and one cross. Player 2 begins at the top; Player 1 begins at the bottom.</p>
+      <p class="modal-lead">Crossmate is a tactical duel on a 7×7 or 9×9 board. The classic 9×9 setup has nine circles and two empty back-row spaces beside the cross; the quicker 7×7 setup removes those two empty spaces and uses seven circles. All movement and win rules are identical. Player 2 begins at the top; Player 1 begins at the bottom.</p>
       <div class="rules-grid">
         <article class="rule-card">
           <div class="rule-head"><span class="rule-icon">○</span><strong>Circle</strong><span class="point-tag">1 point</span></div>
@@ -2559,7 +2609,7 @@
       ];
       var TYPE_NAMES = { circle: "Circle", diamond: "Diamond", square: "Square", triangle: "Triangle", cross: "Cross" };
       var POINT_VALUES = { circle: 1, triangle: 3, square: 5, diamond: 6, cross: 0 };
-      var VERSION = "1.8.0";
+      var VERSION = "1.8.1";
       var THEME_KEY = "crossmate-theme";
       var THEMES = {
         neon: { id: "neon", name: "Original Neon", color: "#050915" },
@@ -2569,7 +2619,10 @@
       };
       var THEME_ALIASES = { space: "obsidian", "fire-ice": "prism", temple: "prism" };
       var ROOM_LIFETIME_MS = 10 * 24 * 60 * 60 * 1000;
-      var BACK_ROW = ["diamond", "square", "triangle", null, "cross", null, "triangle", "square", "diamond"];
+      var BACK_ROWS = {
+        7: ["diamond", "square", "triangle", "cross", "triangle", "square", "diamond"],
+        9: ["diamond", "square", "triangle", null, "cross", null, "triangle", "square", "diamond"]
+      };
 
       var boardEl = document.getElementById("board");
       var boardShell = document.getElementById("boardShell");
@@ -2610,6 +2663,7 @@
       var modeOverlay = document.getElementById("modeOverlay");
       var modeChoices = document.getElementById("modeChoices");
       var modeLead = document.getElementById("modeLead");
+      var boardSizeChoices = document.getElementById("boardSizeChoices");
       var localModeButton = document.getElementById("localModeButton");
       var createOnlineButton = document.getElementById("createOnlineButton");
       var roomCodeInput = document.getElementById("roomCodeInput");
@@ -2697,6 +2751,7 @@
       var aiWorker = null;
       var aiWorkerSource = "";
       var activeTheme = "neon";
+      var selectedBoardSize = safeGet("crossmate-board-size") === "7" ? 7 : 9;
 
 
       function safeGet(key) {
@@ -2707,6 +2762,21 @@
       function safeSet(key, value) {
         try { window.localStorage.setItem(key, value); }
         catch (error) { return; }
+      }
+      function updateBoardSizeChoiceUi() {
+        var buttons = boardSizeChoices.querySelectorAll("[data-board-size]");
+        var i;
+        var selected;
+        for (i = 0; i < buttons.length; i += 1) {
+          selected = Number(buttons[i].getAttribute("data-board-size")) === selectedBoardSize;
+          buttons[i].classList.toggle("selected", selected);
+          buttons[i].setAttribute("aria-pressed", selected ? "true" : "false");
+        }
+      }
+      function chooseBoardSize(value) {
+        selectedBoardSize = Number(value) === 7 ? 7 : 9;
+        safeSet("crossmate-board-size", String(selectedBoardSize));
+        updateBoardSizeChoiceUi();
       }
 
 
@@ -2806,7 +2876,9 @@
         for (i = 0; i < 5; i += 1) { result += alphabet.charAt(Math.floor(Math.random() * alphabet.length)); }
         return result;
       }
-      function freshState() {
+      function freshState(boardSize) {
+        var requestedSize = Number(boardSize);
+        if (requestedSize === 7 || requestedSize === 9) { SIZE = requestedSize; }
         var fresh = createInitialState();
         fresh.positionCounts[positionKey(fresh)] = 1;
         return fresh;
@@ -2819,6 +2891,7 @@
         value.positionCounts = value.positionCounts || {};
         value.moveNumber = Number(value.moveNumber || 0);
         value.halfmoveClock = Number(value.halfmoveClock || 0);
+        value.boardSize = Number(value.boardSize) === 7 ? 7 : 9;
         value.gameOver = Boolean(value.gameOver);
         return value;
       }
@@ -2949,6 +3022,7 @@
         onlineRoomListener = function (snapshot) {
           var roomData = snapshot.val();
           var incoming;
+          var incomingSize;
           var moved;
           if (!roomData || !roomData.state) {
             setOnlineError("This room no longer exists.");
@@ -2957,6 +3031,13 @@
           upgradeRoomExpiry(onlineRoomRef, roomData);
           updateRoomPresence(roomData);
           incoming = normaliseState(roomData.state);
+          incomingSize = incoming ? Number(incoming.boardSize || 9) : 9;
+          if (SIZE !== incomingSize || cellEls.length !== incomingSize) {
+            SIZE = incomingSize;
+            aiWorkerSource = "";
+            createCells();
+            applyBoardPerspective();
+          }
           moved = !onlineInitialSnapshot && incoming.moveNumber !== lastSeenOnlineMove;
           state = incoming;
           if (moved) { presentLastMove(state.lastMove); }
@@ -2999,7 +3080,7 @@
                 createdAt: Date.now(),
                 expiresAt: Date.now() + ROOM_LIFETIME_MS,
                 players: { p1: { uid: firebaseUser.uid, joinedAt: Date.now() } },
-                state: freshState()
+                state: freshState(selectedBoardSize)
               };
             }, function (error, committed) {
               if (error) { setOnlineError(error.message || "Could not create the room."); return; }
@@ -3103,7 +3184,7 @@
         endOverlay.classList.remove("open");
         onlineRoomRef.child("state").transaction(function (current) {
           if (!current) { return; }
-          return freshState();
+          return freshState(Number(current.boardSize) === 7 ? 7 : 9);
         }, function (error, committed) {
           onlineBusy = false;
           if (error || !committed) { showToast("Could not start the rematch"); }
@@ -3225,18 +3306,20 @@
       function createInitialState() {
         var pieces = [];
         var idCounter = { value: 1 };
+        var backRow = BACK_ROWS[SIZE] || BACK_ROWS[9];
         var c;
         for (c = 0; c < SIZE; c += 1) {
-          if (BACK_ROW[c]) {
-            addPiece(pieces, BACK_ROW[c], 2, 0, c, BACK_ROW[c] === "triangle" ? 2 : 0, idCounter);
+          if (backRow[c]) {
+            addPiece(pieces, backRow[c], 2, 0, c, backRow[c] === "triangle" ? 2 : 0, idCounter);
           }
           addPiece(pieces, "circle", 2, 1, c, 2, idCounter);
           addPiece(pieces, "circle", 1, SIZE - 2, c, 0, idCounter);
-          if (BACK_ROW[c]) {
-            addPiece(pieces, BACK_ROW[c], 1, SIZE - 1, c, BACK_ROW[c] === "triangle" ? 0 : 0, idCounter);
+          if (backRow[c]) {
+            addPiece(pieces, backRow[c], 1, SIZE - 1, c, backRow[c] === "triangle" ? 0 : 0, idCounter);
           }
         }
         return {
+          boardSize: SIZE,
           pieces: pieces,
           currentPlayer: Math.random() < 0.5 ? 1 : 2,
           halfmoveClock: 0,
@@ -3921,10 +4004,10 @@
         statusEl.className = "status p" + state.currentPlayer + (check ? " danger" : "");
         networkBadge.className = "network-pill";
         if (playMode === "online") {
-          networkBadge.textContent = onlineRoomCode || "Online";
+          networkBadge.textContent = (onlineRoomCode || "Online") + " · " + SIZE + "×" + SIZE;
           networkBadge.classList.add(onlineOpponentConnected ? "online" : "offline");
         } else if (playMode === "local") {
-          networkBadge.textContent = "One phone";
+          networkBadge.textContent = "One phone · " + SIZE + "×" + SIZE;
         } else {
           networkBadge.textContent = "Choose mode";
         }
@@ -4305,7 +4388,7 @@
       }
 
       function newGame(showIntro, silent) {
-        SIZE = 9;
+        SIZE = selectedBoardSize === 7 ? 7 : 9;
         createCells();
         applyBoardPerspective();
         state = createInitialState();
@@ -4321,7 +4404,7 @@
         refreshInitialLayout();
         window.setTimeout(refreshInitialLayout, 90);
         window.setTimeout(refreshInitialLayout, 280);
-        if (!silent) { showToast("Player " + state.currentPlayer + " moves first on 9×9"); }
+        if (!silent) { showToast("Player " + state.currentPlayer + " moves first on " + SIZE + "×" + SIZE); }
         if (showIntro) { helpOverlay.classList.add("open"); }
       }
 
@@ -4924,8 +5007,8 @@
         return value;
       };
       var v13FreshState = freshState;
-      freshState = function () {
-        var fresh = v13FreshState();
+      freshState = function (boardSize) {
+        var fresh = v13FreshState(boardSize);
         fresh.history = [packHistorySnapshot(fresh)];
         return fresh;
       };
@@ -5735,6 +5818,7 @@
       var v14NewGame = newGame;
       newGame = function (showIntro, silent) {
         cancelAiSearch();
+        aiWorkerSource = "";
         v14NewGame(showIntro, silent);
         if (playMode === "ai") {
           aiStartingPlayer = chosenOpeningPlayer();
@@ -5757,7 +5841,7 @@
         if (playMode === "ai") {
           p1Name.textContent = "You · Rose";
           p2Name.textContent = "Computer · Cyan";
-          networkBadge.textContent = "Computer · " + aiTitle(aiDifficulty);
+          networkBadge.textContent = "Computer · " + aiTitle(aiDifficulty) + " · " + SIZE + "×" + SIZE;
           networkBadge.className = "network-pill ai" + (aiThinking && !reviewingHistory() ? " ai-thinking" : "");
           boardShell.classList.toggle("ai-thinking", aiThinking && !reviewingHistory());
           if (reviewingHistory()) { return; }
@@ -5799,6 +5883,12 @@
       });
       registerCrossmateOffline();
 
+      boardSizeChoices.addEventListener("click", function (event) {
+        var button = event.target.closest("[data-board-size]");
+        if (!button) { return; }
+        chooseBoardSize(button.getAttribute("data-board-size"));
+      });
+      updateBoardSizeChoiceUi();
       function handleNewMatchButton() {
         if (playMode === "online") { leaveOnlineMatch(); }
         else { newGame(false, false); }
