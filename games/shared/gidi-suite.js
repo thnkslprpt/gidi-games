@@ -1,8 +1,8 @@
-/* Gidi Games shared runtime · suite 3.0.2 */
+/* Gidi Games shared runtime · suite 3.0.3 */
 (function () {
   "use strict";
 
-  var VERSION = "3.0.2";
+  var VERSION = "3.0.3";
   var toastTimer = 0;
 
   function onReady(callback) {
@@ -14,7 +14,11 @@
   }
 
   function setViewportHeight() {
-    document.documentElement.style.setProperty("--gidi-vh", (window.innerHeight * 0.01) + "px");
+    var viewport = window.visualViewport;
+    var height = viewport && viewport.height ? viewport.height : window.innerHeight;
+    height = Math.max(1, Math.round(height || document.documentElement.clientHeight));
+    document.documentElement.style.setProperty("--gidi-vh", (height * 0.01) + "px");
+    document.documentElement.style.setProperty("--gidi-viewport-height", height + "px");
   }
 
   function safeStorageSet(key, value) {
@@ -250,6 +254,10 @@
   window.addEventListener("resize", setViewportHeight, { passive: true });
   window.addEventListener("orientationchange", setViewportHeight, { passive: true });
   window.addEventListener("pageshow", setViewportHeight, { passive: true });
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", setViewportHeight, { passive: true });
+    window.visualViewport.addEventListener("scroll", setViewportHeight, { passive: true });
+  }
 
   window.GidiSuite = {
     version: VERSION,
