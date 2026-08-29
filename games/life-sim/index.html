@@ -1,0 +1,1035 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#071426">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="format-detection" content="telephone=no">
+  <title>Life Sandbox · Gidi's Game Room</title>
+  <link rel="stylesheet" href="../shared/gidi-suite.css?v=3.1.0">
+  <script defer src="../shared/gidi-suite.js?v=3.1.0"></script>
+  <style>
+    :root {
+      --night: #071426;
+      --ink: #f7fbff;
+      --muted: #a9bad4;
+      --line: rgba(149, 188, 255, 0.19);
+      --panel: rgba(7, 20, 44, 0.86);
+      --panel-strong: rgba(7, 18, 39, 0.96);
+      --cyan: #55dcff;
+      --violet: #917cff;
+      --pink: #ff73ae;
+      color-scheme: dark;
+      font-family: ui-rounded, "SF Pro Rounded", "SF Pro Display", -apple-system,
+        BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body { min-width: 320px; min-height: 100%; margin: 0; }
+    body {
+      min-height: 100vh;
+      min-height: calc(var(--gidi-vh, 1vh) * 100);
+      overflow: hidden;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 10% -5%, rgba(81, 217, 255, 0.2), transparent 24rem),
+        radial-gradient(circle at 100% 10%, rgba(145, 124, 255, 0.18), transparent 28rem),
+        linear-gradient(180deg, #08182e 0%, #06101f 100%);
+      overscroll-behavior: none;
+    }
+    button, a { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+    button { font: inherit; }
+    .app {
+      display: flex;
+      min-height: 100vh;
+      min-height: calc(var(--gidi-vh, 1vh) * 100);
+      flex-direction: column;
+    }
+    .topbar {
+      position: relative;
+      z-index: 20;
+      display: flex;
+      min-height: 58px;
+      align-items: center;
+      gap: 10px;
+      padding: max(9px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) 8px max(10px, env(safe-area-inset-left));
+      border-bottom: 1px solid var(--line);
+      background: rgba(5, 14, 32, 0.86);
+      -webkit-backdrop-filter: blur(18px);
+      backdrop-filter: blur(18px);
+    }
+    .back-link {
+      display: inline-flex;
+      min-height: 40px;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 11px;
+      border: 1px solid rgba(151, 193, 255, 0.28);
+      border-radius: 999px;
+      color: #f6fbff;
+      background: rgba(13, 29, 61, 0.76);
+      font-size: 12px;
+      font-weight: 850;
+      text-decoration: none;
+    }
+    .title-wrap { min-width: 0; flex: 1; }
+    .title-wrap h1 {
+      overflow: hidden;
+      margin: 0;
+      font-size: clamp(18px, 5vw, 25px);
+      line-height: 1;
+      letter-spacing: -0.035em;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .working-label {
+      display: block;
+      margin-top: 4px;
+      color: #8fa5c6;
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+    }
+    .version {
+      flex: 0 0 auto;
+      padding: 5px 7px;
+      border: 1px solid rgba(148, 185, 244, 0.19);
+      border-radius: 999px;
+      color: #9fb2cf;
+      background: rgba(12, 26, 53, 0.7);
+      font: 800 9px/1 ui-monospace, "SFMono-Regular", Consolas, monospace;
+    }
+    .hud {
+      position: relative;
+      z-index: 15;
+      display: flex;
+      min-height: 47px;
+      align-items: center;
+      gap: 8px;
+      padding: 7px max(10px, env(safe-area-inset-right)) 7px max(10px, env(safe-area-inset-left));
+      border-bottom: 1px solid rgba(146, 184, 246, 0.13);
+      background: rgba(7, 17, 37, 0.82);
+    }
+    .location-chip {
+      min-width: 0;
+      flex: 1;
+      overflow: hidden;
+      color: #f4f8ff;
+      font-size: 12px;
+      font-weight: 850;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .location-chip span { color: #7ddfff; }
+    .hud-button {
+      min-height: 34px;
+      padding: 7px 10px;
+      border: 1px solid rgba(148, 189, 255, 0.22);
+      border-radius: 11px;
+      color: #eaf5ff;
+      background: rgba(20, 40, 77, 0.76);
+      font-size: 11px;
+      font-weight: 850;
+    }
+    .stage {
+      position: relative;
+      min-height: 0;
+      flex: 1;
+      overflow: hidden;
+      background: #7bc96c;
+      touch-action: none;
+    }
+    #gameCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      touch-action: none;
+    }
+    .hint {
+      position: absolute;
+      z-index: 8;
+      top: 10px;
+      left: 50%;
+      width: min(84%, 390px);
+      transform: translateX(-50%);
+      padding: 8px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      border-radius: 999px;
+      color: #fff;
+      background: rgba(7, 20, 39, 0.74);
+      box-shadow: 0 9px 30px rgba(0, 0, 0, 0.16);
+      font-size: 11px;
+      font-weight: 850;
+      text-align: center;
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 150ms ease;
+    }
+    .hint.show { opacity: 1; }
+    .controls {
+      position: absolute;
+      z-index: 10;
+      right: max(10px, env(safe-area-inset-right));
+      bottom: max(10px, env(safe-area-inset-bottom));
+      left: max(10px, env(safe-area-inset-left));
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 12px;
+      pointer-events: none;
+    }
+    .dpad {
+      display: grid;
+      grid-template-columns: repeat(3, 44px);
+      grid-template-rows: repeat(3, 44px);
+      gap: 3px;
+      pointer-events: auto;
+    }
+    .move-button,
+    .action-button,
+    .mini-action {
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      color: #fff;
+      background: rgba(5, 18, 38, 0.76);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22), inset 0 1px rgba(255, 255, 255, 0.1);
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .move-button {
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      border-radius: 13px;
+      font-size: 18px;
+      font-weight: 950;
+      pointer-events: auto;
+    }
+    .move-button.blank { visibility: hidden; pointer-events: none; }
+    .move-button.active,
+    .move-button:active { background: rgba(79, 202, 255, 0.44); transform: scale(0.95); }
+    .action-stack {
+      display: grid;
+      width: 110px;
+      gap: 7px;
+      justify-items: end;
+      pointer-events: auto;
+    }
+    .action-button {
+      width: 74px;
+      height: 74px;
+      padding: 0 8px;
+      border-radius: 50%;
+      border-color: rgba(89, 220, 255, 0.5);
+      background: linear-gradient(145deg, rgba(43, 176, 230, 0.9), rgba(93, 108, 220, 0.9));
+      font-size: 12px;
+      font-weight: 950;
+      letter-spacing: 0.01em;
+    }
+    .action-button:active { transform: scale(0.95); }
+    .mini-action {
+      min-height: 38px;
+      padding: 8px 11px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 900;
+    }
+    .panel-layer {
+      position: absolute;
+      z-index: 30;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: rgba(3, 9, 22, 0.58);
+      -webkit-backdrop-filter: blur(7px);
+      backdrop-filter: blur(7px);
+    }
+    .panel-layer.show { display: flex; }
+    .panel {
+      width: min(100%, 360px);
+      max-height: calc(100% - 8px);
+      overflow: auto;
+      padding: 18px;
+      border: 1px solid rgba(150, 190, 255, 0.24);
+      border-radius: 22px;
+      background: var(--panel-strong);
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.34);
+    }
+    .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .panel h2 { margin: 0; font-size: 22px; letter-spacing: -0.04em; }
+    .panel p { margin: 7px 0 15px; color: var(--muted); font-size: 12px; line-height: 1.45; }
+    .close-button {
+      width: 38px;
+      height: 38px;
+      border: 1px solid rgba(155, 191, 248, 0.2);
+      border-radius: 12px;
+      color: #fff;
+      background: rgba(22, 40, 75, 0.8);
+      font-size: 19px;
+    }
+    .choice-group { margin-top: 14px; }
+    .choice-group strong { display: block; margin-bottom: 7px; color: #b9c9e3; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; }
+    .swatches { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+    .swatch {
+      min-width: 0;
+      height: 44px;
+      border: 2px solid rgba(255, 255, 255, 0.12);
+      border-radius: 13px;
+      background: var(--swatch);
+      box-shadow: inset 0 1px rgba(255, 255, 255, 0.18);
+    }
+    .swatch.selected { border-color: #fff; box-shadow: 0 0 0 3px rgba(87, 216, 255, 0.25), inset 0 1px rgba(255, 255, 255, 0.2); }
+    .emote-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; margin-top: 13px; }
+    .emote-button {
+      min-height: 62px;
+      border: 1px solid rgba(148, 188, 248, 0.2);
+      border-radius: 15px;
+      color: #f6fbff;
+      background: rgba(18, 37, 73, 0.8);
+      font-size: 11px;
+      font-weight: 850;
+    }
+    .emote-button span { display: block; margin-bottom: 4px; font-size: 23px; }
+    .start-overlay {
+      position: absolute;
+      z-index: 50;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background:
+        radial-gradient(circle at 50% 20%, rgba(72, 209, 255, 0.17), transparent 19rem),
+        rgba(5, 13, 29, 0.92);
+      -webkit-backdrop-filter: blur(9px);
+      backdrop-filter: blur(9px);
+    }
+    .start-overlay.hidden { display: none; }
+    .start-card {
+      width: min(100%, 390px);
+      padding: 24px 20px;
+      border: 1px solid rgba(147, 190, 255, 0.24);
+      border-radius: 25px;
+      background: linear-gradient(155deg, rgba(17, 37, 75, 0.96), rgba(8, 19, 42, 0.98));
+      box-shadow: 0 28px 90px rgba(0, 0, 0, 0.38);
+      text-align: center;
+    }
+    .start-icon {
+      display: grid;
+      width: 76px;
+      height: 76px;
+      margin: 0 auto 15px;
+      place-items: center;
+      border: 1px solid rgba(119, 218, 255, 0.35);
+      border-radius: 24px;
+      background: linear-gradient(145deg, rgba(76, 213, 255, 0.2), rgba(150, 112, 255, 0.2));
+      font-size: 38px;
+    }
+    .start-card h2 { margin: 0; font-size: clamp(28px, 9vw, 39px); letter-spacing: -0.055em; }
+    .start-card p { margin: 11px auto 19px; color: #b1c0d7; font-size: 13px; line-height: 1.55; }
+    .start-button {
+      width: 100%;
+      min-height: 50px;
+      border: 0;
+      border-radius: 15px;
+      color: #061320;
+      background: linear-gradient(135deg, #63dfff, #8ef1c2);
+      box-shadow: 0 12px 30px rgba(83, 219, 255, 0.22);
+      font-size: 14px;
+      font-weight: 950;
+    }
+    .start-note { margin-top: 11px; color: #7f94b4; font-size: 10px; font-weight: 750; }
+    @media (max-width: 360px) {
+      .topbar { gap: 7px; }
+      .back-link { min-height: 36px; padding-inline: 9px; font-size: 11px; }
+      .version { display: none; }
+      .hud { gap: 5px; }
+      .hud-button { padding-inline: 8px; font-size: 10px; }
+      .dpad { grid-template-columns: repeat(3, 40px); grid-template-rows: repeat(3, 40px); }
+      .move-button { width: 40px; height: 40px; border-radius: 12px; }
+      .action-stack { width: 94px; }
+      .action-button { width: 66px; height: 66px; }
+      .mini-action { padding-inline: 9px; }
+      .controls { gap: 7px; }
+      .swatches { gap: 6px; }
+    }
+    @media (max-height: 560px) and (orientation: landscape) {
+      .topbar { min-height: 48px; padding-top: max(5px, env(safe-area-inset-top)); padding-bottom: 5px; }
+      .working-label { display: none; }
+      .hud { min-height: 39px; padding-block: 4px; }
+      .move-button { width: 38px; height: 38px; }
+      .dpad { grid-template-columns: repeat(3, 38px); grid-template-rows: repeat(3, 38px); }
+      .action-button { width: 62px; height: 62px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .hint { transition-duration: 0.01ms; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <a class="back-link" href="../../">All games</a>
+      <div class="title-wrap">
+        <h1 data-game-title>Life Sandbox</h1>
+        <span class="working-label">Working title · name comes later</span>
+      </div>
+      <span class="version">v0.1.0</span>
+    </header>
+
+    <div class="hud">
+      <div class="location-chip">You are at <span id="locationText">Home Street</span></div>
+      <button class="hud-button" id="lookButton" type="button">Look</button>
+      <button class="hud-button" id="emoteButton" type="button">Emotes</button>
+    </div>
+
+    <main class="stage" id="stage">
+      <canvas id="gameCanvas" aria-label="Top-down life sandbox game"></canvas>
+      <div class="hint" id="hint" aria-live="polite"></div>
+
+      <div class="controls" aria-label="Game controls">
+        <div class="dpad" aria-label="Movement controls">
+          <button class="move-button blank" type="button" aria-hidden="true" tabindex="-1"></button>
+          <button class="move-button" type="button" data-dir="up" aria-label="Move up">▲</button>
+          <button class="move-button blank" type="button" aria-hidden="true" tabindex="-1"></button>
+          <button class="move-button" type="button" data-dir="left" aria-label="Move left">◀</button>
+          <button class="move-button blank" type="button" aria-hidden="true" tabindex="-1"></button>
+          <button class="move-button" type="button" data-dir="right" aria-label="Move right">▶</button>
+          <button class="move-button blank" type="button" aria-hidden="true" tabindex="-1"></button>
+          <button class="move-button" type="button" data-dir="down" aria-label="Move down">▼</button>
+          <button class="move-button blank" type="button" aria-hidden="true" tabindex="-1"></button>
+        </div>
+        <div class="action-stack">
+          <button class="mini-action" id="waveButton" type="button">👋 Wave</button>
+          <button class="action-button" id="actionButton" type="button">ACTION</button>
+        </div>
+      </div>
+
+      <div class="panel-layer" id="lookPanel" role="dialog" aria-modal="true" aria-labelledby="lookTitle">
+        <section class="panel">
+          <div class="panel-head">
+            <h2 id="lookTitle">Your look</h2>
+            <button class="close-button" type="button" data-close="lookPanel" aria-label="Close appearance panel">×</button>
+          </div>
+          <p>Pick a simple look for your character. Your choices are saved on this device.</p>
+          <div class="choice-group">
+            <strong>Skin</strong>
+            <div class="swatches" id="skinChoices"></div>
+          </div>
+          <div class="choice-group">
+            <strong>Shirt</strong>
+            <div class="swatches" id="shirtChoices"></div>
+          </div>
+          <div class="choice-group">
+            <strong>Hair</strong>
+            <div class="swatches" id="hairChoices"></div>
+          </div>
+        </section>
+      </div>
+
+      <div class="panel-layer" id="emotePanel" role="dialog" aria-modal="true" aria-labelledby="emoteTitle">
+        <section class="panel">
+          <div class="panel-head">
+            <h2 id="emoteTitle">Emotes</h2>
+            <button class="close-button" type="button" data-close="emotePanel" aria-label="Close emote panel">×</button>
+          </div>
+          <p>Just-for-fun actions for your character.</p>
+          <div class="emote-grid">
+            <button class="emote-button" type="button" data-emote="wave"><span>👋</span>Wave</button>
+            <button class="emote-button" type="button" data-emote="dance"><span>🎵</span>Dance</button>
+            <button class="emote-button" type="button" data-emote="sit"><span>🪑</span>Sit</button>
+          </div>
+        </section>
+      </div>
+
+      <div class="start-overlay" id="startOverlay" data-game-overlay>
+        <section class="start-card">
+          <div class="start-icon" aria-hidden="true">🏡</div>
+          <h2>Live your own little life</h2>
+          <p>Walk around town, visit places, go home, drive your car, and change your look. There are no points and no timer—just explore.</p>
+          <button class="start-button" id="startButton" type="button">Start exploring</button>
+          <div class="start-note">Simple first version · more places and activities can come later</div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var canvas = document.getElementById("gameCanvas");
+      var ctx = canvas.getContext("2d");
+      var stage = document.getElementById("stage");
+      var locationText = document.getElementById("locationText");
+      var hint = document.getElementById("hint");
+      var actionButton = document.getElementById("actionButton");
+      var lookPanel = document.getElementById("lookPanel");
+      var emotePanel = document.getElementById("emotePanel");
+      var startOverlay = document.getElementById("startOverlay");
+      var started = false;
+      var lastTime = 0;
+      var hintTimer = 0;
+      var keys = { up: false, down: false, left: false, right: false };
+      var dpr = 1;
+      var cssWidth = 1;
+      var cssHeight = 1;
+      var reducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      var skinColors = ["#f5c7a5", "#d99b72", "#aa6e4d", "#70452f", "#f1d6bd"];
+      var shirtColors = ["#56c8ff", "#ff6fa8", "#8f7dff", "#62d895", "#ffbd58"];
+      var hairColors = ["#32241e", "#8a562f", "#e3bf63", "#191a20", "#b35f44"];
+      var appearance = loadAppearance();
+
+      var TOWN_W = 1600;
+      var TOWN_H = 1200;
+      var HOME_W = 900;
+      var HOME_H = 700;
+      var scene = "town";
+      var player = { x: 520, y: 455, radius: 18, dirX: 0, dirY: 1, inCar: false, emote: "", emoteUntil: 0 };
+      var car = { x: 470, y: 485, angle: 0 };
+      var camera = { x: 0, y: 0 };
+
+      var townSolids = [
+        { x: 120, y: 120, w: 320, h: 250 },
+        { x: 1020, y: 120, w: 330, h: 225 },
+        { x: 1060, y: 715, w: 350, h: 230 }
+      ];
+      var homeSolids = [
+        { x: 95, y: 105, w: 185, h: 88 },
+        { x: 590, y: 105, w: 205, h: 105 },
+        { x: 120, y: 485, w: 210, h: 86 },
+        { x: 610, y: 450, w: 165, h: 100 }
+      ];
+
+      var interactables = {
+        town: [
+          { id: "home", x: 280, y: 405, label: "Enter your home", action: enterHome },
+          { id: "car", x: car.x, y: car.y, label: "Drive your car", action: enterCar },
+          { id: "cafe", x: 1185, y: 382, label: "Visit the café", action: function () { showToast("Coffee break ☕"); } },
+          { id: "shop", x: 1235, y: 985, label: "Visit the shop", action: openLook },
+          { id: "bench", x: 710, y: 305, label: "Relax in the park", action: function () { setEmote("sit", 2500); showToast("Taking a quiet park break 🌳"); } },
+          { id: "pool", x: 320, y: 885, label: "Jump in the pool", action: function () { showToast("Pool time! 💦"); } }
+        ],
+        home: [
+          { id: "exit", x: 450, y: 635, label: "Go back outside", action: exitHome },
+          { id: "bed", x: 190, y: 230, label: "Rest on the bed", action: function () { setEmote("sit", 2200); showToast("A perfect place for a nap 😴"); } },
+          { id: "closet", x: 695, y: 250, label: "Change your look", action: openLook },
+          { id: "sofa", x: 225, y: 455, label: "Sit on the sofa", action: function () { setEmote("sit", 2500); showToast("Relaxing at home 🛋️"); } },
+          { id: "kitchen", x: 690, y: 420, label: "Make a snack", action: function () { showToast("Snack made! 🥪"); } }
+        ]
+      };
+
+      function safeGet(key) {
+        try { return window.localStorage.getItem(key); }
+        catch (error) { return null; }
+      }
+      function safeSet(key, value) {
+        try { window.localStorage.setItem(key, value); }
+        catch (error) { return; }
+      }
+      function loadAppearance() {
+        var raw = safeGet("gidi-life-sim-appearance");
+        if (raw) {
+          try {
+            var parsed = JSON.parse(raw);
+            return {
+              skin: Math.max(0, Math.min(skinColors.length - 1, Number(parsed.skin) || 0)),
+              shirt: Math.max(0, Math.min(shirtColors.length - 1, Number(parsed.shirt) || 0)),
+              hair: Math.max(0, Math.min(hairColors.length - 1, Number(parsed.hair) || 0))
+            };
+          } catch (error) { return { skin: 0, shirt: 0, hair: 0 }; }
+        }
+        return { skin: 0, shirt: 0, hair: 0 };
+      }
+      function saveAppearance() {
+        safeSet("gidi-life-sim-appearance", JSON.stringify(appearance));
+      }
+      function showToast(message) {
+        if (window.GidiSuite && window.GidiSuite.toast) {
+          window.GidiSuite.toast(message, 1800);
+        } else {
+          showHint(message, 1600);
+        }
+      }
+      function showHint(message, duration) {
+        hint.textContent = message;
+        hint.classList.add("show");
+        window.clearTimeout(hintTimer);
+        hintTimer = window.setTimeout(function () { hint.classList.remove("show"); }, duration || 1400);
+      }
+      function distance(ax, ay, bx, by) {
+        var dx = ax - bx;
+        var dy = ay - by;
+        return Math.sqrt(dx * dx + dy * dy);
+      }
+      function nearestInteractable() {
+        if (player.inCar) {
+          return { id: "exit-car", x: player.x, y: player.y, label: "Get out of the car", action: exitCar };
+        }
+        var list = interactables[scene];
+        var best = null;
+        var bestDistance = 96;
+        var i;
+        for (i = 0; i < list.length; i += 1) {
+          if (list[i].id === "car") {
+            list[i].x = car.x;
+            list[i].y = car.y;
+          }
+          var d = distance(player.x, player.y, list[i].x, list[i].y);
+          if (d < bestDistance) {
+            best = list[i];
+            bestDistance = d;
+          }
+        }
+        return best;
+      }
+      function updateActionLabel() {
+        var near = nearestInteractable();
+        actionButton.textContent = near ? near.label.replace("your ", "").replace("the ", "").toUpperCase() : "ACTION";
+        if (actionButton.textContent.length > 12) {
+          actionButton.textContent = near && near.id === "home" ? "ENTER HOME" : near && near.id === "exit" ? "GO OUTSIDE" : near && near.id === "car" ? "DRIVE" : near && near.id === "exit-car" ? "GET OUT" : "ACTION";
+        }
+      }
+      function enterHome() {
+        if (player.inCar) return;
+        scene = "home";
+        player.x = 450;
+        player.y = 575;
+        locationText.textContent = "My Home";
+        showToast("Welcome home 🏡");
+      }
+      function exitHome() {
+        scene = "town";
+        player.x = 280;
+        player.y = 455;
+        locationText.textContent = "Home Street";
+      }
+      function enterCar() {
+        if (scene !== "town" || player.inCar) return;
+        player.inCar = true;
+        player.x = car.x;
+        player.y = car.y;
+        showToast("You're driving 🚗");
+      }
+      function exitCar() {
+        if (!player.inCar) return;
+        player.inCar = false;
+        car.x = player.x;
+        car.y = player.y;
+        player.x += 42;
+        player.y += 28;
+        showToast("Back on foot");
+      }
+      function openLook() {
+        updateSwatches();
+        lookPanel.classList.add("show");
+      }
+      function openEmotes() {
+        emotePanel.classList.add("show");
+      }
+      function closePanel(panel) {
+        panel.classList.remove("show");
+      }
+      function setEmote(name, duration) {
+        if (player.inCar) {
+          showToast("Get out of the car first");
+          return;
+        }
+        player.emote = name;
+        player.emoteUntil = performance.now() + (duration || 1800);
+      }
+      function buildSwatches(containerId, colors, key) {
+        var container = document.getElementById(containerId);
+        colors.forEach(function (color, index) {
+          var button = document.createElement("button");
+          button.type = "button";
+          button.className = "swatch";
+          button.style.setProperty("--swatch", color);
+          button.setAttribute("aria-label", key + " option " + (index + 1));
+          button.setAttribute("data-choice-key", key);
+          button.setAttribute("data-choice-index", String(index));
+          button.addEventListener("click", function () {
+            appearance[key] = index;
+            saveAppearance();
+            updateSwatches();
+          });
+          container.appendChild(button);
+        });
+      }
+      function updateSwatches() {
+        Array.prototype.forEach.call(document.querySelectorAll(".swatch"), function (button) {
+          var key = button.getAttribute("data-choice-key");
+          var index = Number(button.getAttribute("data-choice-index"));
+          button.classList.toggle("selected", appearance[key] === index);
+        });
+      }
+
+      function roundRect(context, x, y, w, h, r) {
+        var radius = Math.min(r, w / 2, h / 2);
+        context.beginPath();
+        context.moveTo(x + radius, y);
+        context.arcTo(x + w, y, x + w, y + h, radius);
+        context.arcTo(x + w, y + h, x, y + h, radius);
+        context.arcTo(x, y + h, x, y, radius);
+        context.arcTo(x, y, x + w, y, radius);
+        context.closePath();
+      }
+      function fillRoundRect(x, y, w, h, r, fill) {
+        ctx.fillStyle = fill;
+        roundRect(ctx, x, y, w, h, r);
+        ctx.fill();
+      }
+      function drawLabel(text, x, y, width) {
+        ctx.save();
+        ctx.font = "800 17px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+        ctx.textAlign = "center";
+        var w = Math.max(width || 0, ctx.measureText(text).width + 24);
+        fillRoundRect(x - w / 2, y - 18, w, 32, 14, "rgba(8,22,38,0.72)");
+        ctx.fillStyle = "#ffffff";
+        ctx.fillText(text, x, y + 4);
+        ctx.restore();
+      }
+      function drawTree(x, y, scale) {
+        var s = scale || 1;
+        ctx.fillStyle = "rgba(40,78,40,0.18)";
+        ctx.beginPath();
+        ctx.ellipse(x + 8 * s, y + 14 * s, 28 * s, 13 * s, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#815b38";
+        fillRoundRect(x - 5 * s, y, 10 * s, 26 * s, 4 * s, "#815b38");
+        ctx.fillStyle = "#3ba95c";
+        ctx.beginPath(); ctx.arc(x, y - 8 * s, 25 * s, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#54c870";
+        ctx.beginPath(); ctx.arc(x - 10 * s, y - 16 * s, 14 * s, 0, Math.PI * 2); ctx.fill();
+      }
+      function drawBuilding(x, y, w, h, wall, roof, label, doorX) {
+        ctx.fillStyle = "rgba(23,43,62,0.18)";
+        fillRoundRect(x + 14, y + 18, w, h, 20, "rgba(24,51,66,0.22)");
+        fillRoundRect(x, y, w, h, 20, wall);
+        ctx.fillStyle = roof;
+        ctx.beginPath();
+        ctx.moveTo(x - 12, y + 32);
+        ctx.lineTo(x + w / 2, y - 32);
+        ctx.lineTo(x + w + 12, y + 32);
+        ctx.lineTo(x + w - 3, y + 75);
+        ctx.lineTo(x + 3, y + 75);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = "rgba(255,255,255,0.75)";
+        fillRoundRect(x + 45, y + 115, 55, 45, 7, "rgba(232,249,255,0.85)");
+        fillRoundRect(x + w - 100, y + 115, 55, 45, 7, "rgba(232,249,255,0.85)");
+        ctx.fillStyle = "#5e453b";
+        fillRoundRect(doorX - 24, y + h - 58, 48, 58, 8, "#695046");
+        ctx.fillStyle = "#f4d56c";
+        ctx.beginPath(); ctx.arc(doorX + 13, y + h - 28, 4, 0, Math.PI * 2); ctx.fill();
+        drawLabel(label, x + w / 2, y + h + 36, 0);
+      }
+      function drawTown() {
+        ctx.fillStyle = "#78c76b";
+        ctx.fillRect(0, 0, TOWN_W, TOWN_H);
+        ctx.fillStyle = "rgba(255,255,255,0.055)";
+        var gx, gy;
+        for (gx = 0; gx < TOWN_W; gx += 80) {
+          for (gy = 0; gy < TOWN_H; gy += 80) {
+            ctx.beginPath(); ctx.arc(gx + 22, gy + 16, 2.2, 0, Math.PI * 2); ctx.fill();
+          }
+        }
+
+        ctx.fillStyle = "#7f8994";
+        ctx.fillRect(0, 500, TOWN_W, 175);
+        ctx.fillRect(680, 0, 190, TOWN_H);
+        ctx.fillStyle = "#aab2b9";
+        ctx.fillRect(0, 500, TOWN_W, 18);
+        ctx.fillRect(0, 657, TOWN_W, 18);
+        ctx.fillRect(680, 0, 18, TOWN_H);
+        ctx.fillRect(852, 0, 18, TOWN_H);
+        ctx.fillStyle = "rgba(255,255,255,0.62)";
+        for (gx = 20; gx < TOWN_W; gx += 110) ctx.fillRect(gx, 584, 54, 7);
+        for (gy = 18; gy < TOWN_H; gy += 110) ctx.fillRect(771, gy, 7, 54);
+
+        ctx.fillStyle = "#63b968";
+        fillRoundRect(500, 100, 330, 330, 38, "#63b968");
+        ctx.fillStyle = "#d7bb78";
+        fillRoundRect(570, 205, 190, 92, 40, "#d8bd7c");
+        drawTree(535, 150, 0.9); drawTree(800, 165, 0.9); drawTree(555, 370, 0.8); drawTree(805, 355, 0.8);
+        ctx.fillStyle = "#8b5b3e"; fillRoundRect(658, 302, 104, 22, 9, "#8b5b3e");
+        ctx.fillStyle = "#d4d8dc"; fillRoundRect(670, 286, 6, 34, 2, "#d4d8dc"); fillRoundRect(744, 286, 6, 34, 2, "#d4d8dc");
+        drawLabel("Park", 665, 116, 76);
+
+        ctx.fillStyle = "#45b9dc";
+        fillRoundRect(120, 765, 410, 270, 46, "#47bfe0");
+        ctx.fillStyle = "rgba(255,255,255,0.22)";
+        for (gx = 155; gx < 490; gx += 80) ctx.fillRect(gx, 875, 46, 5);
+        drawLabel("Pool", 325, 740, 80);
+
+        drawBuilding(120, 120, 320, 250, "#f3dfc4", "#ed7c85", "Your Home", 280);
+        drawBuilding(1020, 120, 330, 225, "#f7e2b6", "#e39b56", "Café", 1185);
+        drawBuilding(1060, 715, 350, 230, "#ddd4ff", "#937be9", "Shop", 1235);
+
+        drawTree(75, 230, 0.85); drawTree(475, 235, 0.8); drawTree(965, 265, 0.8); drawTree(1445, 225, 0.9);
+        drawTree(80, 710, 0.85); drawTree(590, 930, 0.9); drawTree(955, 915, 0.85); drawTree(1480, 900, 0.95);
+        drawTree(1430, 1045, 0.8); drawTree(670, 1090, 0.8);
+
+        if (!player.inCar) drawCar(car.x, car.y, car.angle, 1);
+      }
+      function drawHome() {
+        ctx.fillStyle = "#e7d9c8";
+        ctx.fillRect(0, 0, HOME_W, HOME_H);
+        ctx.fillStyle = "#d2bda7";
+        for (var x = 0; x < HOME_W; x += 54) ctx.fillRect(x, 0, 3, HOME_H);
+        ctx.fillStyle = "#f5efe8";
+        ctx.fillRect(42, 42, HOME_W - 84, 25);
+        ctx.fillRect(42, HOME_H - 67, HOME_W - 84, 25);
+        ctx.fillRect(42, 42, 25, HOME_H - 84);
+        ctx.fillRect(HOME_W - 67, 42, 25, HOME_H - 84);
+
+        fillRoundRect(95, 105, 185, 88, 15, "#8cc3ff");
+        fillRoundRect(110, 120, 155, 58, 12, "#e8f5ff");
+        ctx.fillStyle = "#fff"; ctx.fillRect(120, 122, 62, 55);
+        drawLabel("Bed", 188, 87, 66);
+
+        fillRoundRect(590, 105, 205, 105, 15, "#a98bf0");
+        fillRoundRect(615, 132, 155, 58, 10, "#c7b3ff");
+        drawLabel("Closet", 692, 87, 84);
+
+        fillRoundRect(120, 485, 210, 86, 22, "#ee8b87");
+        fillRoundRect(140, 463, 170, 48, 18, "#f4a09c");
+        drawLabel("Sofa", 225, 440, 70);
+
+        fillRoundRect(610, 450, 165, 100, 13, "#f3f0ea");
+        fillRoundRect(630, 470, 125, 15, 5, "#c9c2b7");
+        ctx.fillStyle = "#758d9a"; ctx.beginPath(); ctx.arc(655, 515, 18, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(725, 515, 18, 0, Math.PI * 2); ctx.fill();
+        drawLabel("Kitchen", 692, 430, 88);
+
+        ctx.fillStyle = "#6d5347";
+        fillRoundRect(414, 606, 72, 70, 10, "#6d5347");
+        drawLabel("Outside", 450, 592, 90);
+
+        ctx.fillStyle = "rgba(255,255,255,0.22)";
+        ctx.beginPath(); ctx.arc(450, 332, 95, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#ffffff"; fillRoundRect(378, 296, 144, 74, 20, "rgba(255,255,255,0.74)");
+        ctx.fillStyle = "#deb869"; ctx.beginPath(); ctx.arc(450, 333, 31, 0, Math.PI * 2); ctx.fill();
+      }
+      function drawCar(x, y, angle, scale) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(angle);
+        ctx.scale(scale || 1, scale || 1);
+        ctx.fillStyle = "rgba(24,46,58,0.2)";
+        fillRoundRect(-34, -18, 76, 44, 15, "rgba(24,46,58,0.2)");
+        fillRoundRect(-38, -24, 76, 44, 15, "#4f8cff");
+        fillRoundRect(-18, -18, 36, 32, 9, "#c8efff");
+        ctx.fillStyle = "#1d2d45";
+        fillRoundRect(-28, -30, 18, 8, 4, "#1d2d45");
+        fillRoundRect(10, -30, 18, 8, 4, "#1d2d45");
+        fillRoundRect(-28, 14, 18, 8, 4, "#1d2d45");
+        fillRoundRect(10, 14, 18, 8, 4, "#1d2d45");
+        ctx.fillStyle = "#fff3a5";
+        ctx.beginPath(); ctx.arc(31, -13, 4, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(31, 9, 4, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      }
+      function drawPlayer(now) {
+        if (player.inCar) {
+          drawCar(player.x, player.y, car.angle, 1.06);
+          return;
+        }
+        var bounce = 0;
+        if (player.emote === "dance" && now < player.emoteUntil && !reducedMotion) bounce = Math.sin(now / 90) * 5;
+        ctx.save();
+        ctx.translate(player.x, player.y + bounce);
+        ctx.fillStyle = "rgba(24,46,58,0.16)";
+        ctx.beginPath(); ctx.ellipse(5, 18, 22, 10, 0, 0, Math.PI * 2); ctx.fill();
+        fillRoundRect(-15, -2, 30, 34, 11, shirtColors[appearance.shirt]);
+        ctx.fillStyle = skinColors[appearance.skin];
+        ctx.beginPath(); ctx.arc(0, -17, 17, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = hairColors[appearance.hair];
+        ctx.beginPath(); ctx.arc(0, -22, 17, Math.PI, Math.PI * 2); ctx.lineTo(17, -18); ctx.lineTo(-17, -18); ctx.fill();
+        ctx.fillStyle = "#243042";
+        ctx.beginPath(); ctx.arc(-6, -15, 1.8, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(6, -15, 1.8, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#28354b";
+        fillRoundRect(-13, 27, 10, 15, 4, "#28354b");
+        fillRoundRect(3, 27, 10, 15, 4, "#28354b");
+        if (player.emote === "wave" && now < player.emoteUntil) {
+          ctx.strokeStyle = skinColors[appearance.skin];
+          ctx.lineWidth = 7;
+          ctx.lineCap = "round";
+          ctx.beginPath(); ctx.moveTo(12, 6); ctx.lineTo(28, -9); ctx.stroke();
+          ctx.fillStyle = "#ffffff"; ctx.font = "22px sans-serif"; ctx.fillText("👋", 23, -24);
+        } else if (player.emote === "dance" && now < player.emoteUntil) {
+          ctx.fillStyle = "#ffffff"; ctx.font = "20px sans-serif"; ctx.fillText("♪", -32, -36); ctx.fillText("♫", 23, -27);
+        } else if (player.emote === "sit" && now < player.emoteUntil) {
+          ctx.fillStyle = "#ffffff"; ctx.font = "17px sans-serif"; ctx.fillText("☺", 21, -24);
+        }
+        ctx.restore();
+      }
+      function collidesAt(x, y) {
+        var solids = scene === "town" ? townSolids : homeSolids;
+        var radius = player.inCar ? 28 : player.radius;
+        var worldW = scene === "town" ? TOWN_W : HOME_W;
+        var worldH = scene === "town" ? TOWN_H : HOME_H;
+        if (x < radius || y < radius || x > worldW - radius || y > worldH - radius) return true;
+        for (var i = 0; i < solids.length; i += 1) {
+          var s = solids[i];
+          if (x + radius > s.x && x - radius < s.x + s.w && y + radius > s.y && y - radius < s.y + s.h) return true;
+        }
+        return false;
+      }
+      function update(dt, now) {
+        if (!started) return;
+        if (player.emote && now >= player.emoteUntil) player.emote = "";
+        var dx = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
+        var dy = (keys.down ? 1 : 0) - (keys.up ? 1 : 0);
+        if (dx || dy) {
+          var length = Math.sqrt(dx * dx + dy * dy) || 1;
+          dx /= length; dy /= length;
+          var speed = player.inCar ? 270 : 150;
+          if (player.emote === "sit") speed = 0;
+          var nx = player.x + dx * speed * dt;
+          var ny = player.y + dy * speed * dt;
+          if (!collidesAt(nx, player.y)) player.x = nx;
+          if (!collidesAt(player.x, ny)) player.y = ny;
+          player.dirX = dx;
+          player.dirY = dy;
+          if (player.inCar) {
+            car.angle = Math.atan2(dy, dx);
+            car.x = player.x;
+            car.y = player.y;
+          }
+        }
+        updateLocation();
+        updateActionLabel();
+      }
+      function updateLocation() {
+        if (scene === "home") {
+          locationText.textContent = "My Home";
+          return;
+        }
+        if (player.y > 735 && player.x < 600) locationText.textContent = "Pool";
+        else if (player.x > 980 && player.y < 460) locationText.textContent = "Café Corner";
+        else if (player.x > 1000 && player.y > 680) locationText.textContent = "Shops";
+        else if (player.x > 480 && player.x < 900 && player.y < 460) locationText.textContent = "Town Park";
+        else if (player.x < 500 && player.y < 500) locationText.textContent = "Home Street";
+        else locationText.textContent = "Sunny Town";
+      }
+      function render(now) {
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, cssWidth, cssHeight);
+        var worldW = scene === "town" ? TOWN_W : HOME_W;
+        var worldH = scene === "town" ? TOWN_H : HOME_H;
+        camera.x = Math.max(0, Math.min(worldW - cssWidth, player.x - cssWidth / 2));
+        camera.y = Math.max(0, Math.min(worldH - cssHeight, player.y - cssHeight / 2));
+        if (worldW < cssWidth) camera.x = -(cssWidth - worldW) / 2;
+        if (worldH < cssHeight) camera.y = -(cssHeight - worldH) / 2;
+        ctx.save();
+        ctx.translate(-camera.x, -camera.y);
+        if (scene === "town") drawTown(); else drawHome();
+        drawPlayer(now);
+        ctx.restore();
+      }
+      function loop(now) {
+        var dt = Math.min(0.035, Math.max(0, (now - lastTime) / 1000 || 0));
+        lastTime = now;
+        update(dt, now);
+        render(now);
+        window.requestAnimationFrame(loop);
+      }
+      function resize() {
+        var rect = stage.getBoundingClientRect();
+        cssWidth = Math.max(1, Math.floor(rect.width));
+        cssHeight = Math.max(1, Math.floor(rect.height));
+        dpr = Math.min(2, window.devicePixelRatio || 1);
+        canvas.width = Math.max(1, Math.floor(cssWidth * dpr));
+        canvas.height = Math.max(1, Math.floor(cssHeight * dpr));
+      }
+      function setDirection(dir, active, button) {
+        keys[dir] = active;
+        if (button) button.classList.toggle("active", active);
+      }
+      function releaseAll() {
+        keys.up = keys.down = keys.left = keys.right = false;
+        Array.prototype.forEach.call(document.querySelectorAll(".move-button"), function (button) { button.classList.remove("active"); });
+      }
+      function installMoveButton(button) {
+        var dir = button.getAttribute("data-dir");
+        if (!dir) return;
+        button.addEventListener("pointerdown", function (event) {
+          event.preventDefault();
+          try { button.setPointerCapture(event.pointerId); } catch (error) { /* no-op */ }
+          setDirection(dir, true, button);
+        });
+        button.addEventListener("pointerup", function (event) { event.preventDefault(); setDirection(dir, false, button); });
+        button.addEventListener("pointercancel", function () { setDirection(dir, false, button); });
+        button.addEventListener("lostpointercapture", function () { setDirection(dir, false, button); });
+      }
+
+      buildSwatches("skinChoices", skinColors, "skin");
+      buildSwatches("shirtChoices", shirtColors, "shirt");
+      buildSwatches("hairChoices", hairColors, "hair");
+      updateSwatches();
+
+      Array.prototype.forEach.call(document.querySelectorAll(".move-button[data-dir]"), installMoveButton);
+      document.getElementById("lookButton").addEventListener("click", openLook);
+      document.getElementById("emoteButton").addEventListener("click", openEmotes);
+      document.getElementById("waveButton").addEventListener("click", function () { setEmote("wave", 1800); });
+      actionButton.addEventListener("click", function () {
+        var near = nearestInteractable();
+        if (near) near.action(); else showHint("Walk closer to something to interact", 1200);
+      });
+      document.getElementById("startButton").addEventListener("click", function () {
+        started = true;
+        startOverlay.classList.add("hidden");
+        showHint("Explore freely — your home and car are nearby", 2100);
+      });
+      Array.prototype.forEach.call(document.querySelectorAll("[data-close]"), function (button) {
+        button.addEventListener("click", function () {
+          var panel = document.getElementById(button.getAttribute("data-close"));
+          if (panel) closePanel(panel);
+        });
+      });
+      Array.prototype.forEach.call(document.querySelectorAll("[data-emote]"), function (button) {
+        button.addEventListener("click", function () {
+          setEmote(button.getAttribute("data-emote"), 2200);
+          closePanel(emotePanel);
+        });
+      });
+      lookPanel.addEventListener("click", function (event) { if (event.target === lookPanel) closePanel(lookPanel); });
+      emotePanel.addEventListener("click", function (event) { if (event.target === emotePanel) closePanel(emotePanel); });
+
+      window.addEventListener("keydown", function (event) {
+        var map = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right", w: "up", W: "up", s: "down", S: "down", a: "left", A: "left", d: "right", D: "right" };
+        if (map[event.key]) { keys[map[event.key]] = true; event.preventDefault(); }
+        if ((event.key === " " || event.key === "Enter") && started && !lookPanel.classList.contains("show") && !emotePanel.classList.contains("show")) {
+          var near = nearestInteractable();
+          if (near) near.action();
+          event.preventDefault();
+        }
+      });
+      window.addEventListener("keyup", function (event) {
+        var map = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right", w: "up", W: "up", s: "down", S: "down", a: "left", A: "left", d: "right", D: "right" };
+        if (map[event.key]) { keys[map[event.key]] = false; event.preventDefault(); }
+      });
+      window.addEventListener("blur", releaseAll);
+      document.addEventListener("visibilitychange", function () { if (document.hidden) releaseAll(); });
+      window.addEventListener("resize", resize, { passive: true });
+      window.addEventListener("orientationchange", resize, { passive: true });
+
+      resize();
+      updateActionLabel();
+      window.requestAnimationFrame(loop);
+    }());
+  </script>
+</body>
+</html>
