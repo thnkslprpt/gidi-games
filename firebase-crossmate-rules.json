@@ -129,10 +129,10 @@
             ".write": "auth != null && $uid == auth.uid && (root.child('lifeSandboxRooms').child($room).child('players/p1/uid').val() == auth.uid || root.child('lifeSandboxRooms').child($room).child('players/p2/uid').val() == auth.uid) && (!newData.exists() || root.child('lifeSandboxRooms').child($room).child('expiresAt').val() >= now)",
             ".validate": "newData.hasChildren(['x','y','scene','dirX','dirY','inVehicle','vehicleType','vehicleAngle','vehicleReverse','name','skin','shirt','pants','hair','hairStyle','accessory','emote','emoteUntil','action','actionUntil','pet','petFollowing','updatedAt'])",
             "x": {
-              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 3000"
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 4700"
             },
             "y": {
-              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 2200"
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 3300"
             },
             "scene": {
               ".validate": "newData.isString() && (newData.val() == 'town' || newData.val() == 'home' || newData.val() == 'cafe' || newData.val() == 'boutique' || newData.val() == 'petshop' || newData.val() == 'arcade')"
@@ -147,7 +147,7 @@
               ".validate": "newData.isBoolean()"
             },
             "vehicleType": {
-              ".validate": "newData.isString() && (newData.val() == 'car' || newData.val() == 'scooter' || newData.val() == 'bike' || newData.val() == 'roadster')"
+              ".validate": "newData.isString() && (newData.val() == 'car' || newData.val() == 'scooter' || newData.val() == 'bike' || newData.val() == 'roadster' || newData.val() == 'cruiser')"
             },
             "vehicleAngle": {
               ".validate": "newData.isNumber() && newData.val() >= -7 && newData.val() <= 7"
