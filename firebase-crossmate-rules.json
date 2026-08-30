@@ -209,7 +209,7 @@
             ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() < 1440"
           },
           "weather": {
-            ".validate": "newData.isString() && (newData.val() == 'sunny' || newData.val() == 'cloudy' || newData.val() == 'rainy')"
+            ".validate": "newData.isString() && (newData.val() == 'sunny' || newData.val() == 'cloudy' || newData.val() == 'rainy' || newData.val() == 'snowy')"
           },
           "dayCycle": {
             ".validate": "newData.isBoolean()"
