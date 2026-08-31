@@ -320,7 +320,7 @@ var neighborHomeThemes=[
  {wall:"#fff0c8",roof:"#b27b35",floor:"#c99d6d",sofa:"#dea842",hobby:"שולחן גינה",icon:"🌻"},{wall:"#ffe0e2",roof:"#bc5963",floor:"#c29a74",sofa:"#dc7580",hobby:"המיטה של ביסקוויט",icon:"🐕"}
 ];
 /* Homes live in small pockets across the whole city instead of one artificial row. */
-var neighborHomeLots=[{x:600,y:880},{x:1900,y:880},{x:4550,y:100},{x:20,y:880},{x:20,y:1540},{x:1400,y:1660},{x:4680,y:880},{x:4680,y:1350},{x:40,y:2240},{x:60,y:2700},{x:1420,y:2960},{x:3120,y:3280}];
+var neighborHomeLots=[{x:600,y:880},{x:1900,y:880},{x:4550,y:100},{x:4320,y:850},{x:20,y:1540},{x:1400,y:1660},{x:4680,y:880},{x:4680,y:1350},{x:40,y:2240},{x:60,y:2700},{x:1420,y:2960},{x:3120,y:3280}];
 var npcHomes=npcs.map(function(n,i){var theme=neighborHomeThemes[i],lot=neighborHomeLots[i];return{id:"home-"+n.id,ownerId:n.id,owner:n.name,x:lot.x,y:lot.y,w:320,h:230,doorX:lot.x+160,doorY:lot.y+230,wall:theme.wall,roof:theme.roof,floor:theme.floor,sofa:theme.sofa,hobby:theme.hobby,icon:theme.icon}});
 npcHomes.forEach(function(h){townSolids.push({x:h.x,y:h.y,w:h.w,h:h.h});places.push({id:h.id,name:"הבית של "+h.owner,emoji:"🏡",x:h.doorX,y:h.doorY+45})});
 var westTrafficRoute=[{x:1255,y:720},{x:2811,y:720},{x:2811,y:2086},{x:1255,y:2086},{x:1255,y:3656},{x:2811,y:3656},{x:2811,y:2086},{x:1255,y:2086}];
